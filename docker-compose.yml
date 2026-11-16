@@ -1,0 +1,73 @@
+# Cluster Cassandra local : 3 nœuds, 1 datacenter (dc1). Rien n'est déployé : tout tourne sur ce PC.
+# Démarrage : docker compose up -d      Tests : docker compose run --rm tests
+name: streaming-platform
+
+x-cassandra: &cassandra
+  image: cassandra:5.0
+  restart: unless-stopped
+  mem_limit: 1700m   # heap 768M + mémoire hors heap ; 1400m était trop juste (mesuré : 1,36 Gio)
+  environment: &cassandra-env
+    CASSANDRA_CLUSTER_NAME: streaming-cluster
+    CASSANDRA_DC: dc1
+    CASSANDRA_RACK: rack1
+    CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+    CASSANDRA_SEEDS: cassandra1
+    # Heap réduit pour tenir 3 nœuds sur un portable (les deux variables vont par paire).
+    MAX_HEAP_SIZE: 768M
+    HEAP_NEWSIZE: 128M
+  healthcheck:
+    test: ["CMD-SHELL", "cqlsh -e 'SELECT release_version FROM system.local' > /dev/null 2>&1"]
+    interval: 15s
+    timeout: 10s
+    retries: 30
+    start_period: 60s
+
+services:
+  cassandra1:
+    <<: *cassandra
+    hostname: cassandra1
+    ports:
+      - "9142:9042"   # 9142 côté PC pour ne pas entrer en conflit avec d'autres projets sur 9042
+    volumes:
+      - cassandra1-data:/var/lib/cassandra
+
+  # Les nœuds rejoignent l'anneau un par un (démarrage simultané = erreurs de bootstrap).
+  cassandra2:
+    <<: *cassandra
+    hostname: cassandra2
+    volumes:
+      - cassandra2-data:/var/lib/cassandra
+    depends_on:
+      cassandra1:
+        condition: service_healthy
+
+  cassandra3:
+    <<: *cassandra
+    hostname: cassandra3
+    volumes:
+      - cassandra3-data:/var/lib/cassandra
+    depends_on:
+      cassandra2:
+        condition: service_healthy
+
+  # Les tests tournent DANS le réseau Docker : le pilote doit joindre les 3 nœuds,
+  # ce qui n'est pas possible depuis Windows avec un seul port exposé.
+  tests:
+    build:
+      context: .
+      dockerfile: docker/tests.Dockerfile
+    profiles: ["tests"]
+    environment:
+      CASSANDRA_CONTACT_POINTS: cassandra1,cassandra2,cassandra3
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    depends_on:
+      cassandra3:
+        condition: service_healthy
+    command: ["pytest", "-v", "--junitxml=reports/tests/latest.xml"]
+
+volumes:
+  cassandra1-data:
+  cassandra2-data:
+  cassandra3-data:
