@@ -1,1 +1,1 @@
-"""Paquet streaming pour la plateforme de streaming Cassandra."""
+"""Package streaming – accès au schéma Cassandra."""

@@ -3,8 +3,10 @@
 Modélisation orientée requêtes (une table par requête Q1..Q8).
 """
 
+# Nom du keyspace principal de l'application (production).
 KEYSPACE = "streaming"
 
+# Liste ordonnée des tables créées – utilisée par les tests.
 TABLES = [
     "title_by_id",
     "titles_by_genre",
@@ -18,13 +20,14 @@ TABLES = [
 
 
 def create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3) -> None:
-    """Crée le keyspace et les tables de la plateforme de streaming (idempotent).
+    """Crée le keyspace et les tables (idempotent).
 
-    Args:
-        session: Session cassandra-driver ouverte.
-        keyspace: Nom du keyspace à créer/utiliser.
-        replication_factor: Facteur de réplication pour le datacenter 'dc1'.
+    Tous les ``CREATE ... IF NOT EXISTS`` garantissent que l'appel est sûr à répéter.
+    Le keyspace utilise ``NetworkTopologyStrategy`` avec le datacenter ``dc1``.
     """
+    # ---------------------------------------------------------------------
+    # Keyspace
+    # ---------------------------------------------------------------------
     create_keyspace_cql = f"""
     CREATE KEYSPACE IF NOT EXISTS {keyspace}
     WITH replication = {{
@@ -34,8 +37,11 @@ def create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3
     """
     session.execute(create_keyspace_cql)
 
-    # Q1 : Fiche d'un titre (film ou série) par son identifiant.
-    # Clé de partition : title_id.
+    # ---------------------------------------------------------------------
+    # Tables – une par requête (Q1..Q8). Chaque table possède un COMMENT
+    # indiquant la requête qu'elle sert.
+    # ---------------------------------------------------------------------
+    # Q1 : fiche d'un titre (film ou série) par son identifiant.
     create_q1 = f"""
     CREATE TABLE IF NOT EXISTS {keyspace}.title_by_id (
         title_id uuid,
@@ -47,11 +53,10 @@ def create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3
         duration_minutes int,
         episodes_count int,
         PRIMARY KEY (title_id)
-    )
+    ) WITH comment = 'Q1: fiche d''un titre (film ou série) par son identifiant.'
     """
 
-    # Q2 : Titres d'un genre, du plus récent au plus ancien.
-    # Clé de partition : genre. Clé de clustering : release_year DESC, title_id ASC.
+    # Q2 : titres d'un genre, du plus récent au plus ancien.
     create_q2 = f"""
     CREATE TABLE IF NOT EXISTS {keyspace}.titles_by_genre (
         genre text,
@@ -61,10 +66,10 @@ def create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3
         kind text,
         PRIMARY KEY (genre, release_year, title_id)
     ) WITH CLUSTERING ORDER BY (release_year DESC, title_id ASC)
+      AND comment = 'Q2: titres d''un genre, du plus récent au plus ancien.'
     """
 
-    # Q3 : Profil d'un utilisateur par son identifiant.
-    # Clé de partition : user_id.
+    # Q3 : profil d'un utilisateur par son identifiant.
     create_q3 = f"""
     CREATE TABLE IF NOT EXISTS {keyspace}.user_by_id (
         user_id uuid,
@@ -72,11 +77,10 @@ def create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3
         username text,
         created_at timestamp,
         PRIMARY KEY (user_id)
-    )
+    ) WITH comment = 'Q3: profil d''un utilisateur par son identifiant.'
     """
 
-    # Q4 : Avis (note 1 à 5 + commentaire) d'un titre, du plus récent au plus ancien.
-    # Clé de partition : title_id. Clé de clustering : created_at DESC, user_id ASC.
+    # Q4 : avis (note 1 à 5 + commentaire) d'un titre, du plus récent au plus ancien.
     create_q4 = f"""
     CREATE TABLE IF NOT EXISTS {keyspace}.reviews_by_title (
         title_id uuid,
@@ -87,10 +91,10 @@ def create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3
         username text,
         PRIMARY KEY (title_id, created_at, user_id)
     ) WITH CLUSTERING ORDER BY (created_at DESC, user_id ASC)
+      AND comment = 'Q4: avis (note 1 à 5 + commentaire) d''un titre, du plus récent au plus ancien.'
     """
 
-    # Q5 : Avis donnés par un utilisateur, du plus récent au plus ancien.
-    # Clé de partition : user_id. Clé de clustering : created_at DESC, title_id ASC.
+    # Q5 : avis donnés par un utilisateur, du plus récent au plus ancien.
     create_q5 = f"""
     CREATE TABLE IF NOT EXISTS {keyspace}.reviews_by_user (
         user_id uuid,
@@ -101,10 +105,10 @@ def create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3
         title text,
         PRIMARY KEY (user_id, created_at, title_id)
     ) WITH CLUSTERING ORDER BY (created_at DESC, title_id ASC)
+      AND comment = 'Q5: avis donnés par un utilisateur, du plus récent au plus ancien.'
     """
 
-    # Q6 : Historique de visionnage d'un utilisateur, du plus récent au plus ancien.
-    # Clé de partition : user_id. Clé de clustering : watched_at DESC, title_id ASC.
+    # Q6 : historique de visionnage d'un utilisateur, du plus récent au plus ancien.
     create_q6 = f"""
     CREATE TABLE IF NOT EXISTS {keyspace}.watch_history_by_user (
         user_id uuid,
@@ -115,11 +119,10 @@ def create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3
         completed boolean,
         PRIMARY KEY (user_id, watched_at, title_id)
     ) WITH CLUSTERING ORDER BY (watched_at DESC, title_id ASC)
+      AND comment = 'Q6: historique de visionnage d''un utilisateur, du plus récent au plus ancien.'
     """
 
-    # Q7 : Statistiques d'un titre : nombre de vues, somme et nombre des notes (compteurs).
-    # Clé de partition : title_id.
-    # Remarque Cassandra : Une table avec des counters ne doit contenir QUE des colonnes counter et la clé primaire.
+    # Q7 : statistiques d'un titre (compteurs uniquement).
     create_q7 = f"""
     CREATE TABLE IF NOT EXISTS {keyspace}.title_stats (
         title_id uuid,
@@ -127,22 +130,20 @@ def create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3
         rating_sum counter,
         rating_count counter,
         PRIMARY KEY (title_id)
-    )
+    ) WITH comment = 'Q7: statistiques d''un titre (nombre de vues, somme et nombre des notes).'
     """
 
-    # Q8 : Nombre de vues de chaque titre pour un jour donné (pour calculer le Top 10 du jour).
-    # Clé de partition : view_date. Clé de clustering : title_id.
-    # Remarque Cassandra : Une table avec des counters ne doit contenir QUE des colonnes counter et la clé primaire.
+    # Q8 : nombre de vues de chaque titre pour un jour donné (compteurs uniquement).
     create_q8 = f"""
     CREATE TABLE IF NOT EXISTS {keyspace}.daily_views_by_title (
         view_date date,
         title_id uuid,
         view_count counter,
         PRIMARY KEY (view_date, title_id)
-    )
+    ) WITH comment = 'Q8: nombre de vues de chaque titre pour un jour donné.'
     """
 
-    queries = [
+    for query in [
         create_q1,
         create_q2,
         create_q3,
@@ -151,17 +152,10 @@ def create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3
         create_q6,
         create_q7,
         create_q8,
-    ]
-
-    for q in queries:
-        session.execute(q)
+    ]:
+        session.execute(query)
 
 
 def drop_schema(session, keyspace: str) -> None:
-    """Supprime le keyspace spécifié (idempotent avec IF EXISTS).
-
-    Args:
-        session: Session cassandra-driver ouverte.
-        keyspace: Nom du keyspace à supprimer.
-    """
+    """Supprime le keyspace (idempotent)."""
     session.execute(f"DROP KEYSPACE IF EXISTS {keyspace}")
