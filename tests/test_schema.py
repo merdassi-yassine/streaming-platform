@@ -26,8 +26,9 @@ def test_create_schema_and_verify_tables(cluster, session):
     keyspace_meta = cluster.metadata.keyspaces.get(TEST_KEYSPACE)
     assert keyspace_meta is not None, f"Le keyspace {TEST_KEYSPACE} doit exister."
 
-    # Vérification de la stratégie de réplication
-    assert keyspace_meta.replication_strategy.name == "org.apache.cassandra.locator.NetworkTopologyStrategy"
+    # Vérification de la stratégie de réplication (nom court ou nom complet selon la version du driver/cluster)
+    strat_name = keyspace_meta.replication_strategy.name
+    assert "NetworkTopologyStrategy" in strat_name
     assert keyspace_meta.replication_strategy.options.get("dc1") == "3"
 
     # Vérification de l'existence de toutes les tables
@@ -51,19 +52,20 @@ def test_table_primary_keys_and_clustering(cluster, session):
     t_q2 = keyspace_meta.tables["titles_by_genre"]
     partition_cols = [c.name for c in t_q2.partition_key]
     clustering_cols = [c.name for c in t_q2.clustering_key]
-    clustering_orders = t_q2.clustering_orders
 
     assert partition_cols == ["genre"]
     assert clustering_cols == ["release_year", "title_id"]
-    assert clustering_orders[0] == "DESC"  # release_year DESC
-    assert clustering_orders[1] == "ASC"   # title_id ASC
+    # Vérification de l'ordre de clustering via is_reversed sur les colonnes de clustering
+    assert t_q2.columns["release_year"].is_reversed is True   # release_year DESC
+    assert t_q2.columns["title_id"].is_reversed is False      # title_id ASC
 
     # Vérification Q4 : reviews_by_title
     # Partition key: title_id ; Clustering key: created_at DESC, user_id ASC
     t_q4 = keyspace_meta.tables["reviews_by_title"]
     assert [c.name for c in t_q4.partition_key] == ["title_id"]
     assert [c.name for c in t_q4.clustering_key] == ["created_at", "user_id"]
-    assert t_q4.clustering_orders[0] == "DESC"  # created_at DESC
+    assert t_q4.columns["created_at"].is_reversed is True     # created_at DESC
+    assert t_q4.columns["user_id"].is_reversed is False       # user_id ASC
 
     # Vérification Q7 : title_stats (counters)
     t_q7 = keyspace_meta.tables["title_stats"]
