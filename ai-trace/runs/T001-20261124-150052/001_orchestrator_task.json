@@ -1,0 +1,43 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 1,
+  "agent": "orchestrator",
+  "kind": "task",
+  "timestamp": "2026-11-24T14:00:52+00:00",
+  "task": {
+    "id": "T001",
+    "title": "Modèle de données Cassandra (schéma CQL orienté requêtes)",
+    "role": "backend_developer",
+    "prompt_template": "prompts/backend_developer.v2.md",
+    "write_allow": [
+      "streaming/",
+      "tests/"
+    ],
+    "review": true,
+    "test_command": [
+      "docker",
+      "compose",
+      "--profile",
+      "tests",
+      "run",
+      "--rm",
+      "tests",
+      "pytest",
+      "-v",
+      "-p",
+      "no:cacheprovider",
+      "tests/"
+    ],
+    "test_timeout": 1800,
+    "description": "Crée le paquet Python `streaming/` (avec `streaming/__init__.py`) et le module `streaming/schema.py`\nqui définit le schéma Cassandra de la plateforme.\n\nRequêtes que l'application devra servir (une table par requête) :\n- Q1 : fiche d'un titre (film ou série) par son identifiant.\n- Q2 : titres d'un genre, du plus récent au plus ancien.\n- Q3 : profil d'un utilisateur par son identifiant.\n- Q4 : avis (note 1 à 5 + commentaire) d'un titre, du plus récent au plus ancien.\n- Q5 : avis donnés par un utilisateur, du plus récent au plus ancien.\n- Q6 : historique de visionnage d'un utilisateur, du plus récent au plus ancien.\n- Q7 : statistiques d'un titre : nombre de vues, somme et nombre des notes (compteurs).\n- Q8 : nombre de vues de chaque titre pour un jour donné (pour calculer le Top 10 du jour).\n\nContenu attendu de `streaming/schema.py` :\n- une constante `KEYSPACE = \"streaming\"` ;\n- une fonction `create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3) -> None`\n  qui crée le keyspace (NetworkTopologyStrategy, datacenter `dc1`) et toutes les tables avec\n  `IF NOT EXISTS` (idempotente : on peut l'appeler deux fois) ;\n- une fonction `drop_schema(session, keyspace: str) -> None` ;\n- une constante `TABLES` : la liste des noms de tables créées.\nChaque table doit avoir un commentaire indiquant la requête (Q1..Q8) qu'elle sert.\n\nCrée aussi `tests/test_schema.py` qui, sur un keyspace de test dédié (ex. `streaming_test_schema`) :\nvérifie que toutes les tables de `TABLES` existent après `create_schema`, que l'appel est idempotent,\nque les clés de partition/clustering de 2 ou 3 tables importantes sont celles attendues (via\n`cluster.metadata`), et supprime le keyspace à la fin.\n",
+    "acceptance": [
+      "create_schema crée le keyspace avec NetworkTopologyStrategy et dc1 = replication_factor",
+      "une table par requête Q1 à Q8, chacune commentée avec sa requête",
+      "les tables d'historique/avis sont triées du plus récent au plus ancien (clustering DESC)",
+      "les statistiques utilisent des colonnes counter, dans des tables ne contenant que des counters",
+      "create_schema est idempotente (IF NOT EXISTS) ; drop_schema supprime le keyspace",
+      "tests/test_schema.py n'utilise pas le keyspace « streaming » et nettoie son keyspace de test"
+    ]
+  },
+  "branch": "squad/T001-150052"
+}

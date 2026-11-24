@@ -1,0 +1,11 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 58,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-24T17:24:20+00:00",
+  "iteration": 2,
+  "decision": "changes",
+  "feedback": "Les tests échouent encore sur l'API du pilote. Pour la réplication, utilise cluster.metadata.keyspaces[ks].replication_strategy.export_for_schema() (chaîne contenant NetworkTopologyStrategy et 'dc1': '3'). Pour les colonnes, l'attribut est col.cql_type (ex. 'counter'), pas data_type. Pour l'ordre DESC, utilise col.is_reversed sur les colonnes de table.clustering_key. Ne change pas schema.py.",
+  "decided_by": "MERDASSI Yassine"
+}

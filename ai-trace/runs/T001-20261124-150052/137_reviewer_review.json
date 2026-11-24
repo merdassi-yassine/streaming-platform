@@ -1,0 +1,11 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 137,
+  "agent": "reviewer",
+  "kind": "review",
+  "timestamp": "2026-11-24T21:44:40+00:00",
+  "iteration": 4,
+  "review": "Critères :\n✓ create_schema crée le keyspace avec NetworkTopologyStrategy et dc1 = replication_factor  \n✓ une table par requête Q1 à Q8, chacune commentée avec sa requête  \n✓ les tables d'historique/avis sont triées du plus récent au plus ancien (clustering DESC)  \n✓ les statistiques utilisent uniquement des colonnes counter (tables Q7 et Q8)  \n✓ create_schema est idempotente (IF NOT EXISTS) ; drop_schema supprime le keyspace  \n✓ tests/test_schema.py n'utilise pas le keyspace « streaming » et nettoie son keyspace de test  \n✓ les clés de partition et de clustering des tables Q2, Q4 et Q7 sont conformes aux attentes  \n\nRemarques :\n- À AMÉLIORER : aucune utilisation de requêtes préparées n’est nécessaire pour la création du schéma, mais les commentaires CQL sont correctement échappés.  \n- MINEUR : les docstrings pourraient préciser les types de données attendus pour plus de clarté, sans impacter le fonctionnement.  \n\nRecommandation : APPROUVER — la modification satisfait l’ensemble des critères d’acceptation et les tests passent avec succès.",
+  "steps": 1,
+  "stop_reason": "done"
+}

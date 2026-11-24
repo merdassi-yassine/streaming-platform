@@ -1,0 +1,79 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 50,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T17:10:45+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 2.71,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"Tests pour le module streaming.schema.\"\"\"\n\nimport pytest\nfrom streaming.schema import TABLES, create_schema, drop_schema\n\nTEST_KEYSPACE = \"streaming_test_schema\"\n\n\n@pytest.fixture(autouse=True)\ndef cleanup_test_keyspace(session):\n    \"\"\"S'assure que le keyspace de test est nettoyé après chaque test.\"\"\"\n    yield\n    drop_schema(session, TEST_KEYSPACE)\n\n\ndef test_create_schema_and_verify_tables(cluster, session):\n    \"\"\"Vérifie la création du keyspace, l'existence des tables et l'idempotence.\"\"\"\n    # Nettoyage initial au cas où\n    drop_schema(session, TEST_KEYSPACE)\n\n    # 1. Premier appel : création du schéma\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\n\n    # Rafraîchir les métadonnées\n    cluster.refresh_schema_metadata()\n    keyspace_meta = cluster.metadata.keyspaces.get(TEST_KEYSPACE)\n    assert keyspace_meta is not None, f\"Le keyspace {TEST_KEYSPACE} doit exister.\"\n\n    # Vérification de la stratégie de réplication\n    assert keyspace_meta.replication_strategy.name == \"org.apache.cassandra.locator.NetworkTopologyStrategy\"\n    assert keyspace_meta.replication_strategy.options.get(\"dc1\") == \"3\"\n\n    # Vérification de l'existence de toutes les tables\n    for table_name in TABLES:\n        assert table_name in keyspace_meta.tables, f\"La table {table_name} doit exister dans le keyspace.\"\n\n    # 2. Deuxième appel : vérifier l'idempotence (ne doit pas lever d'erreur)\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\n\n\ndef test_table_primary_keys_and_clustering(cluster, session):\n    \"\"\"Vérifie la structure (clés de partition et clustering) sur quelques tables clés.\"\"\"\n    drop_schema(session, TEST_KEYSPACE)\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\n\n    cluster.refresh_schema_metadata()\n    keyspace_meta = cluster.metadata.keyspaces[TEST_KEYSPACE]\n\n    # Vérification Q2 : titles_by_genre\n    # Partition key: genre ; Clustering key: release_year DESC, title_id ASC\n    t_q2 = keyspace_meta.tables[\"titles_by_genre\"]\n    partition_cols = [c.name for c in t_q2.partition_key]\n    clustering_cols = [c.name for c in t_q2.clustering_key]\n    clustering_orders = t_q2.clustering_orders\n\n    assert partition_cols == [\"genre\"]\n    assert clustering_cols == [\"release_year\", \"title_id\"]\n    assert clustering_orders[0] == \"DESC\"  # release_year DESC\n    assert clustering_orders[1] == \"ASC\"   # title_id ASC\n\n    # Vérification Q4 : reviews_by_title\n    # Partition key: title_id ; Clustering key: created_at DESC, user_id ASC\n    t_q4 = keyspace_meta.tables[\"reviews_by_title\"]\n    assert [c.name for c in t_q4.partition_key] == [\"title_id\"]\n    assert [c.name for c in t_q4.clustering_key] == [\"created_at\", \"user_id\"]\n    assert t_q4.clustering_orders[0] == \"DESC\"  # created_at DESC\n\n    # Vérification Q7 : title_stats (counters)\n    t_q7 = keyspace_meta.tables[\"title_stats\"]\n    assert [c.name for c in t_q7.partition_key] == [\"title_id\"]\n    counter_cols = {c.name for c in t_q7.columns.values() if c.data_type.name == \"counter\"}\n    assert counter_cols == {\"view_count\", \"rating_sum\", \"rating_count\"}\n\n\ndef test_drop_schema(cluster, session):\n    \"\"\"Vérifie que drop_schema supprime correctement le keyspace.\"\"\"\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\n    drop_schema(session, TEST_KEYSPACE)\n\n    cluster.refresh_schema_metadata()\n    assert TEST_KEYSPACE not in cluster.metadata.keyspaces\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_10469075524755520811",
+                "args": {
+                  "path": "tests/test_schema.py",
+                  "content": "\"\"\"Tests pour le module streaming.schema.\"\"\"\n\nimport pytest\nfrom streaming.schema import TABLES, create_schema, drop_schema\n\nTEST_KEYSPACE = \"streaming_test_schema\"\n\n\n@pytest.fixture(autouse=True)\ndef cleanup_test_keyspace(session):\n    \"\"\"S'assure que le keyspace de test est nettoyé après chaque test.\"\"\"\n    yield\n    drop_schema(session, TEST_KEYSPACE)\n\n\ndef test_create_schema_and_verify_tables(cluster, session):\n    \"\"\"Vérifie la création du keyspace, l'existence des tables et l'idempotence.\"\"\"\n    # Nettoyage initial au cas où\n    drop_schema(session, TEST_KEYSPACE)\n\n    # 1. Premier appel : création du schéma\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\n\n    # Rafraîchir les métadonnées\n    cluster.refresh_schema_metadata()\n    keyspace_meta = cluster.metadata.keyspaces.get(TEST_KEYSPACE)\n    assert keyspace_meta is not None, f\"Le keyspace {TEST_KEYSPACE} doit exister.\"\n\n    # Vérification de la stratégie de réplication (nom court ou nom complet selon la version du driver/cluster)\n    strat_name = keyspace_meta.replication_strategy.name\n    assert \"NetworkTopologyStrategy\" in strat_name\n    assert keyspace_meta.replication_strategy.options.get(\"dc1\") == \"3\"\n\n    # Vérification de l'existence de toutes les tables\n    for table_name in TABLES:\n        assert table_name in keyspace_meta.tables, f\"La table {table_name} doit exister dans le keyspace.\"\n\n    # 2. Deuxième appel : vérifier l'idempotence (ne doit pas lever d'erreur)\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\n\n\ndef test_table_primary_keys_and_clustering(cluster, session):\n    \"\"\"Vérifie la structure (clés de partition et clustering) sur quelques tables clés.\"\"\"\n    drop_schema(session, TEST_KEYSPACE)\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\n\n    cluster.refresh_schema_metadata()\n    keyspace_meta = cluster.metadata.keyspaces[TEST_KEYSPACE]\n\n    # Vérification Q2 : titles_by_genre\n    # Partition key: genre ; Clustering key: release_year DESC, title_id ASC\n    t_q2 = keyspace_meta.tables[\"titles_by_genre\"]\n    partition_cols = [c.name for c in t_q2.partition_key]\n    clustering_cols = [c.name for c in t_q2.clustering_key]\n\n    assert partition_cols == [\"genre\"]\n    assert clustering_cols == [\"release_year\", \"title_id\"]\n    # Vérification de l'ordre de clustering via is_reversed sur les colonnes de clustering\n    assert t_q2.columns[\"release_year\"].is_reversed is True   # release_year DESC\n    assert t_q2.columns[\"title_id\"].is_reversed is False      # title_id ASC\n\n    # Vérification Q4 : reviews_by_title\n    # Partition key: title_id ; Clustering key: created_at DESC, user_id ASC\n    t_q4 = keyspace_meta.tables[\"reviews_by_title\"]\n    assert [c.name for c in t_q4.partition_key] == [\"title_id\"]\n    assert [c.name for c in t_q4.clustering_key] == [\"created_at\", \"user_id\"]\n    assert t_q4.columns[\"created_at\"].is_reversed is True     # created_at DESC\n    assert t_q4.columns[\"user_id\"].is_reversed is False       # user_id ASC\n\n    # Vérification Q7 : title_stats (counters)\n    t_q7 = keyspace_meta.tables[\"title_stats\"]\n    assert [c.name for c in t_q7.partition_key] == [\"title_id\"]\n    counter_cols = {c.name for c in t_q7.columns.values() if c.data_type.name == \"counter\"}\n    assert counter_cols == {\"view_count\", \"rating_sum\", \"rating_count\"}\n\n\ndef test_drop_schema(cluster, session):\n    \"\"\"Vérifie que drop_schema supprime correctement le keyspace.\"\"\"\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\n    drop_schema(session, TEST_KEYSPACE)\n\n    cluster.refresh_schema_metadata()\n    assert TEST_KEYSPACE not in cluster.metadata.keyspaces\n"
+                },
+                "name": "write_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfRO_7edcEXjzs6zh-dKy6My0_nYop-mfxX2aawU2a5gpL5kdolsbCpmCAM9jRwQ4gnovQRe8dzNl5xbfP9ya3ieOwWFGQ8NXEJVp0Yt-BVh8DtNnbn8p-um44MdzKPLEHEmBhq80RLy2Llt3UwQilkAFVeCnbwhb8jmCbicUPrzGhwmMxNr4pWkgPTdGFEMT"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "EsUFa_vsH97fnsEP4uLoiA8",
+    "usage_metadata": {
+      "cache_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 2019
+        }
+      ],
+      "cached_content_token_count": 2019,
+      "candidates_token_count": 1129,
+      "prompt_token_count": 5480,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 5480
+        }
+      ],
+      "total_token_count": 6609
+    }
+  },
+  "usage": {
+    "input_tokens": 5480,
+    "output_tokens": 1129,
+    "thinking_tokens": null
+  }
+}

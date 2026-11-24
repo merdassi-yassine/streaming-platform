@@ -1,0 +1,26 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 54,
+  "agent": "orchestrator",
+  "kind": "test_run",
+  "timestamp": "2026-11-24T17:11:38+00:00",
+  "iteration": 2,
+  "command": [
+    "docker",
+    "compose",
+    "--profile",
+    "tests",
+    "run",
+    "--rm",
+    "tests",
+    "pytest",
+    "-v",
+    "-p",
+    "no:cacheprovider",
+    "tests/"
+  ],
+  "exit_code": 1,
+  "passed": false,
+  "log": "tests_iter2.log",
+  "tail": "        assert t_q4.columns[\"user_id\"].is_reversed is False       # user_id ASC\n    \n        # Vérification Q7 : title_stats (counters)\n        t_q7 = keyspace_meta.tables[\"title_stats\"]\n        assert [c.name for c in t_q7.partition_key] == [\"title_id\"]\n>       counter_cols = {c.name for c in t_q7.columns.values() if c.data_type.name == \"counter\"}\n                                                                 ^^^^^^^^^^^\nE       AttributeError: 'ColumnMetadata' object has no attribute 'data_type'\n\ntests/test_schema.py:73: AttributeError\n=========================== short test summary info ============================\nFAILED tests/test_schema.py::test_create_schema_and_verify_tables - Attribute...\nFAILED tests/test_schema.py::test_table_primary_keys_and_clustering - Attribu...\n========================= 2 failed, 4 passed in 47.88s =========================\n Container streaming-platform-cassandra1-1 Running \n Container streaming-platform-cassandra2-1 Running \n Container streaming-platform-cassandra3-1 Running \n Container streaming-platform-cassandra1-1 Waiting \n Container streaming-platform-cassandra1-1 Healthy \n Container streaming-platform-cassandra2-1 Waiting \n Container streaming-platform-cassandra2-1 Healthy \n Container streaming-platform-cassandra3-1 Waiting \n Container streaming-platform-cassandra3-1 Healthy \n Container streaming-platform-tests-run-10539543a07d Creating \n Container streaming-platform-tests-run-10539543a07d Created"
+}

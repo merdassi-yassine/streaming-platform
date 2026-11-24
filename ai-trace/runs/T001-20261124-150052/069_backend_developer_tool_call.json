@@ -1,0 +1,15 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 69,
+  "agent": "backend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-24T17:24:46+00:00",
+  "tool": "read_file",
+  "args": {
+    "path": "tests/test_schema.py"
+  },
+  "result": {
+    "ok": true,
+    "content": "\"\"\"Tests pour le module streaming.schema.\"\"\"\n\nimport pytest\nfrom streaming.schema import TABLES, create_schema, drop_schema\n\nTEST_KEYSPACE = \"streaming_test_schema\"\n\n\n@pytest.fixture(autouse=True)\ndef cleanup_test_keyspace(session):\n    \"\"\"S'assure que le keyspace de test est nettoyé après chaque test.\"\"\"\n    yield\n    drop_schema(session, TEST_KEYSPACE)\n\n\ndef test_create_schema_and_verify_tables(cluster, session):\n    \"\"\"Vérifie la création du keyspace, l'existence des tables et l'idempotence.\"\"\"\n    # Nettoyage initial au cas où\n    drop_schema(session, TEST_KEYSPACE)\n\n    # 1. Premier appel : création du schéma\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\n\n    # Rafraîchir les métadonnées\n    cluster.refresh_schema_metadata()\n    keyspace_meta = cluster.metadata.keyspaces.get(TEST_KEYSPACE)\n    assert keyspace_meta is not None, f\"Le keyspace {TEST_KEYSPACE} doit exister.\"\n\n    # Vérification de la stratégie de réplication via export_for_schema()\n    # (chaîne CQL"
+  }
+}

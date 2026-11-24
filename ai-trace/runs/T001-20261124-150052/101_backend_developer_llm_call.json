@@ -1,0 +1,95 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 101,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T21:28:14+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7387, Requested 4098. Please try again in 26.1375s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6686, Requested 4098. Please try again in 20.88s. Need more tokens? Upgrade to Dev Tier today at h"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5313, Requested 4526. Please try again in 13.7925s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 3157, Requested 4451. Please try again in 5.211428571s. Need more tokens? Upgrade to Dev Tier "
+    }
+  ],
+  "latency_s": 21.68,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_34665483-d7b1-44e6-a16a-ed0506870163",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"Définition du schéma Cassandra pour la plateforme de streaming.\\n\\nModélisation orientée requêtes (une table par requête Q1..Q8).\\n\\\"\\\"\\\"\\n\\nKEYSPACE = \\\"streaming\\\"\\n\\nTABLES = [\\n    \\\"title_by_id\\\",\\n    \\\"titles_by_genre\\\",\\n    \\\"user_by_id\\\",\\n    \\\"reviews_by_title\\\",\\n    \\\"reviews_by_user\\\",\\n    \\\"watch_history_by_user\\\",\\n    \\\"title_stats\\\",\\n    \\\"daily_views_by_title\\\",\\n]\\n\\n\\ndef create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3) -> None:\\n    \\\"\\\"\\\"Crée le keyspace et les tables de la plateforme de streaming (idempotent).\\n\\n    Args:\\n        session: Session cassandra-driver ouverte.\\n        keyspace: Nom du keyspace à créer/utiliser.\\n        replication_factor: Facteur de réplication pour le datacenter 'dc1'.\\n    \\\"\\\"\\\"\\n    create_keyspace_cql = f\\\"\\\"\\\"\\n    CREATE KEYSPACE IF NOT EXISTS {keyspace}\\n    WITH replication = {{\\n        'class': 'NetworkTopologyStrategy',\\n        'dc1': {replication_factor}\\n    }}\\n    \\\"\\\"\\\"\\n    session.execute(create_keyspace_cql)\\n\\n    # Q1 : Fiche d'un titre (film ou série) par son identifiant.\\n    # Clé de partition : title_id.\\n    create_q1 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.title_by_id (\\n        title_id uuid,\\n        title text,\\n        kind text,\\n        release_year int,\\n        genres set<text>,\\n        synopsis text,\\n        duration_minutes int,\\n        episodes_count int,\\n        PRIMARY KEY (title_id)\\n    ) WITH comment = 'Q1 : Fiche d''un titre par son identifiant'\\n    \\\"\\\"\\\"\\n\\n    # Q2 : Titres d'un genre, du plus récent au plus ancien.\\n    # Clé de partition : genre. Clé de clustering : release_year DESC, title_id ASC.\\n    create_q2 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.titles_by_genre (\\n        genre text,\\n        release_year int,\\n        title_id uuid,\\n        title text,\\n        kind text,\\n        PRIMARY KEY (genre, release_year, title_id)\\n    ) WITH CLUSTERING ORDER BY (release_year DESC, title_id ASC)\\n      AND comment = 'Q2 : Titres d''un genre, du plus récent au plus ancien'\\n    \\\"\\\"\\\"\\n\\n    # Q3 : Profil d'un utilisateur par son identifiant.\\n    # Clé de partition : user_id.\\n    create_q3 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.user_by_id (\\n        user_id uuid,\\n        email text,\\n        username text,\\n        created_at timestamp,\\n        PRIMARY KEY (user_id)\\n    ) WITH comment = 'Q3 : Profil d''un utilisateur par son identifiant'\\n    \\\"\\\"\\\"\\n\\n    # Q4 : Avis (note 1 à 5 + commentaire) d'un titre, du plus récent au plus ancien.\\n    # Clé de partition : title_id. Clé de clustering : created_at DESC, user_id ASC.\\n    create_q4 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.reviews_by_title (\\n        title_id uuid,\\n        created_at timestamp,\\n        user_id uuid,\\n        rating int,\\n        comment text,\\n        username text,\\n        PRIMARY KEY (title_id, created_at, user_id)\\n    ) WITH CLUSTERING ORDER BY (created_at DESC, user_id ASC)\\n      AND comment = 'Q4 : Avis d''un titre, du plus récent au plus ancien'\\n    \\\"\\\"\\\"\\n\\n    # Q5 : Avis donnés par un utilisateur, du plus récent au plus ancien.\\n    # Clé de partition : user_id. Clé de clustering : created_at DESC, title_id ASC.\\n    create_q5 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.reviews_by_user (\\n        user_id uuid,\\n        created_at timestamp,\\n        title_id uuid,\\n        rating int,\\n        comment text,\\n        title text,\\n        PRIMARY KEY (user_id, created_at, title_id)\\n    ) WITH CLUSTERING ORDER BY (created_at DESC, title_id ASC)\\n      AND comment = 'Q5 : Avis donnés par un utilisateur, du plus récent au plus ancien'\\n    \\\"\\\"\\\"\\n\\n    # Q6 : Historique de visionnage d'un utilisateur, du plus récent au plus ancien.\\n    # Clé de partition : user_id. Clé de clustering : watched_at DESC, title_id ASC.\\n    create_q6 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.watch_history_by_user (\\n        user_id uuid,\\n        watched_at timestamp,\\n        title_id uuid,\\n        title text,\\n        duration_watched_seconds int,\\n        completed boolean,\\n        PRIMARY KEY (user_id, watched_at, title_id)\\n    ) WITH CLUSTERING ORDER BY (watched_at DESC, title_id ASC)\\n      AND comment = 'Q6 : Historique de visionnage d''un utilisateur, du plus récent au plus ancien'\\n    \\\"\\\"\\\"\\n\\n    # Q7 : Statistiques d'un titre : nombre de vues, somme et nombre des notes (compteurs).\\n    # Clé de partition : title_id.\\n    # Remarque Cassandra : Une table avec des counters ne doit contenir QUE des colonnes counter et la clé primaire.\\n    create_q7 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.title_stats (\\n        title_id uuid,\\n        view_count counter,\\n        rating_sum counter,\\n        rating_count counter,\\n        PRIMARY KEY (title_id)\\n    ) WITH comment = 'Q7 : Statistiques d''un titre'\\n    \\\"\\\"\\\"\\n\\n    # Q8 : Nombre de vues de chaque titre pour un jour donné (pour calculer le Top 10 du jour).\\n    # Clé de partition : view_date. Clé de clustering : title_id.\\n    # Remarque Cassandra : Une table avec des counters ne doit contenir QUE des colonnes counter et la clé primaire.\\n    create_q8 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.daily_views_by_title (\\n        view_date date,\\n        title_id uuid,\\n        view_count counter,\\n        PRIMARY KEY (view_date, title_id)\\n    ) WITH comment = 'Q8 : Nombre de vues de chaque titre pour un jour donné'\\n    \\\"\\\"\\\"\\n\\n    queries = [\\n        create_q1,\\n        create_q2,\\n        create_q3,\\n        create_q4,\\n        create_q5,\\n        create_q6,\\n        create_q7,\\n        create_q8,\\n    ]\\n\\n    for q in queries:\\n        session.execute(q)\\n\\n\\ndef drop_schema(session, keyspace: str) -> None:\\n    \\\"\\\"\\\"Supprime le keyspace spécifié (idempotent avec IF EXISTS).\\n\\n    Args:\\n        session: Session cassandra-driver ouverte.\\n        keyspace: Nom du keyspace à supprimer.\\n    \\\"\\\"\\\"\\n    session.execute(f\\\"DROP KEYSPACE IF EXISTS {keyspace}\\\")\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-e89c63c5-6575-4f7e-a3db-74db7e721152",
+    "object": "chat.completion",
+    "created": 1795555694,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "a50z96x6r",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"tests/test_schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.067176028,
+      "prompt_tokens": 4451,
+      "prompt_time": 0.357277189,
+      "completion_tokens": 28,
+      "completion_time": 0.081239897,
+      "total_tokens": 4479,
+      "total_time": 0.438517086
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_8999620a6e",
+    "x_groq": {
+      "id": "req_01m87qb59sen4scwcffp1fvwzr",
+      "seed": 1632570589
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 4451,
+    "output_tokens": 28
+  }
+}

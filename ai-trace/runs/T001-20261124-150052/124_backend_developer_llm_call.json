@@ -1,0 +1,90 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 124,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T21:34:49+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4553, Requested 5340. Please try again in 14.1975s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3856, Requested 5340. Please try again in 8.969999999s. Need more tokens? Upgrade to Dev Tier toda"
+    }
+  ],
+  "latency_s": 16.68,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_e2e253d1-6dfe-4890-885a-e175af8e7436",
+      "name": "write_file",
+      "content": "{\"ok\": true, \"written\": \"streaming/schema.py\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-db84cbe6-0913-431d-87e7-01d5b972dd22",
+    "object": "chat.completion",
+    "created": 1795556089,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We added COMMENT clauses. Need to ensure imports? No. Ensure __init__.py exists. Not yet. Need to create streaming/__init__.py (maybe empty). Also ensure tests import streaming.schema works. Already there.\n\nPotential issues: In create_schema, we didn't set keyspace for session? The session may be connected to default keyspace? In tests they call create_schema(session, keyspace=TEST_KEYSPACE). The session likely not set to that keyspace yet, but CREATE KEYSPACE and CREATE TABLE with fully qualified keyspace works. Good.\n\nNeed to ensure comment syntax correct: WITH comment = '...' is valid CQL? In Cassandra, COMMENT is a table property: CREATE TABLE ... WITH comment = 'text'. Yes.\n\nMake sure we used single quotes inside string escaped correctly. In Python triple quotes we used single quotes inside comment string with escaped apostrophe. That's fine.\n\nNow need to add __init__.py.",
+          "tool_calls": [
+            {
+              "id": "fc_326f1683-b76b-40fa-a974-b1ccfe13225c",
+              "type": "function",
+              "function": {
+                "name": "write_file",
+                "arguments": "{\"content\":\"\\\"\\\"\\\"Package streaming – accès au schéma Cassandra.\\\"\\\"\\\"\\n\",\"path\":\"streaming/__init__.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.049261153,
+      "prompt_tokens": 4879,
+      "prompt_time": 0.126729291,
+      "completion_tokens": 231,
+      "completion_time": 0.606258328,
+      "total_tokens": 5110,
+      "total_time": 0.732987619,
+      "prompt_tokens_details": {
+        "cached_tokens": 2048
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 189
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_02b0d31eca",
+    "x_groq": {
+      "id": "req_01m87qq71he5dtgqam6gxtjncv",
+      "seed": 129662171
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 4879,
+    "output_tokens": 231
+  }
+}

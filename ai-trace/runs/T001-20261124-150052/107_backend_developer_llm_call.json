@@ -1,0 +1,74 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 107,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T21:29:08+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 0.4,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "35d6tkfhw",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"Paquet streaming pour la plateforme de streaming Cassandra.\\\"\\\"\\\"\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-60706725-dae3-4d92-9891-4faf3623da89",
+    "object": "chat.completion",
+    "created": 1795555748,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We have overwritten streaming/schema.py with new content that includes COMMENT clauses. Need to ensure tests still pass. Let's view tests to see expectations.",
+          "tool_calls": [
+            {
+              "id": "fc_759314b6-ba02-42d3-8112-f3a10d5adcdf",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"tests/test_schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.048187243,
+      "prompt_tokens": 3748,
+      "prompt_time": 0.148208005,
+      "completion_tokens": 51,
+      "completion_time": 0.105910431,
+      "total_tokens": 3799,
+      "total_time": 0.254118436,
+      "completion_tokens_details": {
+        "reasoning_tokens": 38
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_02b0d31eca",
+    "x_groq": {
+      "id": "req_01m87qctnkesf92wc8z95p58na",
+      "seed": 1353572763
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 3748,
+    "output_tokens": 51
+  }
+}

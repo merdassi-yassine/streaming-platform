@@ -1,0 +1,11 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 24,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-24T14:20:32+00:00",
+  "iteration": 1,
+  "decision": "changes",
+  "feedback": "Corrige les 2 tests qui échouent : (1) le pilote renvoie replication_strategy.name = 'NetworkTopologyStrategy' (nom court) ; (2) TableMetadata n'a pas d'attribut clustering_orders : utilise table.clustering_key (liste de colonnes) et, pour l'ordre, la propriété is_reversed de chaque colonne. Ajoute aussi COMMENT = 'Qx : ...' dans le WITH de chaque CREATE TABLE.",
+  "decided_by": "MERDASSI Yassine"
+}

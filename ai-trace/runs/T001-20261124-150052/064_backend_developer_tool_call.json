@@ -1,0 +1,15 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 64,
+  "agent": "backend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-24T17:24:22+00:00",
+  "tool": "read_file",
+  "args": {
+    "path": "tests/conftest.py"
+  },
+  "result": {
+    "ok": true,
+    "content": "import os\n\nimport pytest\nfrom cassandra.cluster import EXEC_PROFILE_DEFAULT, Cluster, ExecutionProfile\nfrom cassandra.policies import DCAwareRoundRobinPolicy\n\n\n@pytest.fixture(scope=\"session\")\ndef cluster():\n    contact_points = os.environ.get(\"CASSANDRA_CONTACT_POINTS\", \"cassandra1\").split(\",\")\n    profile = ExecutionProfile(\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\"dc1\"),\n        # Sur un portable, un DDL peut dépasser les 10 s par défaut (pauses JVM mesurées jusqu'à 24 s).\n        request_timeout=60,\n    )\n    c = Cluster(\n        contact_points,\n        execution_profiles={EXEC_PROFILE_DEFAULT: profile},\n        protocol_version=5,\n        max_schema_agreement_wait=60,  # attendre que les 3 nœuds aient le même schéma après un DDL\n    )\n    yield c\n    c.shutdown()\n\n\n@pytest.fixture(scope=\"session\")\ndef session(cluster):\n    return cluster.connect()\n"
+  }
+}

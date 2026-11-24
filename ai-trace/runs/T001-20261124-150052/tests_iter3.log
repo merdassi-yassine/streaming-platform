@@ -1,0 +1,25 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /usr/local/bin/python3.13
+rootdir: /workspace
+configfile: pytest.ini
+collecting ... collected 6 items
+
+tests/test_cluster.py::test_version_cassandra_5 PASSED                   [ 16%]
+tests/test_cluster.py::test_trois_noeuds_visibles_et_up PASSED           [ 33%]
+tests/test_cluster.py::test_replication_rf3 PASSED                       [ 50%]
+tests/test_schema.py::test_create_schema_and_idempotence PASSED          [ 66%]
+tests/test_schema.py::test_primary_keys_and_clustering PASSED            [ 83%]
+tests/test_schema.py::test_drop_schema PASSED                            [100%]
+
+============================== 6 passed in 45.55s ==============================
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-21b83161ce21 Creating 
+ Container streaming-platform-tests-run-21b83161ce21 Created 

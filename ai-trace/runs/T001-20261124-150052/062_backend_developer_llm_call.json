@@ -1,0 +1,93 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 62,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T17:24:22+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 400,
+      "message": "HTTP 400 : {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'repo_browser.open_file' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"repo_browser.open_file\\\", \\\"arguments\\\":"
+    }
+  ],
+  "latency_s": 1.34,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_4e26f8e6-da18-415d-b710-de5f0df90cb6",
+      "name": "list_files",
+      "content": "{\"ok\": true, \"files\": [\".gitignore\", \"docker/tests.Dockerfile\", \"docker-compose.yml\", \"docs/journal/phase-1.md\", \"pytest.ini\", \"README.md\", \"reports/tests/latest.xml\", \"requirements-dev.txt\", \"streaming/__init__.py\", \"streaming/schema.py\", \"tests/conftest.py\", \"tests/test_cluster.py\", \"tests/test_schema.py\"]}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-54818ad0-5613-4a5c-a130-843284ca9e46",
+    "object": "chat.completion",
+    "created": 1795541062,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "3bfp1nm08",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"tests/test_schema.py\"}"
+              }
+            },
+            {
+              "id": "qd1xbe24f",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"tests/conftest.py\"}"
+              }
+            },
+            {
+              "id": "r5rs39a56",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.20744445,
+      "prompt_tokens": 2843,
+      "prompt_time": 0.249538083,
+      "completion_tokens": 85,
+      "completion_time": 0.347075763,
+      "total_tokens": 2928,
+      "total_time": 0.596613846
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_8999620a6e",
+    "x_groq": {
+      "id": "req_01m879ckkeeff8ddm0ehq2r3tb",
+      "seed": 1152251959
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 2843,
+    "output_tokens": 85
+  }
+}

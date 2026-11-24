@@ -1,0 +1,71 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 7,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T14:01:31+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 0.9,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "import os\n\nimport pytest\nfrom cassandra.cluster import EXEC_PROFILE_DEFAULT, Cluster, ExecutionProfile\nfrom cassandra.policies import DCAwareRoundRobinPolicy\n\n\n@pytest.fixture(scope=\"session\")\ndef cluster():\n    contact_points = os.environ.get(\"CASSANDRA_CONTACT_POINTS\", \"cassandra1\").split(\",\")\n    profile = ExecutionProfile(\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\"dc1\"),\n        # Sur un portable, un DDL peut dépasser les 10 s par défaut (pauses JVM mesurées jusqu'à 24 s).\n        request_timeout=60,\n    )\n    c = Cluster(\n        contact_points,\n        execution_profiles={EXEC_PROFILE_DEFAULT: profile},\n        protocol_version=5,\n        max_schema_agreement_wait=60,  # attendre que les 3 nœuds aient le même schéma après un DDL\n    )\n    yield c\n    c.shutdown()\n\n\n@pytest.fixture(scope=\"session\")\ndef session(cluster):\n    return cluster.connect()\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_17215473037526777479",
+                "args": {
+                  "path": "tests/test_cluster.py"
+                },
+                "name": "read_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfRMyRVji6y5Cen3EPMEf20-YSvqmtbC2CoyCv1QVMn5vLcPx85HWZPqbKUWfhVii45-Ro5O6oHnM45bkoN7ta36Xut2SMXkaLJtwLs5bjUz0JtQFLT_BUn5uFMPcDGOvF0F7xYvFXCb0351WcmzENciq9wB-mhkiPMD32zUbgq5V3iFhMm0xj79Avly1vsqY"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "upgFa4-MM-KH28oPmLje0Qo",
+    "usage_metadata": {
+      "candidates_token_count": 22,
+      "prompt_token_count": 2055,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 2055
+        }
+      ],
+      "total_token_count": 2077
+    }
+  },
+  "usage": {
+    "input_tokens": 2055,
+    "output_tokens": 22,
+    "thinking_tokens": null
+  }
+}

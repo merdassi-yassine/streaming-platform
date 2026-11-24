@@ -1,0 +1,113 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 130,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T21:37:44+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5818, Requested 6186. Please try again in 30.029999999s. Need more tokens? Upgrade to Dev Tier tod"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5103, Requested 7732. Please try again in 36.2625s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3725, Requested 7732. Please try again in 25.9275s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 3755, Requested 6024. Please try again in 23.82s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 3134, Requested 6024. Please try again in 18.497142857s. Need more tokens? Upgrade to Dev Tier"
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 1930, Requested 6024. Please try again in 8.177142857s. Need more tokens? Upgrade to Dev Tier "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 413,
+      "message": "HTTP 413 : {\"error\":{\"message\":\"Request too large for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Requested 8514, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier tod"
+    }
+  ],
+  "latency_s": 152.74,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "4pddbhb78",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"import os\\n\\nimport pytest\\nfrom cassandra.cluster import EXEC_PROFILE_DEFAULT, Cluster, ExecutionProfile\\nfrom cassandra.policies import DCAwareRoundRobinPolicy\\n\\n\\n@pytest.fixture(scope=\\\"session\\\")\\ndef cluster():\\n    contact_points = os.environ.get(\\\"CASSANDRA_CONTACT_POINTS\\\", \\\"cassandra1\\\").split(\\\",\\\")\\n    profile = ExecutionProfile(\\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\\\"dc1\\\"),\\n        # Sur un portable, un DDL peut dépasser les 10 s par défaut (pauses JVM mesurées jusqu'à 24 s).\\n        request_timeout=60,\\n    )\\n    c = Cluster(\\n        contact_points,\\n        execution_profiles={EXEC_PROFILE_DEFAULT: profile},\\n        protocol_version=5,\\n        max_schema_agreement_wait=60,  # attendre que les 3 nœuds aient le même schéma après un DDL\\n    )\\n    yield c\\n    c.shutdown()\\n\\n\\n@pytest.fixture(scope=\\\"session\\\")\\ndef session(cluster):\\n    return cluster.connect()\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-22984ce6-1ae5-4fac-9caf-067ce27432b2",
+    "object": "chat.completion",
+    "created": 1795556264,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "atjd3wy87",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"tests/test_schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.14117059,
+      "prompt_tokens": 6024,
+      "prompt_time": 0.432906313,
+      "completion_tokens": 28,
+      "completion_time": 0.086555403,
+      "total_tokens": 6052,
+      "total_time": 0.519461716
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_8999620a6e",
+    "x_groq": {
+      "id": "req_01m87qwhk2ej8sbhnzs0ca4cxs",
+      "seed": 896289619
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 6024,
+    "output_tokens": 28
+  }
+}

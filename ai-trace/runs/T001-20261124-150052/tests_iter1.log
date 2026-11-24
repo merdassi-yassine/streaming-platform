@@ -1,0 +1,79 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /usr/local/bin/python3.13
+rootdir: /workspace
+configfile: pytest.ini
+collecting ... collected 6 items
+
+tests/test_cluster.py::test_version_cassandra_5 PASSED                   [ 16%]
+tests/test_cluster.py::test_trois_noeuds_visibles_et_up PASSED           [ 33%]
+tests/test_cluster.py::test_replication_rf3 PASSED                       [ 50%]
+tests/test_schema.py::test_create_schema_and_verify_tables FAILED        [ 66%]
+tests/test_schema.py::test_table_primary_keys_and_clustering FAILED      [ 83%]
+tests/test_schema.py::test_drop_schema PASSED                            [100%]
+
+=================================== FAILURES ===================================
+_____________________ test_create_schema_and_verify_tables _____________________
+
+cluster = <cassandra.cluster.Cluster object at 0x794035ffdd30>
+session = <cassandra.cluster.Session object at 0x794035f84440>
+
+    def test_create_schema_and_verify_tables(cluster, session):
+        """Vérifie la création du keyspace, l'existence des tables et l'idempotence."""
+        # Nettoyage initial au cas où
+        drop_schema(session, TEST_KEYSPACE)
+    
+        # 1. Premier appel : création du schéma
+        create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)
+    
+        # Rafraîchir les métadonnées
+        cluster.refresh_schema_metadata()
+        keyspace_meta = cluster.metadata.keyspaces.get(TEST_KEYSPACE)
+        assert keyspace_meta is not None, f"Le keyspace {TEST_KEYSPACE} doit exister."
+    
+        # Vérification de la stratégie de réplication
+>       assert keyspace_meta.replication_strategy.name == "org.apache.cassandra.locator.NetworkTopologyStrategy"
+E       AssertionError: assert 'NetworkTopologyStrategy' == 'org.apache.c...ologyStrategy'
+E         
+E         - org.apache.cassandra.locator.NetworkTopologyStrategy
+E         + NetworkTopologyStrategy
+
+tests/test_schema.py:30: AssertionError
+____________________ test_table_primary_keys_and_clustering ____________________
+
+cluster = <cassandra.cluster.Cluster object at 0x794035ffdd30>
+session = <cassandra.cluster.Session object at 0x794035f84440>
+
+    def test_table_primary_keys_and_clustering(cluster, session):
+        """Vérifie la structure (clés de partition et clustering) sur quelques tables clés."""
+        drop_schema(session, TEST_KEYSPACE)
+        create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)
+    
+        cluster.refresh_schema_metadata()
+        keyspace_meta = cluster.metadata.keyspaces[TEST_KEYSPACE]
+    
+        # Vérification Q2 : titles_by_genre
+        # Partition key: genre ; Clustering key: release_year DESC, title_id ASC
+        t_q2 = keyspace_meta.tables["titles_by_genre"]
+        partition_cols = [c.name for c in t_q2.partition_key]
+        clustering_cols = [c.name for c in t_q2.clustering_key]
+>       clustering_orders = t_q2.clustering_orders
+                            ^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'TableMetadataV3' object has no attribute 'clustering_orders'. Did you mean: 'clustering_key'?
+
+tests/test_schema.py:54: AttributeError
+=========================== short test summary info ============================
+FAILED tests/test_schema.py::test_create_schema_and_verify_tables - Assertion...
+FAILED tests/test_schema.py::test_table_primary_keys_and_clustering - Attribu...
+========================= 2 failed, 4 passed in 46.14s =========================
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-c047494ee51e Creating 
+ Container streaming-platform-tests-run-c047494ee51e Created 
+

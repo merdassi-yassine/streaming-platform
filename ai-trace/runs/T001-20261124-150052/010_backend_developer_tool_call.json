@@ -1,0 +1,15 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 10,
+  "agent": "backend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-24T14:01:32+00:00",
+  "tool": "read_file",
+  "args": {
+    "path": "README.md"
+  },
+  "result": {
+    "ok": true,
+    "content": "# streaming-platform\n\nPlateforme de streaming (type Netflix) sur Apache Cassandra — projet académique NoSQL, exécuté **uniquement en local**.\nLe code applicatif sera développé par l'équipe d'agents IA du dépôt voisin `streaming-ai-squad`, sous supervision humaine.\n\n## Prérequis\n- Docker Desktop (≈ 5,5 Go de RAM libres pour les 3 nœuds)\n- Python 3.13 (le pilote `cassandra-driver` 3.30 ne supporte pas 3.15)\n\n## Démarrer le cluster (3 nœuds, dc1)\n```\ndocker compose up -d --wait        # les nœuds rejoignent l'anneau un par un (plusieurs minutes)\ndocker compose exec cassandra1 nodetool status\n```\nCQL depuis le PC : `localhost:9142` (cqlsh : `docker compose exec cassandra1 cqlsh`).\n\n## Lancer les tests\n```\ndocker compose run --rm tests\n```\nLes tests tournent dans le réseau Docker. Sous Windows avec Python ≥ 3.12, le pilote n'a pas de boucle\nd'événements par défaut (ni libev ni asyncore) : le `.venv` local sert à l'éditeur, pas à exécuter les tests.\n\n## Arrêter\n```\ndocker compose stop      # conserve les données\ndocker compose down -v   # SUPPRIME les données\n```\n"
+  }
+}

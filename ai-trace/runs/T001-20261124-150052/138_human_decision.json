@@ -1,0 +1,11 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 138,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-24T21:56:41+00:00",
+  "iteration": 4,
+  "decision": "approve",
+  "feedback": "",
+  "decided_by": "MERDASSI Yassine"
+}

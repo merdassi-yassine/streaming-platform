@@ -1,0 +1,279 @@
+diff --git a/streaming/__init__.py b/streaming/__init__.py
+new file mode 100644
+index 0000000..0884c76
+--- /dev/null
++++ b/streaming/__init__.py
+@@ -0,0 +1 @@
++"""Paquet streaming pour la plateforme de streaming Cassandra."""
+diff --git a/streaming/schema.py b/streaming/schema.py
+new file mode 100644
+index 0000000..32e1b52
+--- /dev/null
++++ b/streaming/schema.py
+@@ -0,0 +1,167 @@
++"""Définition du schéma Cassandra pour la plateforme de streaming.
++
++Modélisation orientée requêtes (une table par requête Q1..Q8).
++"""
++
++KEYSPACE = "streaming"
++
++TABLES = [
++    "title_by_id",
++    "titles_by_genre",
++    "user_by_id",
++    "reviews_by_title",
++    "reviews_by_user",
++    "watch_history_by_user",
++    "title_stats",
++    "daily_views_by_title",
++]
++
++
++def create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3) -> None:
++    """Crée le keyspace et les tables de la plateforme de streaming (idempotent).
++
++    Args:
++        session: Session cassandra-driver ouverte.
++        keyspace: Nom du keyspace à créer/utiliser.
++        replication_factor: Facteur de réplication pour le datacenter 'dc1'.
++    """
++    create_keyspace_cql = f"""
++    CREATE KEYSPACE IF NOT EXISTS {keyspace}
++    WITH replication = {{
++        'class': 'NetworkTopologyStrategy',
++        'dc1': {replication_factor}
++    }}
++    """
++    session.execute(create_keyspace_cql)
++
++    # Q1 : Fiche d'un titre (film ou série) par son identifiant.
++    # Clé de partition : title_id.
++    create_q1 = f"""
++    CREATE TABLE IF NOT EXISTS {keyspace}.title_by_id (
++        title_id uuid,
++        title text,
++        kind text,
++        release_year int,
++        genres set<text>,
++        synopsis text,
++        duration_minutes int,
++        episodes_count int,
++        PRIMARY KEY (title_id)
++    )
++    """
++
++    # Q2 : Titres d'un genre, du plus récent au plus ancien.
++    # Clé de partition : genre. Clé de clustering : release_year DESC, title_id ASC.
++    create_q2 = f"""
++    CREATE TABLE IF NOT EXISTS {keyspace}.titles_by_genre (
++        genre text,
++        release_year int,
++        title_id uuid,
++        title text,
++        kind text,
++        PRIMARY KEY (genre, release_year, title_id)
++    ) WITH CLUSTERING ORDER BY (release_year DESC, title_id ASC)
++    """
++
++    # Q3 : Profil d'un utilisateur par son identifiant.
++    # Clé de partition : user_id.
++    create_q3 = f"""
++    CREATE TABLE IF NOT EXISTS {keyspace}.user_by_id (
++        user_id uuid,
++        email text,
++        username text,
++        created_at timestamp,
++        PRIMARY KEY (user_id)
++    )
++    """
++
++    # Q4 : Avis (note 1 à 5 + commentaire) d'un titre, du plus récent au plus ancien.
++    # Clé de partition : title_id. Clé de clustering : created_at DESC, user_id ASC.
++    create_q4 = f"""
++    CREATE TABLE IF NOT EXISTS {keyspace}.reviews_by_title (
++        title_id uuid,
++        created_at timestamp,
++        user_id uuid,
++        rating int,
++        comment text,
++        username text,
++        PRIMARY KEY (title_id, created_at, user_id)
++    ) WITH CLUSTERING ORDER BY (created_at DESC, user_id ASC)
++    """
++
++    # Q5 : Avis donnés par un utilisateur, du plus récent au plus ancien.
++    # Clé de partition : user_id. Clé de clustering : created_at DESC, title_id ASC.
++    create_q5 = f"""
++    CREATE TABLE IF NOT EXISTS {keyspace}.reviews_by_user (
++        user_id uuid,
++        created_at timestamp,
++        title_id uuid,
++        rating int,
++        comment text,
++        title text,
++        PRIMARY KEY (user_id, created_at, title_id)
++    ) WITH CLUSTERING ORDER BY (created_at DESC, title_id ASC)
++    """
++
++    # Q6 : Historique de visionnage d'un utilisateur, du plus récent au plus ancien.
++    # Clé de partition : user_id. Clé de clustering : watched_at DESC, title_id ASC.
++    create_q6 = f"""
++    CREATE TABLE IF NOT EXISTS {keyspace}.watch_history_by_user (
++        user_id uuid,
++        watched_at timestamp,
++        title_id uuid,
++        title text,
++        duration_watched_seconds int,
++        completed boolean,
++        PRIMARY KEY (user_id, watched_at, title_id)
++    ) WITH CLUSTERING ORDER BY (watched_at DESC, title_id ASC)
++    """
++
++    # Q7 : Statistiques d'un titre : nombre de vues, somme et nombre des notes (compteurs).
++    # Clé de partition : title_id.
++    # Remarque Cassandra : Une table avec des counters ne doit contenir QUE des colonnes counter et la clé primaire.
++    create_q7 = f"""
++    CREATE TABLE IF NOT EXISTS {keyspace}.title_stats (
++        title_id uuid,
++        view_count counter,
++        rating_sum counter,
++        rating_count counter,
++        PRIMARY KEY (title_id)
++    )
++    """
++
++    # Q8 : Nombre de vues de chaque titre pour un jour donné (pour calculer le Top 10 du jour).
++    # Clé de partition : view_date. Clé de clustering : title_id.
++    # Remarque Cassandra : Une table avec des counters ne doit contenir QUE des colonnes counter et la clé primaire.
++    create_q8 = f"""
++    CREATE TABLE IF NOT EXISTS {keyspace}.daily_views_by_title (
++        view_date date,
++        title_id uuid,
++        view_count counter,
++        PRIMARY KEY (view_date, title_id)
++    )
++    """
++
++    queries = [
++        create_q1,
++        create_q2,
++        create_q3,
++        create_q4,
++        create_q5,
++        create_q6,
++        create_q7,
++        create_q8,
++    ]
++
++    for q in queries:
++        session.execute(q)
++
++
++def drop_schema(session, keyspace: str) -> None:
++    """Supprime le keyspace spécifié (idempotent avec IF EXISTS).
++
++    Args:
++        session: Session cassandra-driver ouverte.
++        keyspace: Nom du keyspace à supprimer.
++    """
++    session.execute(f"DROP KEYSPACE IF EXISTS {keyspace}")
+diff --git a/tests/test_schema.py b/tests/test_schema.py
+new file mode 100644
+index 0000000..faa96bc
+--- /dev/null
++++ b/tests/test_schema.py
+@@ -0,0 +1,93 @@
++"""Tests pour le module :pymod:`streaming.schema`.
++
++Ces tests utilisent un keyspace dédié (``streaming_test_schema``) afin de ne jamais toucher
++au keyspace de production ``streaming``.
++"""
++
++import pytest
++from streaming.schema import TABLES, create_schema, drop_schema
++
++# ---------------------------------------------------------------------------
++# Fixtures
++# ---------------------------------------------------------------------------
++
++TEST_KEYSPACE = "streaming_test_schema"
++
++
++@pytest.fixture(autouse=True)
++def _cleanup_keyspace(session):
++    """Supprime le keyspace de test après chaque fonction de test.
++
++    Le fixture ``session`` provient de ``tests/conftest.py``.
++    """
++    yield
++    drop_schema(session, TEST_KEYSPACE)
++
++
++# ---------------------------------------------------------------------------
++# Tests
++# ---------------------------------------------------------------------------
++
++def test_create_schema_and_idempotence(cluster, session):
++    """Création du keyspace, existence des tables et idempotence de ``create_schema``.
++    """
++    # Nettoyage éventuel préalable
++    drop_schema(session, TEST_KEYSPACE)
++
++    # 1️⃣ première création
++    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)
++    cluster.refresh_schema_metadata()
++    ks_meta = cluster.metadata.keyspaces.get(TEST_KEYSPACE)
++    assert ks_meta is not None, f"Le keyspace {TEST_KEYSPACE} doit exister."
++
++    # 2️⃣ stratégie de réplication – on utilise la chaîne exportée par le driver
++    replication_cql = ks_meta.replication_strategy.export_for_schema()
++    assert "NetworkTopologyStrategy" in replication_cql
++    assert "'dc1': '3'" in replication_cql or "dc1': '3" in replication_cql
++
++    # 3️⃣ toutes les tables attendues sont présentes
++    for tbl in TABLES:
++        assert tbl in ks_meta.tables, f"Table {tbl} manquante dans le keyspace."
++
++    # 4️⃣ appel idempotent – aucune exception ne doit être levée
++    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)
++
++
++def test_primary_keys_and_clustering(cluster, session):
++    """Vérifie la structure (clés de partition / clustering) de quelques tables clés.
++    """
++    drop_schema(session, TEST_KEYSPACE)
++    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)
++    cluster.refresh_schema_metadata()
++    ks_meta = cluster.metadata.keyspaces[TEST_KEYSPACE]
++
++    # Q2 – titles_by_genre : partition = genre, clustering = release_year DESC, title_id ASC
++    t_q2 = ks_meta.tables["titles_by_genre"]
++    assert [c.name for c in t_q2.partition_key] == ["genre"]
++    assert [c.name for c in t_q2.clustering_key] == ["release_year", "title_id"]
++    assert t_q2.columns["release_year"].is_reversed is True
++    assert t_q2.columns["title_id"].is_reversed is False
++
++    # Q4 – reviews_by_title : partition = title_id, clustering = created_at DESC, user_id ASC
++    t_q4 = ks_meta.tables["reviews_by_title"]
++    assert [c.name for c in t_q4.partition_key] == ["title_id"]
++    assert [c.name for c in t_q4.clustering_key] == ["created_at", "user_id"]
++    assert t_q4.columns["created_at"].is_reversed is True
++    assert t_q4.columns["user_id"].is_reversed is False
++
++    # Q7 – title_stats : table de compteurs, uniquement des colonnes counter en plus de la PK
++    t_q7 = ks_meta.tables["title_stats"]
++    assert [c.name for c in t_q7.partition_key] == ["title_id"]
++    counter_names = {c.name for c in t_q7.columns.values() if c.cql_type == "counter"}
++    assert counter_names == {"view_count", "rating_sum", "rating_count"}
++    # aucune autre colonne que les compteurs et la clé primaire
++    non_counter = {c.name for c in t_q7.columns.values() if c.cql_type != "counter" and c.name != "title_id"}
++    assert not non_counter
++
++
++def test_drop_schema(cluster, session):
++    """Vérifie que ``drop_schema`` supprime correctement le keyspace de test."""
++    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)
++    drop_schema(session, TEST_KEYSPACE)
++    cluster.refresh_schema_metadata()
++    assert TEST_KEYSPACE not in cluster.metadata.keyspaces

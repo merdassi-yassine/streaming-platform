@@ -1,0 +1,11 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 78,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-24T17:33:46+00:00",
+  "iteration": 3,
+  "decision": "changes",
+  "feedback": "Les tests passent. streaming/schema.py contient déjà les clauses comment = 'Qx ...' : vérifie-le (read_file) sans le réécrire, et ne modifie pas les tests sauf si nécessaire.",
+  "decided_by": "MERDASSI Yassine"
+}

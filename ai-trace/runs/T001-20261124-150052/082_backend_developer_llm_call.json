@@ -1,0 +1,77 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 82,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T17:33:47+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 0.23,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_96e5f9ba-6237-4e15-8df6-2c6a4722488d",
+      "name": "list_files",
+      "content": "{\"ok\": true, \"files\": [\".gitignore\", \"docker/tests.Dockerfile\", \"docker-compose.yml\", \"docs/journal/phase-1.md\", \"pytest.ini\", \"README.md\", \"reports/tests/latest.xml\", \"requirements-dev.txt\", \"streaming/__init__.py\", \"streaming/schema.py\", \"tests/conftest.py\", \"tests/test_cluster.py\", \"tests/test_schema.py\"]}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-24ae86b0-1e96-435a-8f04-9bb2d966d2dc",
+    "object": "chat.completion",
+    "created": 1795541627,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to inspect streaming/schema.py and tests to see current state.",
+          "tool_calls": [
+            {
+              "id": "fc_cb996488-eb79-4d21-8d06-b5d370c92f77",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.018789875,
+      "prompt_tokens": 2056,
+      "prompt_time": 0.025477921,
+      "completion_tokens": 41,
+      "completion_time": 0.085764241,
+      "total_tokens": 2097,
+      "total_time": 0.111242162,
+      "prompt_tokens_details": {
+        "cached_tokens": 1792
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 15
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_49bfac06f1",
+    "x_groq": {
+      "id": "req_01m879xw2fe0xbhz7ycjpnskr6",
+      "seed": 1692986612
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 2056,
+    "output_tokens": 41
+  }
+}

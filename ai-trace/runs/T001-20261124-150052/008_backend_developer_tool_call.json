@@ -1,0 +1,15 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 8,
+  "agent": "backend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-24T14:01:31+00:00",
+  "tool": "read_file",
+  "args": {
+    "path": "tests/test_cluster.py"
+  },
+  "result": {
+    "ok": true,
+    "content": "\"\"\"Phase 1 : vérifie que l'infrastructure distribuée fonctionne (pas encore de code applicatif).\"\"\"\nfrom cassandra import ConsistencyLevel\nfrom cassandra.query import SimpleStatement\n\nKEYSPACE = \"phase1_check\"\n\n\ndef test_version_cassandra_5(session):\n    version = session.execute(\"SELECT release_version FROM system.local\").one().release_version\n    assert version.startswith(\"5.\"), version\n\n\ndef test_trois_noeuds_visibles_et_up(cluster, session):\n    hosts = cluster.metadata.all_hosts()\n    assert len(hosts) == 3\n    assert all(h.is_up for h in hosts)\n    assert {h.datacenter for h in hosts} == {\"dc1\"}\n\n\ndef test_replication_rf3(cluster, session):\n    session.execute(f\"DROP KEYSPACE IF EXISTS {KEYSPACE}\")\n    session.execute(\n        f\"CREATE KEYSPACE {KEYSPACE} WITH replication = \"\n        \"{'class': 'NetworkTopologyStrategy', 'dc1': 3}\"\n    )\n    try:\n        session.execute(f\"CREATE TABLE {KEYSPACE}.t (id int PRIMARY KEY, v text)\")\n        session.execute(\n            SimpleStatement(\n                f\"INSERT INTO {KEYSPACE}.t (id, v) VALUES (1, 'ok')\",\n                consistency_level=ConsistencyLevel.ALL,\n            )\n        )\n        # Lecture en ALL : réussit seulement si les 3 réplicas répondent.\n        row = session.execute(\n            SimpleStatement(\n                f\"SELECT v FROM {KEYSPACE}.t WHERE id = 1\",\n                consistency_level=ConsistencyLevel.ALL,\n            )\n        ).one()\n        assert row.v == \"ok\"\n\n        # La clé de partition (int 1) est stockée sur les 3 nœuds.\n        cluster.refresh_schema_metadata()\n        routing_key = (1).to_bytes(4, \"big\", signed=True)\n        replicas = cluster.metadata.get_replicas(KEYSPACE, routing_key)\n        assert len(replicas) == 3\n    finally:\n        session.execute(f\"DROP KEYSPACE IF EXISTS {KEYSPACE}\")\n"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 28,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T14:20:46+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [
+    {
+      "model": "gemini-3.5-flash-lite",
+      "attempt": 1,
+      "code": 503,
+      "message": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+    }
+  ],
+  "latency_s": 10.13,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "list_files",
+          "response": {
+            "ok": true,
+            "files": [
+              ".gitignore",
+              "docker/tests.Dockerfile",
+              "docker-compose.yml",
+              "docs/journal/phase-1.md",
+              "pytest.ini",
+              "README.md",
+              "reports/tests/latest.xml",
+              "requirements-dev.txt",
+              "streaming/__init__.py",
+              "streaming/schema.py",
+              "tests/conftest.py",
+              "tests/test_cluster.py",
+              "tests/test_schema.py"
+            ]
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_18219558990430518145",
+                "args": {
+                  "path": "streaming/__init__.py"
+                },
+                "name": "read_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfRPNH9EC3P0mO1XVKSPt71SEUaG5MLd6X4CyqMjeJHWECteToMVao3NFMXaUQtju0zVxot6j-AQ8asNHt3gbJ47Jf7NQ6f-JAZI6zR6ir_A2Ega3Nm_oOCpPUonigDET7XzC0DluVUSt69giWV9biuoId6AAURtOhDV3ZzVo4f9SL_7l0oQQmGP2zUgdRhZR"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "PZ0Fa-eOCYPvxs0P9qHD2Ag",
+    "usage_metadata": {
+      "candidates_token_count": 20,
+      "prompt_token_count": 2653,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 2653
+        }
+      ],
+      "total_token_count": 2673
+    }
+  },
+  "usage": {
+    "input_tokens": 2653,
+    "output_tokens": 20,
+    "thinking_tokens": null
+  }
+}

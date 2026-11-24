@@ -1,0 +1,101 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 66,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T17:24:40+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4731, Requested 5838. Please try again in 19.2675s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4019, Requested 5861. Please try again in 14.1s. Need more tokens? Upgrade to Dev Tier today at ht"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 2643, Requested 5861. Please try again in 3.78s. Need more tokens? Upgrade to Dev Tier today at ht"
+    }
+  ],
+  "latency_s": 17.73,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "3bfp1nm08",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"Tests pour le module streaming.schema.\\\"\\\"\\\"\\n\\nimport pytest\\nfrom streaming.schema import TABLES, create_schema, drop_schema\\n\\nTEST_KEYSPACE = \\\"streaming_test_schema\\\"\\n\\n\\n@pytest.fixture(autouse=True)\\ndef cleanup_test_keyspace(session):\\n    \\\"\\\"\\\"S'assure que le keyspace de test est nettoyé après chaque test.\\\"\\\"\\\"\\n    yield\\n    drop_schema(session, TEST_KEYSPACE)\\n\\n\\ndef test_create_schema_and_verify_tables(cluster, session):\\n    \\\"\\\"\\\"Vérifie la création du keyspace, l'existence des tables et l'idempotence.\\\"\\\"\\\"\\n    # Nettoyage initial au cas où\\n    drop_schema(session, TEST_KEYSPACE)\\n\\n    # 1. Premier appel : création du schéma\\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\\n\\n    # Rafraîchir les métadonnées\\n    cluster.refresh_schema_metadata()\\n    keyspace_meta = cluster.metadata.keyspaces.get(TEST_KEYSPACE)\\n    assert keyspace_meta is not None, f\\\"Le keyspace {TEST_KEYSPACE} doit exister.\\\"\\n\\n    # Vérification de la stratégie de réplication (nom court ou nom complet selon la version du driver/cluster)\\n    strat_name = keyspace_meta.replication_strategy.name\\n    assert \\\"NetworkTopologyStrategy\\\" in strat_name\\n    assert keyspace_meta.replication_strategy.options.get(\\\"dc1\\\") == \\\"3\\\"\\n\\n    # Vérification de l'existence de toutes les tables\\n    for table_name in TABLES:\\n        assert table_name in keyspace_meta.tables, f\\\"La table {table_name} doit exister dans le keyspace.\\\"\\n\\n    # 2. Deuxième appel : vérifier l'idempotence (ne doit pas lever d'erreur)\\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\\n\\n\\ndef test_table_primary_keys_and_clustering(cluster, session):\\n    \\\"\\\"\\\"Vérifie la structure (clés de partition et clustering) sur quelques tables clés.\\\"\\\"\\\"\\n    drop_schema(session, TEST_KEYSPACE)\\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\\n\\n    cluster.refresh_schema_metadata()\\n    keyspace_meta = cluster.metadata.keyspaces[TEST_KEYSPACE]\\n\\n    # Vérification Q2 : titles_by_genre\\n    # Partition key: genre ; Clustering key: release_year DESC, title_id ASC\\n    t_q2 = keyspace_meta.tables[\\\"titles_by_genre\\\"]\\n    partition_cols = [c.name for c in t_q2.partition_key]\\n    clustering_cols = [c.name for c in t_q2.clustering_key]\\n\\n    assert partition_cols == [\\\"genre\\\"]\\n    assert clustering_cols == [\\\"release_year\\\", \\\"title_id\\\"]\\n    # Vérification de l'ordre de clustering via is_reversed sur les colonnes de clustering\\n    assert t_q2.columns[\\\"release_year\\\"].is_reversed is True   # release_year DESC\\n    assert t_q2.columns[\\\"title_id\\\"].is_reversed is False      # title_id ASC\\n\\n    # Vérification Q4 : reviews_by_title\\n    # Partition key: title_id ; Clustering key: created_at DESC, user_id ASC\\n    t_q4 = keyspace_meta.tables[\\\"reviews_by_title\\\"]\\n    assert [c.name for c in t_q4.partition_key] == [\\\"title_id\\\"]\\n    assert [c.name for c in t_q4.clustering_key] == [\\\"created_at\\\", \\\"user_id\\\"]\\n    assert t_q4.columns[\\\"created_at\\\"].is_reversed is True     # created_at DESC\\n    assert t_q4.columns[\\\"user_id\\\"].is_reversed is False       # user_id ASC\\n\\n    # Vérification Q7 : title_stats (counters)\\n    t_q7 = keyspace_meta.tables[\\\"title_stats\\\"]\\n    assert [c.name for c in t_q7.partition_key] == [\\\"title_id\\\"]\\n    counter_cols = {c.name for c in t_q7.columns.values() if c.data_type.name == \\\"counter\\\"}\\n    assert counter_cols == {\\\"view_count\\\", \\\"rating_sum\\\", \\\"rating_count\\\"}\\n\\n\\ndef test_drop_schema(cluster, session):\\n    \\\"\\\"\\\"Vérifie que drop_schema supprime correctement le keyspace.\\\"\\\"\\\"\\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\\n    drop_schema(session, TEST_KEYSPACE)\\n\\n    cluster.refresh_schema_metadata()\\n    assert TEST_KEYSPACE not in cluster.metadata.keyspaces\\n\"}"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "qd1xbe24f",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"import os\\n\\nimport pytest\\nfrom cassandra.cluster import EXEC_PROFILE_DEFAULT, Cluster, ExecutionProfile\\nfrom cassandra.policies import DCAwareRoundRobinPolicy\\n\\n\\n@pytest.fixture(scope=\\\"session\\\")\\ndef cluster():\\n    contact_points = os.environ.get(\\\"CASSANDRA_CONTACT_POINTS\\\", \\\"cassandra1\\\").split(\\\",\\\")\\n    profile = ExecutionProfile(\\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\\\"dc1\\\"),\\n        # Sur un portable, un DDL peut dépasser les 10 s par défaut (pauses JVM mesurées jusqu'à 24 s).\\n        request_timeout=60,\\n    )\\n    c = Cluster(\\n        contact_points,\\n        execution_profiles={EXEC_PROFILE_DEFAULT: profile},\\n        protocol_version=5,\\n        max_schema_agreement_wait=60,  # attendre que les 3 nœuds aient le même schéma après un DDL\\n    )\\n    yield c\\n    c.shutdown()\\n\\n\\n@pytest.fixture(scope=\\\"session\\\")\\ndef session(cluster):\\n    return cluster.connect()\\n\"}"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "r5rs39a56",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"Définition du schéma Cassandra pour la plateforme de streaming.\\n\\nModélisation orientée requêtes (une table par requête Q1..Q8).\\n\\\"\\\"\\\"\\n\\nKEYSPACE = \\\"streaming\\\"\\n\\nTABLES = [\\n    \\\"title_by_id\\\",\\n    \\\"titles_by_genre\\\",\\n    \\\"user_by_id\\\",\\n    \\\"reviews_by_title\\\",\\n    \\\"reviews_by_user\\\",\\n    \\\"watch_history_by_user\\\",\\n    \\\"title_stats\\\",\\n    \\\"daily_views_by_title\\\",\\n]\\n\\n\\ndef create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3) -> None:\\n    \\\"\\\"\\\"Crée le keyspace et les tables de la plateforme de streaming (idempotent).\\n\\n    Args:\\n        session: Session cassandra-driver ouverte.\\n        keyspace: Nom du keyspace à créer/utiliser.\\n        replication_factor: Facteur de réplication pour le datacenter 'dc1'.\\n    \\\"\\\"\\\"\\n    create_keyspace_cql = f\\\"\\\"\\\"\\n    CREATE KEYSPACE IF NOT EXISTS {keyspace}\\n    WITH replication = {{\\n        'class': 'NetworkTopologyStrategy',\\n        'dc1': {replication_factor}\\n    }}\\n    \\\"\\\"\\\"\\n    session.execute(create_keyspace_cql)\\n\\n    # Q1 : Fiche d'un titre (film ou série) par son identifiant.\\n    # Clé de partition : title_id.\\n    create_q1 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.title_by_id (\\n        title_id uuid,\\n        title text,\\n        kind text,\\n        release_year int,\\n        genres set<text>,\\n        synopsis text,\\n        duration_minutes int,\\n        episodes_count int,\\n        PRIMARY KEY (title_id)\\n    ) WITH COMMENT = 'Q1 : Fiche d''un titre par son identifiant'\\n    \\\"\\\"\\\"\\n\\n    # Q2 : Titres d'un genre, du plus récent au plus ancien.\\n    # Clé de partition : genre. Clé de clustering : release_year DESC, title_id ASC.\\n    create_q2 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.titles_by_genre (\\n        genre text,\\n        release_year int,\\n        title_id uuid,\\n        title text,\\n        kind text,\\n        PRIMARY KEY (genre, release_year, title_id)\\n    ) WITH CLUSTERING ORDER BY (release_year DESC, title_id ASC)\\n      AND COMMENT = 'Q2 : Titres d''un genre, du plus récent au plus ancien'\\n    \\\"\\\"\\\"\\n\\n    # Q3 : Profil d'un utilisateur par son identifiant.\\n    # Clé de partition : user_id.\\n    create_q3 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.user_by_id (\\n        user_id uuid,\\n        email text,\\n        username text,\\n        created_at timestamp,\\n        PRIMARY KEY (user_id)\\n    ) WITH COMMENT = 'Q3 : Profil d''un utilisateur par son identifiant'\\n    \\\"\\\"\\\"\\n\\n    # Q4 : Avis (note 1 à 5 + commentaire) d'un titre, du plus récent au plus ancien.\\n    # Clé de partition : title_id. Clé de clustering : created_at DESC, user_id ASC.\\n    create_q4 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.reviews_by_title (\\n        title_id uuid,\\n        created_at timestamp,\\n        user_id uuid,\\n        rating int,\\n        comment text,\\n        username text,\\n        PRIMARY KEY (title_id, created_at, user_id)\\n    ) WITH CLUSTERING ORDER BY (created_at DESC, user_id ASC)\\n      AND COMMENT = 'Q4 : Avis d''un titre, du plus récent au plus ancien'\\n    \\\"\\\"\\\"\\n\\n    # Q5 : Avis donnés par un utilisateur, du plus récent au plus ancien.\\n    # Clé de partition : user_id. Clé de clustering : created_at DESC, title_id ASC.\\n    create_q5 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.reviews_by_user (\\n        user_id uuid,\\n        created_at timestamp,\\n        title_id uuid,\\n        rating int,\\n        comment text,\\n        title text,\\n        PRIMARY KEY (user_id, created_at, title_id)\\n    ) WITH CLUSTERING ORDER BY (created_at DESC, title_id ASC)\\n      AND COMMENT = 'Q5 : Avis donnés par un utilisateur, du plus récent au plus ancien'\\n    \\\"\\\"\\\"\\n\\n    # Q6 : Historique de visionnage d'un utilisateur, du plus récent au plus ancien.\\n    # Clé de partition : user_id. Clé de clustering : watched_at DESC, title_id ASC.\\n    create_q6 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.watch_history_by_user (\\n        user_id uuid,\\n        watched_at timestamp,\\n        title_id uuid,\\n        title text,\\n        duration_watched_seconds int,\\n        completed boolean,\\n        PRIMARY KEY (user_id, watched_at, title_id)\\n    ) WITH CLUSTERING ORDER BY (watched_at DESC, title_id ASC)\\n      AND COMMENT = 'Q6 : Historique de visionnage d''un utilisateur, du plus récent au plus ancien'\\n    \\\"\\\"\\\"\\n\\n    # Q7 : Statistiques d'un titre : nombre de vues, somme et nombre des notes (compteurs).\\n    # Clé de partition : title_id.\\n    # Remarque Cassandra : Une table avec des counters ne doit contenir QUE des colonnes counter et la clé primaire.\\n    create_q7 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.title_stats (\\n        title_id uuid,\\n        view_count counter,\\n        rating_sum counter,\\n        rating_count counter,\\n        PRIMARY KEY (title_id)\\n    ) WITH COMMENT = 'Q7 : Statistiques d''un titre'\\n    \\\"\\\"\\\"\\n\\n    # Q8 : Nombre de vues de chaque titre pour un jour donné (pour calculer le Top 10 du jour).\\n    # Clé de partition : view_date. Clé de clustering : title_id.\\n    # Remarque Cassandra : Une table avec des counters ne doit contenir QUE des colonnes counter et la clé primaire.\\n    create_q8 = f\\\"\\\"\\\"\\n    CREATE TABLE IF NOT EXISTS {keyspace}.daily_views_by_title (\\n        view_date date,\\n        title_id uuid,\\n        view_count counter,\\n        PRIMARY KEY (view_date, title_id)\\n    ) WITH COMMENT = 'Q8 : Nombre de vues de chaque titre pour un jour donné'\\n    \\\"\\\"\\\"\\n\\n    queries = [\\n        create_q1,\\n        create_q2,\\n        create_q3,\\n        create_q4,\\n        create_q5,\\n        create_q6,\\n        create_q7,\\n        create_q8,\\n    ]\\n\\n    for q in queries:\\n        session.execute(q)\\n\\n\\ndef drop_schema(session, keyspace: str) -> None:\\n    \\\"\\\"\\\"Supprime le keyspace spécifié (idempotent avec IF EXISTS).\\n\\n    Args:\\n        session: Session cassandra-driver ouverte.\\n        keyspace: Nom du keyspace à supprimer.\\n    \\\"\\\"\\\"\\n    session.execute(f\\\"DROP KEYSPACE IF EXISTS {keyspace}\\\")\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-3326189e-40e8-4595-a8bf-d6ff29103bd1",
+    "object": "chat.completion",
+    "created": 1795541079,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "prh4z5338",
+              "type": "function",
+              "function": {
+                "name": "write_file",
+                "arguments": "{\"content\":\"\\\"\\\"\\\"Tests pour le module streaming.schema.\\\"\\\"\\\"\\n\\nimport pytest\\nfrom streaming.schema import TABLES, create_schema, drop_schema\\n\\nTEST_KEYSPACE = \\\"streaming_test_schema\\\"\\n\\n\\n@pytest.fixture(autouse=True)\\ndef cleanup_test_keyspace(session):\\n    \\\"\\\"\\\"S'assure que le keyspace de test est nettoyé après chaque test.\\\"\\\"\\\"\\n    yield\\n    drop_schema(session, TEST_KEYSPACE)\\n\\n\\ndef test_create_schema_and_verify_tables(cluster, session):\\n    \\\"\\\"\\\"Vérifie la création du keyspace, l'existence des tables et l'idempotence.\\\"\\\"\\\"\\n    # Nettoyage initial au cas où\\n    drop_schema(session, TEST_KEYSPACE)\\n\\n    # 1. Premier appel : création du schéma\\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=3)\\n\\n    # Rafraîchir les métadonnées\\n    cluster.refresh_schema_metadata()\\n    keyspace_meta = cluster.metadata.keyspaces.get(TEST_KEYSPACE)\\n    assert keyspace_meta is not None, f\\\"Le keyspace {TEST_KEYSPACE} doit exister.\\\"\\n\\n    # Vérification de la stratégie de réplication via export_for_schema()\\n    # (chaîne CQL\",\"path\":\"tests/test_schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.093877603,
+      "prompt_tokens": 5876,
+      "prompt_time": 0.425416835,
+      "completion_tokens": 292,
+      "completion_time": 1.268932996,
+      "total_tokens": 6168,
+      "total_time": 1.694349831
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_a1293f40b5",
+    "x_groq": {
+      "id": "req_01m879d3yfepyvfq1gch19yens",
+      "seed": 1949844313
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 5876,
+    "output_tokens": 292
+  }
+}

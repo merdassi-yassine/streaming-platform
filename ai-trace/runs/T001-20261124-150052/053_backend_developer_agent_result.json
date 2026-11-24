@@ -1,0 +1,14 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 53,
+  "agent": "backend_developer",
+  "kind": "agent_result",
+  "timestamp": "2026-11-24T17:10:47+00:00",
+  "iteration": 2,
+  "summary": "### Résumé de l'intervention\n\n**Fichiers modifiés :**\n- `tests/test_schema.py` : Correction de la vérification de la stratégie de réplication (acceptation du nom court `NetworkTopologyStrategy`) et remplacement de l'utilisation de l'attribut inexistant `clustering_orders` par l'utilisation de `table.columns[col_name].is_reversed` pour inspecter l'ordre de tri (`DESC` / `ASC`).\n\n**Rappel de la modélisation (schéma CQL) :**\n- **Q1 (`title_by_id`)** : Partition par `title_id`.\n- **Q2 (`titles_by_genre`)** : Partition par `genre`, clustering par `release_year DESC, title_id ASC` (titres d'un genre du plus récent au plus ancien).\n- **Q3 (`user_by_id`)** : Partition par `user_id`.\n- **Q4 (`reviews_by_title`)** : Partition par `title_id`, clustering par `created_at DESC, user_id ASC` (avis d'un titre du plus récent au plus ancien).\n- **Q5 (`reviews_by_user`)** : Partition par `user_id`, clustering par `created_at DESC, title_id ASC` (avis d'un utilisateur du plus récent au plus ancien).\n- **Q6 (`watch_history_by_user`)** : Partition par `user_id`, clustering par `watched_at DESC, title_id ASC` (historique de visionnage du plus récent au plus ancien).\n- **Q7 (`title_stats`)** : Partition par `title_id` (colonnes `counter` uniquement).\n- **Q8 (`daily_views_by_title`)** : Partition par `view_date`, clustering par `title_id` (colonnes `counter` uniquement).\n\n**À vérifier :**\n- Les modifications apportées corrigent l'accès aux métadonnées du pilote Cassandra (`is_reversed` et nom de stratégie).\n- Les tests n'ont pas pu être exécutés localement (absence d'accès au shell), ils devront être validés par l'orchestrateur sur le cluster Cassandra.",
+  "steps": 5,
+  "stop_reason": "done",
+  "files_written": [
+    "tests/test_schema.py"
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 74,
+  "agent": "orchestrator",
+  "kind": "test_run",
+  "timestamp": "2026-11-24T17:30:29+00:00",
+  "iteration": 3,
+  "command": [
+    "docker",
+    "compose",
+    "--profile",
+    "tests",
+    "run",
+    "--rm",
+    "tests",
+    "pytest",
+    "-v",
+    "-p",
+    "no:cacheprovider",
+    "tests/"
+  ],
+  "exit_code": 0,
+  "passed": true,
+  "log": "tests_iter3.log",
+  "tail": "============================= test session starts ==============================\nplatform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /usr/local/bin/python3.13\nrootdir: /workspace\nconfigfile: pytest.ini\ncollecting ... collected 6 items\n\ntests/test_cluster.py::test_version_cassandra_5 PASSED                   [ 16%]\ntests/test_cluster.py::test_trois_noeuds_visibles_et_up PASSED           [ 33%]\ntests/test_cluster.py::test_replication_rf3 PASSED                       [ 50%]\ntests/test_schema.py::test_create_schema_and_idempotence PASSED          [ 66%]\ntests/test_schema.py::test_primary_keys_and_clustering PASSED            [ 83%]\ntests/test_schema.py::test_drop_schema PASSED                            [100%]\n\n============================== 6 passed in 45.55s ==============================\n Container streaming-platform-cassandra2-1 Running \n Container streaming-platform-cassandra3-1 Running \n Container streaming-platform-cassandra1-1 Running \n Container streaming-platform-cassandra1-1 Waiting \n Container streaming-platform-cassandra1-1 Healthy \n Container streaming-platform-cassandra2-1 Waiting \n Container streaming-platform-cassandra2-1 Healthy \n Container streaming-platform-cassandra3-1 Waiting \n Container streaming-platform-cassandra3-1 Healthy \n Container streaming-platform-tests-run-21b83161ce21 Creating \n Container streaming-platform-tests-run-21b83161ce21 Created"
+}

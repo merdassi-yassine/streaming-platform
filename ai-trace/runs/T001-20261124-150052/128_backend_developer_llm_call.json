@@ -1,0 +1,77 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 128,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T21:35:11+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 413,
+      "message": "HTTP 413 : {\"error\":{\"message\":\"Request too large for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Requested 8238, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier tod"
+    }
+  ],
+  "latency_s": 1.15,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_67d82006-88c7-4c55-b096-7c146d72c472",
+      "name": "write_file",
+      "content": "{\"ok\": true, \"written\": \"streaming/schema.py\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-9412111c-66d6-480a-802a-c61c1e081eb9",
+    "object": "chat.completion",
+    "created": 1795556111,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "4pddbhb78",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"tests/conftest.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.3786171,
+      "prompt_tokens": 5726,
+      "prompt_time": 0.431430626,
+      "completion_tokens": 29,
+      "completion_time": 0.084513603,
+      "total_tokens": 5755,
+      "total_time": 0.515944229
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_8999620a6e",
+    "x_groq": {
+      "id": "req_01m87qqw7qekdr248qeq7g0xar",
+      "seed": 804628530
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 5726,
+    "output_tokens": 29
+  }
+}

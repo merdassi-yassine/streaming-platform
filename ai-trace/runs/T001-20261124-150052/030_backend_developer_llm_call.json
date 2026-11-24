@@ -1,0 +1,71 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 30,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T14:20:48+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 1.84,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"Paquet streaming pour la plateforme de streaming Cassandra.\"\"\"\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_3115520536229787830",
+                "args": {
+                  "path": "streaming/schema.py"
+                },
+                "name": "read_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfRNbLjXx7-rjWIA-G7fa1nxhPAwm7F9qWdZI2pvre57j2C9x5RoN_e8sRI6o5SWYfKUxO-LP3ny1KEL5DpXZUXlaAfQs8-fuZn4Fwd1FTKLOgf7royRZPhhSpHwb0laSxOSgsM__t1I_m-FEj43lr3Y5vxq96ENROLEgnPuDZbGIiLwSBQt_GEbMu0CHkXx3"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "Pp0Fa8nUFf77xs0P3unvsAY",
+    "usage_metadata": {
+      "candidates_token_count": 20,
+      "prompt_token_count": 2702,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 2702
+        }
+      ],
+      "total_token_count": 2722
+    }
+  },
+  "usage": {
+    "input_tokens": 2702,
+    "output_tokens": 20,
+    "thinking_tokens": null
+  }
+}

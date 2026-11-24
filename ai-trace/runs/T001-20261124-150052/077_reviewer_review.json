@@ -1,0 +1,11 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 77,
+  "agent": "reviewer",
+  "kind": "review",
+  "timestamp": "2026-11-24T17:30:33+00:00",
+  "iteration": 3,
+  "review": "Critères :\n✓ create_schema crée le keyspace avec NetworkTopologyStrategy et dc1 = replication_factor\n✗ une table par requête Q1 à Q8, chacune commentée avec sa requête\n✓ les tables d'historique/avis sont triées du plus récent au plus ancien (clustering DESC)\n✓ les statistiques utilisent des colonnes counter, dans des tables ne contenant que des counters\n✓ create_schema est idempotente (IF NOT EXISTS) ; drop_schema supprime le keyspace\n✓ tests/test_schema.py n'utilise pas le keyspace « streaming » et nettoie son keyspace de test\n\nRemarques :\n- **BLOQUANT** : Les tables ne comportent pas de clause `COMMENT` CQL indiquant la requête (Q1..Q8) comme exigé par les critères d’acceptation.\n- **À AMÉLIORER** : Ajouter un `COMMENT 'Qx …'` (ou `WITH comment = 'Qx …'`) à chaque `CREATE TABLE` afin de satisfaire la spécification.\n- **MINEUR** : Aucun index secondaire n’est créé, mais ce n’est pas requis par les tests.\n\nRecommandation : DEMANDER DES CORRECTIONS — le manque de COMMENT CQL empêche de respecter un critère d’acceptation essentiel.",
+  "steps": 1,
+  "stop_reason": "done"
+}

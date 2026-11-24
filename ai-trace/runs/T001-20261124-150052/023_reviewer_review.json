@@ -1,0 +1,11 @@
+{
+  "run_id": "T001-20261124-150052",
+  "seq": 23,
+  "agent": "reviewer",
+  "kind": "review",
+  "timestamp": "2026-11-24T14:10:39+00:00",
+  "iteration": 1,
+  "review": "Critères :\n✓ create_schema crée le keyspace avec NetworkTopologyStrategy et dc1 = replication_factor\n✓ une table par requête Q1 à Q8\n✗ chaque table est commentée avec sa requête dans le schéma CQL (absent dans les définitions `CREATE TABLE`)\n✓ les tables d'historique/avis sont triées du plus récent au plus ancien (clustering DESC)\n✓ les statistiques utilisent des colonnes counter, dans des tables ne contenant que des counters\n✓ create_schema est idempotente (IF NOT EXISTS) ; drop_schema supprime le keyspace\n✓ tests/test_schema.py n'utilise pas le keyspace « streaming » et nettoie son keyspace de test\n\nRemarques :\n- BLOQUANT : Échec des tests dans `tests/test_schema.py` (ligne 54) : l'attribut `clustering_orders` n'existe pas sur `TableMetadataV3` du driver Cassandra (utiliser l'accès aux ordres via les métadonnées de colonnes ou supprimer cette vérification spécifique non requise par les critères).\n- À AMÉLIORER : Les commentaires requis sur chaque table indiquant la requête Q1..Q8 sont présents dans les commentaires Python (`#`), mais absents des requêtes CQL (`COMMENT '...'`).\n\nRecommandation : DEMANDER DES CORRECTIONS — les tests échouent à cause d'une mauvaise utilisation de l'API de métadonnées du driver Cassandra.",
+  "steps": 1,
+  "stop_reason": "done"
+}
