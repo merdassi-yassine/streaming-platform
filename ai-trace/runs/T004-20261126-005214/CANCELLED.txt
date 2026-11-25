@@ -1,0 +1,1 @@
+Run annulé par l'orchestrateur (Claude) le 26/11/2026 : lancé par erreur avec l'ancienne définition de T004 (avant la fusion T003/T004 décidée par le Project Owner). Aucun fichier écrit par l'agent ; branche supprimée.

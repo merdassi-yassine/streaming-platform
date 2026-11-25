@@ -1,0 +1,78 @@
+{
+  "run_id": "T004-20261126-005214",
+  "seq": 5,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T23:52:15+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 0.51,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_066e1cc8-171e-4773-ade5-a6a38ca22a62",
+      "name": "list_files",
+      "content": "{\"ok\": true, \"files\": [\".gitignore\", \"docker/tests.Dockerfile\", \"docker-compose.yml\", \"docs/journal/phase-1.md\", \"pytest.ini\", \"README.md\", \"reports/tests/latest.xml\", \"requirements-dev.txt\", \"streaming/__init__.py\", \"streaming/dao/__init__.py\", \"streaming/dao/ratings.py\", \"streaming/dao/stats.py\", \"streaming/dao/titles.py\", \"streaming/dao/users.py\", \"streaming/dao/views.py\", \"streaming/models.py\", \"streaming/schema.py\", \"tests/conftest.py\", \"tests/test_cluster.py\", \"tests/test_schema.py\"]}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-800413d0-9fed-41cf-8ec6-9d55d06f2403",
+    "object": "chat.completion",
+    "created": 1795650735,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to inspect DAO files to understand methods.",
+          "tool_calls": [
+            {
+              "id": "fc_61ddbe3c-9283-40d2-b827-472ab8c82ab4",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/dao/titles.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.281465577,
+      "prompt_tokens": 1489,
+      "prompt_time": 0.074730349,
+      "completion_tokens": 37,
+      "completion_time": 0.080511358,
+      "total_tokens": 1526,
+      "total_time": 0.155241707,
+      "prompt_tokens_details": {
+        "cached_tokens": 256
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 23
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_4a7bb72c24",
+    "x_groq": {
+      "id": "req_01m8ahzjh5efwtbymr5vawn8p2",
+      "seed": 1377234721
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 1489,
+    "output_tokens": 37
+  }
+}
