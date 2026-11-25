@@ -1,0 +1,108 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 87,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T21:43:16+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4410, Requested 5985. Please try again in 17.9625s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3718, Requested 5985. Please try again in 12.7725s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 2355, Requested 5985. Please try again in 2.55s. Need more tokens? Upgrade to Dev Tier today at ht"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5077, Requested 6016. Please try again in 23.197499999s. Need more tokens? Upgrade to Dev Tier toda"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4380, Requested 6002. Please try again in 17.865s. Need more tokens? Upgrade to Dev Tier today at h"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3014, Requested 6002. Please try again in 7.62s. Need more tokens? Upgrade to Dev Tier today at htt"
+    }
+  ],
+  "latency_s": 33.66,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_fdae202a-e3a9-49c5-970b-05fb2fcf2799",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"import os\\n\\nimport pytest\\nfrom cassandra.cluster import EXEC_PROFILE_DEFAULT, Cluster, ExecutionProfile\\nfrom cassandra.policies import DCAwareRoundRobinPolicy\\n\\n\\n@pytest.fixture(scope=\\\"session\\\")\\ndef cluster():\\n    contact_points = os.environ.get(\\\"CASSANDRA_CONTACT_POINTS\\\", \\\"cassandra1\\\").split(\\\",\\\")\\n    profile = ExecutionProfile(\\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\\\"dc1\\\"),\\n        # Sur un portable, un DDL peut dépasser les 10 s par défaut (pauses JVM mesurées jusqu'à 24 s).\\n        request_timeout=60,\\n    )\\n    c = Cluster(\\n        contact_points,\\n        execution_profiles={EXEC_PROFILE_DEFAULT: profile},\\n        protocol_version=5,\\n        max_schema_agreement_wait=60,  # attendre que les 3 nœuds aient le même schéma après un DDL\\n    )\\n    yield c\\n    c.shutdown()\\n\\n\\n@pytest.fixture(scope=\\\"session\\\")\\ndef session(cluster):\\n    return cluster.connect()\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-b8f35c02-814c-433f-95a3-95abf670b022",
+    "object": "chat.completion",
+    "created": 1795642995,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "x2vvtdt55",
+              "type": "function",
+              "function": {
+                "name": "write_file",
+                "arguments": "{\"content\":\"\\\"\\\"\\\"DAO des utilisateurs (table Q3).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport uuid\\nfrom typing import Optional\\n\\nfrom ..models import User\\n\\n\\nclass UserDAO:\\n    \\\"\\\"\\\"Accès à la table ``user_by_id`` (Q3).\\\"\\\"\\\"\\n\\n    def __init__(self, session, keyspace: str) -\\u003e None:\\n        self._session = session\\n        self._ks = keyspace\\n        self._stmt_save = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.user_by_id \\\"\\n            \\\"(user_id, email, username, created_at) VALUES (?, ?, ?, ?)\\\"\\n        )\\n        self._stmt_get = session.prepare(\\n            f\\\"SELECT user_id, email, username, created_at \\\"\\n            f\\\"FROM {keyspace}.user_by_id WHERE user_id = ?\\\"\\n        )\\n\\n    def save(self, user: User) -\\u003e None:\\n        \\\"\\\"\\\"Enregistre ou met à jour le profil d'un utilisateur.\\\"\\\"\\\"\\n        self._session.execute(self._stmt_save, (\\n            user.user_id,\\n            user.email,\\n            user.username,\\n            user.created_at,\\n        ))\\n\\n    def get(self, user_id: uuid.UUID) -\\u003e Optional[User]:\\n        \\\"\\\"\\\"Retourne le profil d'un utilisateur ou ``None`` s'il n'existe pas.\\\"\\\"\\\"\\n        row = self._session.execute(self._stmt_get, (user_id,)).one()\\n        if row is None:\\n            return None\\n        return User(\\n            user_id=row.user_id,\\n            email=row.email,\\n            username=row.username,\\n            created_at=row.created_at,\\n        )\",\"path\":\"streaming/dao/users.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.107455102,
+      "prompt_tokens": 6459,
+      "prompt_time": 0.500698179,
+      "completion_tokens": 392,
+      "completion_time": 1.793768907,
+      "total_tokens": 6851,
+      "total_time": 2.294467086
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_8999620a6e",
+    "x_groq": {
+      "id": "req_01m8aakab6erbsn0cthg9aftbt",
+      "seed": 1649793654
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 6459,
+    "output_tokens": 392
+  }
+}

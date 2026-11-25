@@ -1,0 +1,102 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 55,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T17:39:38+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7299, Requested 6908. Please try again in 46.5525s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6601, Requested 7739. Please try again in 47.55s. Need more tokens? Upgrade to Dev Tier today at h"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5236, Requested 7739. Please try again in 37.3125s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 834, Requested 6217. Please try again in 437.142857ms. Need more tokens? Upgrade to Dev Tier t"
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Request too large for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1816. The request's expected output tokens exceed the enforced limit; reduce max_tokens ("
+    }
+  ],
+  "latency_s": 33.01,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_de7b0cb2-c4cc-4fb7-b32b-921f6822474d",
+      "name": "write_file",
+      "content": "{\"ok\": true, \"written\": \"streaming/dao/titles.py\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-3355d73e-b603-48c4-90dd-0acf70f93a0c",
+    "object": "chat.completion",
+    "created": 1795628377,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "r4gq66fzk",
+              "type": "function",
+              "function": {
+                "name": "write_file",
+                "arguments": "{\"content\":\"\\\"\\\"\\\"DAO des utilisateurs (table Q3).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport uuid\\nfrom datetime import datetime\\nfrom typing import Optional\\n\\nfrom ..models import User\\n\\n\\nclass UserDAO:\\n    \\\"\\\"\\\"Accès à la table ``user_by_id`` (Q3).\\\"\\\"\\\"\\n\\n    def __init__(self, session, keyspace: str) -\\u003e None:\\n        self._session = session\\n        self._ks = keyspace\\n        self._stmt_save = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.user_by_id \\\"\\n            \\\"(user_id, email, username, created_at) VALUES (?, ?, ?, ?)\\\"\\n        )\\n        self._stmt_get = session.prepare(\\n            f\\\"SELECT user_id, email, username, created_at \\\"\\n            f\\\"FROM {keyspace}.user_by_id WHERE user_id = ?\\\"\\n        )\\n\\n    def save(self, user: User) -\\u003e None:\\n        \\\"\\\"\\\"Enregistre ou met à jour le profil d'un utilisateur.\\\"\\\"\\\"\\n        self._session.execute(self._stmt_save, (\\n            user.user_id,\\n            user.email,\\n            user.username,\\n            user.created_at,\\n        ))\\n\\n    def get(self, user_id:\",\"path\":\"streaming/dao/users.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.090305792,
+      "prompt_tokens": 6217,
+      "prompt_time": 0.456034653,
+      "completion_tokens": 300,
+      "completion_time": 1.337085971,
+      "total_tokens": 6517,
+      "total_time": 1.7931206240000002
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_21e59ac2de",
+    "x_groq": {
+      "id": "req_01m89wn74be20tq69hn17jbbys",
+      "seed": 695823105
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 6217,
+    "output_tokens": 300
+  }
+}

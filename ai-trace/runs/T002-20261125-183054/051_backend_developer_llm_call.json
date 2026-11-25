@@ -1,0 +1,90 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 51,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T17:38:46+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5547, Requested 4858. Please try again in 18.037499999s. Need more tokens? Upgrade to Dev Tier tod"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4854, Requested 4560. Please try again in 10.604999999s. Need more tokens? Upgrade to Dev Tier tod"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3492, Requested 4560. Please try again in 389.999999ms. Need more tokens? Upgrade to Dev Tier toda"
+    }
+  ],
+  "latency_s": 17.74,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_8c05e221-37ce-4471-844d-cb6b1c9cff74",
+      "name": "write_file",
+      "content": "{\"ok\": true, \"written\": \"streaming/dao/__init__.py\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-a0819cd5-13be-460f-839f-56598a8a1138",
+    "object": "chat.completion",
+    "created": 1795628324,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "gsye8mkz1",
+              "type": "function",
+              "function": {
+                "name": "write_file",
+                "arguments": "{\"content\":\"\\\"\\\"\\\"DAO des titres (tables Q1 et Q2).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport uuid\\nfrom typing import List, Optional\\n\\nfrom cassandra.query import BatchStatement\\n\\nfrom ..models import Title\\n\\n\\nclass TitleDAO:\\n    \\\"\\\"\\\"Accès aux tables ``title_by_id`` (Q1) et ``titles_by_genre`` (Q2).\\\"\\\"\\\"\\n\\n    def __init__(self, session, keyspace: str) -\\u003e None:\\n        self._session = session\\n        self._ks = keyspace\\n        self._save_q1 = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.title_by_id \\\"\\n            \\\"(title_id, title, kind, release_year, genres, synopsis, \\\"\\n            \\\"duration_minutes, episodes_count) \\\"\\n            \\\"VALUES (?, ?, ?, ?, ?, ?, ?, ?)\\\"\\n        )\\n        self._save_q2 = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.titles_by_genre \\\"\\n            \\\"(genre, release_year, title_id, title, kind) VALUES (?, ?, ?, ?, ?)\\\"\\n        )\\n        self._get_q1 = session.prepare(\\n            f\\\"SELECT title, kind, release_year, genres, synopsis, \\\"\\n            \\\"duration_minutes, epsod\",\"path\":\"streaming/dao/titles.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.291529078,
+      "prompt_tokens": 4956,
+      "prompt_time": 0.402303085,
+      "completion_tokens": 307,
+      "completion_time": 1.385261527,
+      "total_tokens": 5263,
+      "total_time": 1.7875646120000002
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_8999620a6e",
+    "x_groq": {
+      "id": "req_01m89wkk8deqyb3p17sx3xjp1k",
+      "seed": 983222512
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 4956,
+    "output_tokens": 307
+  }
+}

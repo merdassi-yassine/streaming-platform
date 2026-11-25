@@ -1,0 +1,75 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 102,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T23:31:41+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 0.38,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_123c5f57-6b70-4b67-8451-00ef5a8068ec",
+      "name": "repo_browser.read_file",
+      "content": "{\"ok\": false, \"error\": \"outil inconnu : repo_browser.read_file\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-3d897fa4-32da-43dc-86ea-e9f5a2c3ae3b",
+    "object": "chat.completion",
+    "created": 1795649500,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to use correct tool name: functions.read_file.",
+          "tool_calls": [
+            {
+              "id": "fc_fd9a0d31-4aa7-4cfb-9d0c-45c2ed123383",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.049660116,
+      "prompt_tokens": 2344,
+      "prompt_time": 0.115555132,
+      "completion_tokens": 36,
+      "completion_time": 0.076514019,
+      "total_tokens": 2380,
+      "total_time": 0.192069151,
+      "completion_tokens_details": {
+        "reasoning_tokens": 13
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_dee443f41b",
+    "x_groq": {
+      "id": "req_01m8agsxhdedmbftp7g6w8ykey",
+      "seed": 83554010
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 2344,
+    "output_tokens": 36
+  }
+}

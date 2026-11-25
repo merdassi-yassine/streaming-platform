@@ -1,0 +1,94 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 75,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T21:41:21+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-20b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6515, Requested 5388. Please try again in 29.2725s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5772, Requested 5199. Please try again in 22.2825s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4386, Requested 5199. Please try again in 11.8875s. Need more tokens? Upgrade to Dev Tier today at"
+    }
+  ],
+  "latency_s": 16.95,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_f3c7ef4f-408f-4bbf-ab48-f35c372328b5",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"DAO des titres (tables Q1 et Q2).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport uuid\\nfrom datetime import datetime\\nfrom typing import List, Optional\\n\\nfrom cassandra.query import BatchStatement\\n\\nfrom ..models import Title\\n\\n\\nclass TitleDAO:\\n    \\\"\\\"\\\"Accès aux tables ``title_by_id`` (Q1) et ``titles_by_genre`` (Q2).\\\"\\\"\\\"\\n\\n    def __init__(self, session, keyspace: str) -> None:\\n        self._session = session\\n        self._ks = keyspace\\n        # INSERT Q1\\n        self._stmt_save_q1 = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.title_by_id \\\"\\n            \\\"(title_id, title, kind, release_year, genres, synopsis, \\\"\\n            \\\"duration_minutes, episodes_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)\\\"\\n        )\\n        # INSERT Q2 (une ligne par genre)\\n        self._stmt_save_q2 = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.titles_by_genre \\\"\\n            \\\"(genre, release_year, title_id, title, kind) VALUES (?, ?, ?, ?, ?)\\\"\\n        )\\n        # SELECT Q1\\n        self._stmt_get_q1 = session.prepare(\\n            f\\\"SELECT title_id, title, kind, release_year, genres, synopsis, \\\"\\n            \\\"duration_minutes, episodes_count FROM {keyspace}.title_by_id WHERE title_id = ?\\\"\\n        )\\n        # SELECT Q2 (liste par genre)\\n        self._stmt_list_by_genre = session.prepare(\\n            f\\\"SELECT title_id, title, kind, release_year FROM {keyspace}.titles_by_genre \\\"\\n            \\\"WHERE genre = ? LIMIT ?\\\"\\n        )\\n\\n    def save(self, title: Title) -> None:\\n        \\\"\\\"\\\"Enregistre la fiche du titre et les entrées par genre.\\n\\n        Utilise un ``BatchStatement`` LOGGED pour garantir l'atomicité entre Q1 et Q2.\\n        \\\"\\\"\\\"\\n        batch = BatchStatement()\\n        batch.add(self._stmt_save_q1, (\\n            title.title_id,\\n            title.title,\\n            title.kind,\\n            title.release_year,\\n            set(title.genres),\\n            title.synopsis,\\n            title.duration_minutes,\\n            title.episodes_count,\\n        ))\\n        for genre in title.genres:\\n            batch.add(self._stmt_save_q2, (\\n                genre,\\n                title.release_year,\\n                title.title_id,\\n                title.title,\\n                title.kind,\\n            ))\\n        self._session.execute(batch)\\n\\n    def get(self, title_id: uuid.UUID) -> Optional[Title]:\\n        \\\"\\\"\\\"Retourne la fiche d'un titre ou ``None`` s'il n'existe pas.\\\"\\\"\\\"\\n        row = self._session.execute(self._stmt_get_q1, (title_id,)).one()\\n        if row is None:\\n            return None\\n        return Title(\\n            title_id=row.title_id,\\n            title=row.title,\\n            kind=row.kind,\\n            release_year=row.release_year,\\n            genres=set(row.genres),\\n            synopsis=row.synopsis,\\n            duration_minutes=row.duration_minutes,\\n            episodes_count=row.episodes_count,\\n        )\\n\\n    def list_by_genre(self, genre: str, limit: int = 20) -> List[dict]:\\n        \\\"\\\"\\\"Liste les titres d'un genre, du plus récent au plus ancien.\\n\\n        Retourne une liste de dictionnaires contenant ``title_id``, ``title``, ``kind`` et ``release_year``.\\n        \\\"\\\"\\\"\\n        rows = self._session.execute(self._stmt_list_by_genre, (genre, limit))\\n        return [\\n            {\\n                \\\"title_id\\\": r.title_id,\\n                \\\"title\\\": r.title,\\n                \\\"kind\\\": r.kind,\\n                \\\"release_year\\\": r.release_year,\\n            }\\n            for r in rows\\n        ]\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-f04416ee-8404-4b61-a310-0e35b9ede0fd",
+    "object": "chat.completion",
+    "created": 1795642880,
+    "model": "openai/gpt-oss-20b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to rewrite users.py fully, and create ratings.py, views.py, stats.py. Also __init__.py already exists but may need to export classes. Let's inspect __init__.py.",
+          "tool_calls": [
+            {
+              "id": "fc_a98db68d-5fd3-4bbe-bd35-96bea973bfee",
+              "type": "function",
+              "function": {
+                "name": "repo_browser.read_file",
+                "arguments": "{\"path\":\"streaming/dao/__init__.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.01767873,
+      "prompt_tokens": 5131,
+      "prompt_time": 0.283070961,
+      "completion_tokens": 69,
+      "completion_time": 0.073706328,
+      "total_tokens": 5200,
+      "total_time": 0.356777289,
+      "completion_tokens_details": {
+        "reasoning_tokens": 54
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_ef00694abe",
+    "x_groq": {
+      "id": "req_01m8aafvwhep790ftxjv5m4fmf",
+      "seed": 339730414
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 5131,
+    "output_tokens": 69
+  }
+}

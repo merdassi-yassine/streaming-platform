@@ -1,0 +1,88 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 43,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T17:37:52+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4464, Requested 4370. Please try again in 6.255s. Need more tokens? Upgrade to Dev Tier today at h"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3773, Requested 5080. Please try again in 6.3975s. Need more tokens? Upgrade to Dev Tier today at "
+    }
+  ],
+  "latency_s": 15.84,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_0c42078f-0ce1-468b-889e-4994b6c722b8",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"Modèles de données simples utilisés par les DAO.\\n\\nCes dataclasses ne contiennent que les champs nécessaires aux tables Cassandra.\\n\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport datetime\\nimport uuid\\nfrom dataclasses import dataclass\\nfrom typing import Optional, Set\\n\\n\\n@dataclass(frozen=True)\\nclass Title:\\n    \\\"\\\"\\\"Représente la fiche d'un titre (film ou série).\\\"\\\"\\\"\\n\\n    title_id: uuid.UUID\\n    title: str\\n    kind: str  # \\\"movie\\\" ou \\\"series\\\"\\n    release_year: int\\n    genres: Set[str]\\n    synopsis: Optional[str] = None\\n    duration_minutes: Optional[int] = None  # pour les films\\n    episodes_count: Optional[int] = None  # pour les séries\\n\\n\\n@dataclass(frozen=True)\\nclass User:\\n    \\\"\\\"\\\"Profil d'un utilisateur.\\\"\\\"\\\"\\n\\n    user_id: uuid.UUID\\n    email: str\\n    username: str\\n    created_at: datetime.datetime\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-9bb9e772-43d1-40e4-9ef9-c47c0f3ebaa8",
+    "object": "chat.completion",
+    "created": 1795628270,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to create streaming/dao directory and files. Let's inspect any existing dao?",
+          "tool_calls": [
+            {
+              "id": "fc_7a953359-7597-4443-a675-f267c58700c2",
+              "type": "function",
+              "function": {
+                "name": "repo_browser.list_files",
+                "arguments": "{\"path\":\"streaming\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.08950367,
+      "prompt_tokens": 4002,
+      "prompt_time": 0.177373731,
+      "completion_tokens": 40,
+      "completion_time": 0.083846188,
+      "total_tokens": 4042,
+      "total_time": 0.261219919,
+      "completion_tokens_details": {
+        "reasoning_tokens": 25
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_05e76be18c",
+    "x_groq": {
+      "id": "req_01m89wj0e4epfvens6vje5eqct",
+      "seed": 218035727
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 4002,
+    "output_tokens": 40
+  }
+}

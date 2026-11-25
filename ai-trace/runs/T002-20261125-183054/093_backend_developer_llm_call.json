@@ -1,0 +1,118 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 93,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T21:46:09+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5260, Requested 7683. Please try again in 37.0725s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4562, Requested 7631. Please try again in 31.447499999s. Need more tokens? Upgrade to Dev Tier tod"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3200, Requested 7631. Please try again in 21.2325s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5407, Requested 7664. Please try again in 38.0325s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4698, Requested 7648. Please try again in 32.595s. Need more tokens? Upgrade to Dev Tier today at h"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3325, Requested 7648. Please try again in 22.2975s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 1,
+      "code": 413,
+      "message": "HTTP 413 : {\"error\":{\"message\":\"Request too large for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Requested 8063, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier"
+    }
+  ],
+  "latency_s": 152.57,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_02b7e9c7-1fbf-4503-877d-a49de9574ea1",
+      "name": "write_file",
+      "content": "{\"ok\": false, \"refused\": true, \"error\": \"écriture refusée : 'streamview?' hors des dossiers autorisés ['streaming/']\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-8750e457-895b-4db1-93b3-b0ade7fe49ec",
+    "object": "chat.completion",
+    "created": 1795643168,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to create missing files: views.py and stats.py, and ensure users.py is correct (currently we wrote with syntax errors? Let's inspect the written users.py content).",
+          "tool_calls": [
+            {
+              "id": "fc_62cb9d15-cc6f-4138-a5f0-687d1f2e10cd",
+              "type": "function",
+              "function": {
+                "name": "repo_browser.read_file",
+                "arguments": "{\"path\":\"streaming/dao/users.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.214040966,
+      "prompt_tokens": 7595,
+      "prompt_time": 0.334428597,
+      "completion_tokens": 61,
+      "completion_time": 0.127087348,
+      "total_tokens": 7656,
+      "total_time": 0.461515945,
+      "completion_tokens_details": {
+        "reasoning_tokens": 47
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_19b184c447",
+    "x_groq": {
+      "id": "req_01m8aarmw9ep58gzvg2n69y1r8",
+      "seed": 825886377
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 7595,
+    "output_tokens": 61
+  }
+}

@@ -1,0 +1,91 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 136,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T23:35:22+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5153, Requested 3664. Please try again in 6.127499999s. Need more tokens? Upgrade to Dev Tier toda"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4454, Requested 3655. Please try again in 817.5ms. Need more tokens? Upgrade to Dev Tier today at "
+    }
+  ],
+  "latency_s": 15.79,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_7181bdd4-7ae1-4e4c-97f5-d2c86013c8a1",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"DAO des utilisateurs (table Q3).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport uuid\\nfrom typing import Optional\\n\\nfrom ..models import User\\n\\n\\nclass UserDAO:\\n    \\\"\\\"\\\"Accès à la table ``user_by_id`` (Q3).\\\"\\\"\\\"\\n\\n    def __init__(self, session, keyspace: str) -> None:\\n        self._session = session\\n        self._ks = keyspace\\n        self._stmt_save = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.user_by_id \\\"\\n            \\\"(user_id, email, username, created_at) VALUES (?, ?, ?, ?)\\\"\\n        )\\n        self._stmt_get = session.prepare(\\n            f\\\"SELECT user_id, email, username, created_at \\\"\\n            f\\\"FROM {keyspace}.user_by_id WHERE user_id = ?\\\"\\n        )\\n\\n    def save(self, user: User) -> None:\\n        \\\"\\\"\\\"Enregistre ou met à jour le profil d'un utilisateur.\\\"\\\"\\\"\\n        self._session.execute(self._stmt_save, (\\n            user.user_id,\\n            user.email,\\n            user.username,\\n            user.created_at,\\n        ))\\n\\n    def get(self, user_id: uuid.UUID) -> Optional[User]:\\n        \\\"\\\"\\\"Retourne le profil d'un utilisateur ou ``None`` s'il n'existe pas.\\\"\\\"\\\"\\n        row = self._session.execute(self._stmt_get, (user_id,)).one()\\n        if row is None:\\n            return None\\n        return User(\\n            user_id=row.user_id,\\n            email=row.email,\\n            username=row.username,\\n            created_at=row.created_at,\\n        )\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-de5bc0ee-a9ca-4a62-b70b-a07f62e20241",
+    "object": "chat.completion",
+    "created": 1795649721,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We have users.py content. Need to ensure it's correct and not truncated. It seems complete. However we need to check other files: titles.py, __init__.py, ratings.py, views.py, stats.py. Let's read them.",
+          "tool_calls": [
+            {
+              "id": "fc_e73a3a91-ab1e-456f-b80a-14a46efb16ed",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/dao/titles.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.048399294,
+      "prompt_tokens": 3578,
+      "prompt_time": 0.062379529,
+      "completion_tokens": 74,
+      "completion_time": 0.154745945,
+      "total_tokens": 3652,
+      "total_time": 0.217125474,
+      "prompt_tokens_details": {
+        "cached_tokens": 2304
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 49
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_64b2f1c926",
+    "x_groq": {
+      "id": "req_01m8ah0n8ye0kvjcs8qa43ymz4",
+      "seed": 1358923275
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 3578,
+    "output_tokens": 74
+  }
+}

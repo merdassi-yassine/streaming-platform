@@ -1,0 +1,88 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 192,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T23:43:47+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5444, Requested 4634. Please try again in 15.585s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4748, Requested 4619. Please try again in 10.2525s. Need more tokens? Upgrade to Dev Tier today at"
+    }
+  ],
+  "latency_s": 16.17,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_57a76194-6c3b-4dda-8958-d3477b75745d",
+      "name": "list_files",
+      "content": "{\"ok\": true, \"files\": [\"tests/conftest.py\", \"tests/test_cluster.py\", \"tests/test_schema.py\"]}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-c34b8d9c-a371-4199-bdd7-998667a383af",
+    "object": "chat.completion",
+    "created": 1795650226,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to create streaming/dao/stats.py with StatsDAO class. The error shows module not found. So we need to add file.\n\nWe need to read models maybe. Let's read streaming/models.py.",
+          "tool_calls": [
+            {
+              "id": "fc_896fb7f0-6374-4f3c-9c53-e7c3823c6d23",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/models.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.056335189,
+      "prompt_tokens": 4531,
+      "prompt_time": 0.375015883,
+      "completion_tokens": 64,
+      "completion_time": 0.132511563,
+      "total_tokens": 4595,
+      "total_time": 0.507527446,
+      "completion_tokens_details": {
+        "reasoning_tokens": 52
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_fe269835c7",
+    "x_groq": {
+      "id": "req_01m8ahg1ynegkrez28v48y8vwn",
+      "seed": 43288950
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 4531,
+    "output_tokens": 64
+  }
+}

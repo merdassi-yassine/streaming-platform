@@ -1,0 +1,88 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 11,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T17:31:29+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7487, Requested 1868. Please try again in 10.1625s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6786, Requested 2169. Please try again in 7.1625s. Need more tokens? Upgrade to Dev Tier today at "
+    }
+  ],
+  "latency_s": 15.95,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_adfc9398-60f7-4c1f-98ff-8c231c089e2b",
+      "name": "read_file",
+      "content": "{\"ok\": false, \"refused\": true, \"error\": \"fichier introuvable : 'streaming/models.py'\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-dcd52462-60a8-4162-a591-8f30b4e2a0af",
+    "object": "chat.completion",
+    "created": 1795627887,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to list files to see repository structure.",
+          "tool_calls": [
+            {
+              "id": "fc_dc5a7884-f7da-4455-b5a1-635588f94b5d",
+              "type": "function",
+              "function": {
+                "name": "list_files",
+                "arguments": "{\"directory\":\"\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.21225597,
+      "prompt_tokens": 1825,
+      "prompt_time": 0.082640454,
+      "completion_tokens": 30,
+      "completion_time": 0.06425848,
+      "total_tokens": 1855,
+      "total_time": 0.146898934,
+      "completion_tokens_details": {
+        "reasoning_tokens": 17
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_90620edd96",
+    "x_groq": {
+      "id": "req_01m89w6b09ezgrfvgge29wjs6d",
+      "seed": 1771945240
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 1825,
+    "output_tokens": 30
+  }
+}

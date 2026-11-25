@@ -1,0 +1,75 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 67,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T21:40:30+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 0.55,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_3aa6ad40-4a5e-46a5-8c5d-7cbd7e8decc6",
+      "name": "list_files",
+      "content": "{\"ok\": true, \"files\": [\"streaming/__init__.py\", \"streaming/dao/__init__.py\", \"streaming/dao/titles.py\", \"streaming/dao/users.py\", \"streaming/models.py\", \"streaming/schema.py\"]}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-2679f395-f83f-4a02-b6a4-94595340dd05",
+    "object": "chat.completion",
+    "created": 1795642829,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to read schema to know tables.",
+          "tool_calls": [
+            {
+              "id": "fc_2f5207b8-a6f1-4e2e-84e9-a955d5098587",
+              "type": "function",
+              "function": {
+                "name": "repo_browser.read_file",
+                "arguments": "{\"path\":\"streaming/schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.282953203,
+      "prompt_tokens": 2277,
+      "prompt_time": 0.109752606,
+      "completion_tokens": 34,
+      "completion_time": 0.074023558,
+      "total_tokens": 2311,
+      "total_time": 0.183776164,
+      "completion_tokens_details": {
+        "reasoning_tokens": 19
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_69334c0be3",
+    "x_groq": {
+      "id": "req_01m8aaeajgek8vvc2p2efgpd6m",
+      "seed": 453861219
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 2277,
+    "output_tokens": 34
+  }
+}

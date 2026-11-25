@@ -1,0 +1,99 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 57,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T17:40:11+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "openai/gpt-oss-20b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 2896, Requested 7234. Please try again in 15.975s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 2194, Requested 7234. Please try again in 10.71s. Need more tokens? Upgrade to Dev Tier today at h"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 413,
+      "message": "HTTP 413 : {\"error\":{\"message\":\"Request too large for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Requested 8080, please reduce your message size and try again. Need more tokens? Upgrade to Dev Tier tod"
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 4161, Requested 6550. Please try again in 31.808571428s. Need more tokens? Upgrade to Dev Tier"
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 3551, Requested 6550. Please try again in 26.58s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 2343, Requested 6550. Please try again in 16.225714285s. Need more tokens? Upgrade to Dev Tier"
+    }
+  ],
+  "latency_s": 32.25,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "r4gq66fzk",
+      "name": "write_file",
+      "content": "{\"ok\": true, \"written\": \"streaming/dao/users.py\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-6d1ec730-45bf-4758-8a37-29c324bc1770",
+    "object": "chat.completion",
+    "created": 1795628409,
+    "model": "openai/gpt-oss-20b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": ""
+        },
+        "logprobs": null,
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.195084493,
+      "prompt_tokens": 6171,
+      "prompt_time": 0.395405344,
+      "completion_tokens": 23,
+      "completion_time": 0.03009035,
+      "total_tokens": 6194,
+      "total_time": 0.425495694
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_2b688e7cc3",
+    "x_groq": {
+      "id": "req_01m89wp7vgeykaksnz3tbs9dy2",
+      "seed": 1549406399
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 6171,
+    "output_tokens": 23
+  }
+}

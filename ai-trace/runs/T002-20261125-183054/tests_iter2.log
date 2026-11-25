@@ -1,0 +1,18 @@
+*** Error compiling 'streaming/dao/users.py'...
+  File "streaming/dao/users.py", line 36
+    def get(self, user_id:
+           ^
+SyntaxError: '(' was never closed
+
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-0be7481ae3fb Creating 
+ Container streaming-platform-tests-run-0be7481ae3fb Created 
+

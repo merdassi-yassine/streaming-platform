@@ -1,0 +1,24 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 160,
+  "agent": "orchestrator",
+  "kind": "test_run",
+  "timestamp": "2026-11-25T23:37:58+00:00",
+  "iteration": 3,
+  "command": [
+    "docker",
+    "compose",
+    "--profile",
+    "tests",
+    "run",
+    "--rm",
+    "tests",
+    "sh",
+    "-c",
+    "python -m compileall -q streaming && python -c 'import streaming.dao' && pytest -v -p no:cacheprovider tests/"
+  ],
+  "exit_code": 1,
+  "passed": false,
+  "log": "tests_iter3.log",
+  "tail": "Container streaming-platform-cassandra2-1 Running \n Container streaming-platform-cassandra3-1 Running \n Container streaming-platform-cassandra1-1 Running \n Container streaming-platform-cassandra1-1 Waiting \n Container streaming-platform-cassandra1-1 Healthy \n Container streaming-platform-cassandra2-1 Waiting \n Container streaming-platform-cassandra2-1 Healthy \n Container streaming-platform-cassandra3-1 Waiting \n Container streaming-platform-cassandra3-1 Healthy \n Container streaming-platform-tests-run-07dd89a86b46 Creating \n Container streaming-platform-tests-run-07dd89a86b46 Created \nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import streaming.dao\n  File \"/workspace/streaming/dao/__init__.py\", line 12, in <module>\n    from .stats import StatsDAO\nModuleNotFoundError: No module named 'streaming.dao.stats'"
+}

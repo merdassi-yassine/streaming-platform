@@ -1,0 +1,16 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 197,
+  "agent": "backend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-25T23:44:26+00:00",
+  "tool": "write_file",
+  "args": {
+    "content": "\"\"\"DAO pour la table title_stats.\n\nLa classe ne fait que lire les compteurs d'un titre.\n\"\"\"\n\nfrom __future__ import annotations\n\nfrom cassandra.cluster import Session\nfrom typing import Tuple\n\n\nclass StatsDAO:\n    \"\"\"Accès aux statistiques d'un titre.\n\n    La table ``title_stats`` contient uniquement des compteurs.  La méthode\n    :py:meth:`get` renvoie un tuple ``(view_count, rating_sum, rating_count)``.\n    \"\"\"\n\n    def __init__(self, session: Session, keyspace: str):\n        self._session = session\n        self._keyspace = keyspace\n        self._get_stmt = session.prepare(\n            f\"SELECT view_count, rating_sum, rating_count FROM {keyspace}.title_stats WHERE title_id = ?\"\n        )\n\n    def get(self, title_id) -> Tuple[int, int, int]:\n        \"\"\"Renvoie les compteurs pour *title_id*.\n\n        Si le titre n'existe pas, la méthode renvoie ``(0, 0, 0)``.\n        \"\"\"\n        row = self._session.execute(self._get_stmt, (title_id,)).one()\n        if row is None:\n            return 0, 0, 0\n        return row.view_count, row.rating_sum, row.rating_count\n",
+    "path": "streaming/dao/stats.py"
+  },
+  "result": {
+    "ok": true,
+    "written": "streaming/dao/stats.py"
+  }
+}

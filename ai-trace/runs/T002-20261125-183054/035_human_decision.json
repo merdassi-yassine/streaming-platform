@@ -1,0 +1,11 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 35,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-25T17:37:34+00:00",
+  "iteration": 1,
+  "decision": "changes",
+  "feedback": "Garde streaming/models.py. Crée maintenant les 6 fichiers du paquet streaming/dao/ (titles.py, users.py, ratings.py, views.py, stats.py, __init__.py), un write_file par fichier avec le contenu complet. Tu as déjà lu schema.py et conftest.py : ne les relis pas.",
+  "decided_by": "MERDASSI Yassine"
+}

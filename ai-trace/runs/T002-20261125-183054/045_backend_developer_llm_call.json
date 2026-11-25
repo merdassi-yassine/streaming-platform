@@ -1,0 +1,90 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 45,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T17:38:08+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6394, Requested 5128. Please try again in 26.415s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5637, Requested 5128. Please try again in 20.7375s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4280, Requested 4093. Please try again in 2.7975s. Need more tokens? Upgrade to Dev Tier today at "
+    }
+  ],
+  "latency_s": 16.61,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_7a953359-7597-4443-a675-f267c58700c2",
+      "name": "repo_browser.list_files",
+      "content": "{\"ok\": false, \"error\": \"outil inconnu : repo_browser.list_files\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-845fa7de-d8dd-44e6-8c05-f5fed56c7706",
+    "object": "chat.completion",
+    "created": 1795628286,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "nxq01ymk9",
+              "type": "function",
+              "function": {
+                "name": "list_files",
+                "arguments": "{\"directory\":\"tests\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.147945855,
+      "prompt_tokens": 4432,
+      "prompt_time": 0.316312733,
+      "completion_tokens": 26,
+      "completion_time": 0.068096722,
+      "total_tokens": 4458,
+      "total_time": 0.384409455
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_424cb89518",
+    "x_groq": {
+      "id": "req_01m89wjgfcejjvppepsy016vmr",
+      "seed": 1596591611
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 4432,
+    "output_tokens": 26
+  }
+}

@@ -1,0 +1,88 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 77,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T21:41:37+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4292, Requested 5253. Please try again in 11.587499999s. Need more tokens? Upgrade to Dev Tier tod"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3592, Requested 5253. Please try again in 6.337499999s. Need more tokens? Upgrade to Dev Tier toda"
+    }
+  ],
+  "latency_s": 16.11,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_a98db68d-5fd3-4bbe-bd35-96bea973bfee",
+      "name": "repo_browser.read_file",
+      "content": "{\"ok\": false, \"error\": \"outil inconnu : repo_browser.read_file\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-e54ac12a-0f3b-481f-b8bf-098a2e6ea255",
+    "object": "chat.completion",
+    "created": 1795642896,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We have files: streaming/dao/users.py is truncated after get method signature. Need to rewrite full file. Also need to create ratings.py, views.py, stats.py. Also ensure __init__ re-exports classes (already exists but we need to verify). Let's read __init__.py content.",
+          "tool_calls": [
+            {
+              "id": "fc_4c3e1ab4-4bcd-4877-8d7c-91258e364dc1",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/dao/__init__.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.088186134,
+      "prompt_tokens": 5185,
+      "prompt_time": 0.233996519,
+      "completion_tokens": 88,
+      "completion_time": 0.183190791,
+      "total_tokens": 5273,
+      "total_time": 0.41718731,
+      "completion_tokens_details": {
+        "reasoning_tokens": 62
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_267e812a3a",
+    "x_groq": {
+      "id": "req_01m8aagbk0ebgra0fsqnx0qrhj",
+      "seed": 1206302312
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 5185,
+    "output_tokens": 88
+  }
+}

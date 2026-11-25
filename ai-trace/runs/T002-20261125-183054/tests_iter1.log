@@ -1,0 +1,16 @@
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-b96526b9db3e Creating 
+ Container streaming-platform-tests-run-b96526b9db3e Created 
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import streaming.dao
+ModuleNotFoundError: No module named 'streaming.dao'
+

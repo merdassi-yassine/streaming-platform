@@ -1,0 +1,11 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 164,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-25T23:40:45+00:00",
+  "iteration": 3,
+  "decision": "changes",
+  "feedback": "Il ne manque que streaming/dao/stats.py : crée la classe StatsDAO (get(title_id) -> (vues, somme_notes, nb_notes)) en lisant la table title_stats de schema.py. Ne modifie aucun autre fichier.",
+  "decided_by": "MERDASSI Yassine"
+}

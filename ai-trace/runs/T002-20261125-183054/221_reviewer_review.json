@@ -1,0 +1,11 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 221,
+  "agent": "reviewer",
+  "kind": "review",
+  "timestamp": "2026-11-25T23:48:01+00:00",
+  "iteration": 4,
+  "review": "Critères :\n✓ les 6 fichiers existent, sont complets et s'importent\n✓ aucune requête avec ALLOW FILTERING ; chaque SELECT cible une partition\n✓ toutes les requêtes sont préparées une seule fois (dans __init__)\n✓ RatingDAO.add refuse une note hors de 1..5 (ValueError) avant toute écriture\n✓ les compteurs et les écritures normales ne sont jamais mélangés dans un même batch\n✓ le module ne contient aucune logique métier\n✗ chaque fichier < 90 lignes (titles.py ≈ 98 lignes, ratings.py ≈ 104 lignes)\n\nRemarques :\n- BLOQUANT : deux DAO dépassent la contrainte de taille de fichier (< 90 lignes). Il faut refactoriser `titles.py` et `ratings.py` en plusieurs fichiers ou réduire le nombre de lignes.\n- À AMÉLIORER : préciser le type de `session` (cassandra.cluster.Session) dans les signatures pour plus de clarté.\n- MINEUR : `views.py` insère des valeurs placeholder pour le titre et la durée ; documenter ce comportement.\n\nRecommandation : DEMANDER DES CORRECTIONS — la taille excessive de deux fichiers empêche le respect de la contrainte « un petit fichier par classe ».",
+  "steps": 1,
+  "stop_reason": "done"
+}

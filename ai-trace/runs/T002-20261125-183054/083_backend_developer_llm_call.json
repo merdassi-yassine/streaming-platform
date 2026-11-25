@@ -1,0 +1,88 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 83,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T21:42:26+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3031, Requested 5658. Please try again in 5.1675s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 2334, Requested 5710. Please try again in 329.999999ms. Need more tokens? Upgrade to Dev Tier toda"
+    }
+  ],
+  "latency_s": 16.15,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_cefea845-0617-486f-a2f1-9e082caff67d",
+      "name": "repo_browser.list_files",
+      "content": "{\"ok\": false, \"error\": \"outil inconnu : repo_browser.list_files\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-9b8ad4d2-9594-4668-91bf-294c61eb86b4",
+    "object": "chat.completion",
+    "created": 1795642945,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to fix users.py (currently truncated) and create ratings.py, views.py, stats.py. Also ensure imports are correct, no unused imports, docstrings, prepared statements, batch handling, counter constraints.\n\nLet's open users.py to see truncated part.",
+          "tool_calls": [
+            {
+              "id": "fc_bfe00ca3-2dc0-4f02-b781-ac53ca5f8da1",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/dao/users.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.21155903,
+      "prompt_tokens": 5622,
+      "prompt_time": 0.24186703,
+      "completion_tokens": 76,
+      "completion_time": 0.156667885,
+      "total_tokens": 5698,
+      "total_time": 0.398534915,
+      "completion_tokens_details": {
+        "reasoning_tokens": 64
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_90620edd96",
+    "x_groq": {
+      "id": "req_01m8aahvd1e8ca93sck20ekwx9",
+      "seed": 538354526
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 5622,
+    "output_tokens": 76
+  }
+}

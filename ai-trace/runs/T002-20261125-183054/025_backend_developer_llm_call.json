@@ -1,0 +1,75 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 25,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T17:33:24+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 1.13,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "j6m56pf7k",
+      "name": "list_files",
+      "content": "{\"ok\": true, \"files\": [\"streaming/__init__.py\", \"streaming/models.py\", \"streaming/schema.py\"]}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-2ad78293-ce96-4321-8177-63f1ead90f59",
+    "object": "chat.completion",
+    "created": 1795628002,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to read schema to know tables. Let's read it.",
+          "tool_calls": [
+            {
+              "id": "fc_84bfc5af-d7d7-415e-9693-2e4fca795829",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.285792688,
+      "prompt_tokens": 2635,
+      "prompt_time": 0.155703714,
+      "completion_tokens": 35,
+      "completion_time": 0.074073483,
+      "total_tokens": 2670,
+      "total_time": 0.229777197,
+      "completion_tokens_details": {
+        "reasoning_tokens": 23
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_c3da0d4bb9",
+    "x_groq": {
+      "id": "req_01m89w9v3wej1twewkt1mr5r1q",
+      "seed": 1752241003
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 2635,
+    "output_tokens": 35
+  }
+}

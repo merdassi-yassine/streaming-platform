@@ -1,0 +1,108 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 214,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T23:46:54+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4937, Requested 6108. Please try again in 22.8375s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4242, Requested 5999. Please try again in 16.8075s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 2871, Requested 5999. Please try again in 6.525s. Need more tokens? Upgrade to Dev Tier today at h"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4122, Requested 6526. Please try again in 19.86s. Need more tokens? Upgrade to Dev Tier today at ht"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3426, Requested 6791. Please try again in 16.6275s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 2055, Requested 6791. Please try again in 6.345s. Need more tokens? Upgrade to Dev Tier today at ht"
+    }
+  ],
+  "latency_s": 32.01,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_e23a9336-c314-40d2-baf2-04b6ab8574f4",
+      "name": "write_file",
+      "content": "{\"ok\": true, \"written\": \"streaming/dao/stats.py\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-ca81e27f-4188-4ed6-ad28-809665a27b79",
+    "object": "chat.completion",
+    "created": 1795650413,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "qym4ak2w5",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/dao/stats.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.094136784,
+      "prompt_tokens": 6563,
+      "prompt_time": 0.453305521,
+      "completion_tokens": 30,
+      "completion_time": 0.088545381,
+      "total_tokens": 6593,
+      "total_time": 0.541850902
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_21e59ac2de",
+    "x_groq": {
+      "id": "req_01m8ahnrmpehn9c3h9z3bbcswg",
+      "seed": 637056764
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 6563,
+    "output_tokens": 30
+  }
+}

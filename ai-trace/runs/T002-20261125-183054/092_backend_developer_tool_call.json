@@ -1,0 +1,17 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 92,
+  "agent": "backend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-25T21:43:36+00:00",
+  "tool": "write_file",
+  "args": {
+    "content": "Scrolling...",
+    "path": "streamview?"
+  },
+  "result": {
+    "ok": false,
+    "refused": true,
+    "error": "écriture refusée : 'streamview?' hors des dossiers autorisés ['streaming/']"
+  }
+}

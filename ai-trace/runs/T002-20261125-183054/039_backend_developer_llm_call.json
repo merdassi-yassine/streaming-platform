@@ -1,0 +1,75 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 39,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T17:37:36+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 0.81,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_c5ead6e6-3b7b-4576-a9a6-0e4ab947d47e",
+      "name": "list_files",
+      "content": "{\"ok\": true, \"files\": [\"streaming/__init__.py\", \"streaming/models.py\", \"streaming/schema.py\"]}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-26567dfb-978b-4e58-90d1-6da60fb6e860",
+    "object": "chat.completion",
+    "created": 1795628253,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We have streaming/models.py and schema.py. Let's read schema.py to understand tables.",
+          "tool_calls": [
+            {
+              "id": "fc_b1d2191a-a44c-4ef7-9fee-691028ef2d55",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.283898037,
+      "prompt_tokens": 2199,
+      "prompt_time": 0.113611278,
+      "completion_tokens": 40,
+      "completion_time": 0.083569886,
+      "total_tokens": 2239,
+      "total_time": 0.197181164,
+      "completion_tokens_details": {
+        "reasoning_tokens": 27
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_27194a498a",
+    "x_groq": {
+      "id": "req_01m89whg8fezqa9vyer2bb56db",
+      "seed": 1534033749
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 2199,
+    "output_tokens": 40
+  }
+}

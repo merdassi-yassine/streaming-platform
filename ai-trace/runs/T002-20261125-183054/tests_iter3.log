@@ -1,0 +1,18 @@
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-07dd89a86b46 Creating 
+ Container streaming-platform-tests-run-07dd89a86b46 Created 
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import streaming.dao
+  File "/workspace/streaming/dao/__init__.py", line 12, in <module>
+    from .stats import StatsDAO
+ModuleNotFoundError: No module named 'streaming.dao.stats'
+

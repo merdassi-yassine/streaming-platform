@@ -1,0 +1,75 @@
+{
+  "run_id": "T002-20261125-183054",
+  "seq": 100,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T23:31:41+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 0.49,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_4e1f5292-9fbd-4b32-9d7e-cb4848e55b73",
+      "name": "list_files",
+      "content": "{\"ok\": true, \"files\": [\"streaming/__init__.py\", \"streaming/dao/__init__.py\", \"streaming/dao/ratings.py\", \"streaming/dao/titles.py\", \"streaming/dao/users.py\", \"streaming/dao/views.py\", \"streaming/models.py\", \"streaming/schema.py\"]}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-77f5f884-be53-4ef3-8a8e-3e7e7b8b3db5",
+    "object": "chat.completion",
+    "created": 1795649500,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to read schema to know tables.",
+          "tool_calls": [
+            {
+              "id": "fc_123c5f57-6b70-4b67-8451-00ef5a8068ec",
+              "type": "function",
+              "function": {
+                "name": "repo_browser.read_file",
+                "arguments": "{\"path\":\"streaming/schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.22152766,
+      "prompt_tokens": 2294,
+      "prompt_time": 0.102511855,
+      "completion_tokens": 34,
+      "completion_time": 0.071379368,
+      "total_tokens": 2328,
+      "total_time": 0.173891223,
+      "completion_tokens_details": {
+        "reasoning_tokens": 19
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_93703442d9",
+    "x_groq": {
+      "id": "req_01m8agsx1me6ztrzvq7dgpz3e3",
+      "seed": 705623491
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 2294,
+    "output_tokens": 34
+  }
+}

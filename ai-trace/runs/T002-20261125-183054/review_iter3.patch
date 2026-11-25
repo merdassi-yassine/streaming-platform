@@ -1,0 +1,408 @@
+diff --git a/streaming/dao/__init__.py b/streaming/dao/__init__.py
+new file mode 100644
+index 0000000..5abf0e1
+--- /dev/null
++++ b/streaming/dao/__init__.py
+@@ -0,0 +1,12 @@
++"""Package DAO – accès Cassandra.
++
++Exporte les cinq classes DAO pour une importation simple :
++
++    from streaming.dao import TitleDAO, UserDAO, RatingDAO, ViewDAO, StatsDAO
++"""
++
++from .titles import TitleDAO
++from .users import UserDAO
++from .ratings import RatingDAO
++from .views import ViewDAO
++from .stats import StatsDAO
+diff --git a/streaming/dao/ratings.py b/streaming/dao/ratings.py
+new file mode 100644
+index 0000000..58a5a9a
+--- /dev/null
++++ b/streaming/dao/ratings.py
+@@ -0,0 +1,104 @@
++"""DAO des évaluations (tables Q4, Q5 et compteurs Q7)."""
++
++from __future__ import annotations
++
++import uuid
++from datetime import datetime
++from typing import List, Dict
++
++from cassandra.query import BatchStatement
++
++from ..models import User, Title
++
++
++class RatingDAO:
++    """Accès aux avis d'utilisateurs.
++
++    - ``add`` écrit les deux tables d'avis et met à jour les compteurs de notes.
++    - ``list_for_title`` et ``list_for_user`` lisent les avis par partition.
++    """
++
++    def __init__(self, session, keyspace: str) -> None:
++        self._session = session
++        self._ks = keyspace
++        # INSERT Q4 : reviews_by_title
++        self._stmt_insert_title = session.prepare(
++            f"INSERT INTO {keyspace}.reviews_by_title "
++            "(title_id, created_at, user_id, rating, comment, username) "
++            "VALUES (?, ?, ?, ?, ?, ?)"
++        )
++        # INSERT Q5 : reviews_by_user
++        self._stmt_insert_user = session.prepare(
++            f"INSERT INTO {keyspace}.reviews_by_user "
++            "(user_id, created_at, title_id, rating, comment, title) "
++            "VALUES (?, ?, ?, ?, ?, ?)"
++        )
++        # UPDATE Q7 : compteurs rating_sum et rating_count
++        self._stmt_update_counters = session.prepare(
++            f"UPDATE {keyspace}.title_stats SET rating_sum = rating_sum + ?, rating_count = rating_count + 1 WHERE title_id = ?"
++        )
++        # SELECT Q4
++        self._stmt_list_by_title = session.prepare(
++            f"SELECT created_at, user_id, rating, comment, username FROM {keyspace}.reviews_by_title "
++            "WHERE title_id = ? LIMIT ?"
++        )
++        # SELECT Q5
++        self._stmt_list_by_user = session.prepare(
++            f"SELECT created_at, title_id, rating, comment, title FROM {keyspace}.reviews_by_user "
++            "WHERE user_id = ? LIMIT ?"
++        )
++
++    def add(
++        self,
++        user_id: uuid.UUID,
++        title_id: uuid.UUID,
++        rating: int,
++        comment: str | None = None,
++        username: str | None = None,
++        title: str | None = None,
++    ) -> None:
++        """Ajoute un avis.
++
++        ``rating`` doit être compris entre 1 et 5, sinon ``ValueError`` est levée.
++        L'insertion dans les tables d'avis est faite dans un ``BatchStatement`` LOGGED.
++        Les compteurs sont mis à jour séparément (les compteurs ne peuvent pas être dans le même batch).
++        """
++        if not 1 <= rating <= 5:
++            raise ValueError("rating must be between 1 and 5")
++
++        created_at = datetime.utcnow()
++        # Batch normal inserts
++        batch = BatchStatement()
++        batch.add(self._stmt_insert_title, (title_id, created_at, user_id, rating, comment, username))
++        batch.add(self._stmt_insert_user, (user_id, created_at, title_id, rating, comment, title))
++        self._session.execute(batch)
++        # Counter update (separate)
++        self._session.execute(self._stmt_update_counters, (rating, title_id))
++
++    def list_for_title(self, title_id: uuid.UUID, limit: int = 20) -> List[Dict]:
++        """Retourne les avis d'un titre, du plus récent au plus ancien."""
++        rows = self._session.execute(self._stmt_list_by_title, (title_id, limit))
++        return [
++            {
++                "created_at": r.created_at,
++                "user_id": r.user_id,
++                "rating": r.rating,
++                "comment": r.comment,
++                "username": r.username,
++            }
++            for r in rows
++        ]
++
++    def list_for_user(self, user_id: uuid.UUID, limit: int = 20) -> List[Dict]:
++        """Retourne les avis d'un utilisateur, du plus récent au plus ancien."""
++        rows = self._session.execute(self._stmt_list_by_user, (user_id, limit))
++        return [
++            {
++                "created_at": r.created_at,
++                "title_id": r.title_id,
++                "rating": r.rating,
++                "comment": r.comment,
++                "title": r.title,
++            }
++            for r in rows
++        ]
+diff --git a/streaming/dao/titles.py b/streaming/dao/titles.py
+new file mode 100644
+index 0000000..70ab83a
+--- /dev/null
++++ b/streaming/dao/titles.py
+@@ -0,0 +1,98 @@
++"""DAO des titres (tables Q1 et Q2)."""
++
++from __future__ import annotations
++
++import uuid
++from datetime import datetime
++from typing import List, Optional
++
++from cassandra.query import BatchStatement
++
++from ..models import Title
++
++
++class TitleDAO:
++    """Accès aux tables ``title_by_id`` (Q1) et ``titles_by_genre`` (Q2)."""
++
++    def __init__(self, session, keyspace: str) -> None:
++        self._session = session
++        self._ks = keyspace
++        # INSERT Q1
++        self._stmt_save_q1 = session.prepare(
++            f"INSERT INTO {keyspace}.title_by_id "
++            "(title_id, title, kind, release_year, genres, synopsis, "
++            "duration_minutes, episodes_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
++        )
++        # INSERT Q2 (une ligne par genre)
++        self._stmt_save_q2 = session.prepare(
++            f"INSERT INTO {keyspace}.titles_by_genre "
++            "(genre, release_year, title_id, title, kind) VALUES (?, ?, ?, ?, ?)"
++        )
++        # SELECT Q1
++        self._stmt_get_q1 = session.prepare(
++            f"SELECT title_id, title, kind, release_year, genres, synopsis, "
++            "duration_minutes, episodes_count FROM {keyspace}.title_by_id WHERE title_id = ?"
++        )
++        # SELECT Q2 (liste par genre)
++        self._stmt_list_by_genre = session.prepare(
++            f"SELECT title_id, title, kind, release_year FROM {keyspace}.titles_by_genre "
++            "WHERE genre = ? LIMIT ?"
++        )
++
++    def save(self, title: Title) -> None:
++        """Enregistre la fiche du titre et les entrées par genre.
++
++        Utilise un ``BatchStatement`` LOGGED pour garantir l'atomicité entre Q1 et Q2.
++        """
++        batch = BatchStatement()
++        batch.add(self._stmt_save_q1, (
++            title.title_id,
++            title.title,
++            title.kind,
++            title.release_year,
++            set(title.genres),
++            title.synopsis,
++            title.duration_minutes,
++            title.episodes_count,
++        ))
++        for genre in title.genres:
++            batch.add(self._stmt_save_q2, (
++                genre,
++                title.release_year,
++                title.title_id,
++                title.title,
++                title.kind,
++            ))
++        self._session.execute(batch)
++
++    def get(self, title_id: uuid.UUID) -> Optional[Title]:
++        """Retourne la fiche d'un titre ou ``None`` s'il n'existe pas."""
++        row = self._session.execute(self._stmt_get_q1, (title_id,)).one()
++        if row is None:
++            return None
++        return Title(
++            title_id=row.title_id,
++            title=row.title,
++            kind=row.kind,
++            release_year=row.release_year,
++            genres=set(row.genres),
++            synopsis=row.synopsis,
++            duration_minutes=row.duration_minutes,
++            episodes_count=row.episodes_count,
++        )
++
++    def list_by_genre(self, genre: str, limit: int = 20) -> List[dict]:
++        """Liste les titres d'un genre, du plus récent au plus ancien.
++
++        Retourne une liste de dictionnaires contenant ``title_id``, ``title``, ``kind`` et ``release_year``.
++        """
++        rows = self._session.execute(self._stmt_list_by_genre, (genre, limit))
++        return [
++            {
++                "title_id": r.title_id,
++                "title": r.title,
++                "kind": r.kind,
++                "release_year": r.release_year,
++            }
++            for r in rows
++        ]
+diff --git a/streaming/dao/users.py b/streaming/dao/users.py
+new file mode 100644
+index 0000000..f1bca47
+--- /dev/null
++++ b/streaming/dao/users.py
+@@ -0,0 +1,45 @@
++"""DAO des utilisateurs (table Q3)."""
++
++from __future__ import annotations
++
++import uuid
++from typing import Optional
++
++from ..models import User
++
++
++class UserDAO:
++    """Accès à la table ``user_by_id`` (Q3)."""
++
++    def __init__(self, session, keyspace: str) -> None:
++        self._session = session
++        self._ks = keyspace
++        self._stmt_save = session.prepare(
++            f"INSERT INTO {keyspace}.user_by_id "
++            "(user_id, email, username, created_at) VALUES (?, ?, ?, ?)"
++        )
++        self._stmt_get = session.prepare(
++            f"SELECT user_id, email, username, created_at "
++            f"FROM {keyspace}.user_by_id WHERE user_id = ?"
++        )
++
++    def save(self, user: User) -> None:
++        """Enregistre ou met à jour le profil d'un utilisateur."""
++        self._session.execute(self._stmt_save, (
++            user.user_id,
++            user.email,
++            user.username,
++            user.created_at,
++        ))
++
++    def get(self, user_id: uuid.UUID) -> Optional[User]:
++        """Retourne le profil d'un utilisateur ou ``None`` s'il n'existe pas."""
++        row = self._session.execute(self._stmt_get, (user_id,)).one()
++        if row is None:
++            return None
++        return User(
++            user_id=row.user_id,
++            email=row.email,
++            username=row.username,
++            created_at=row.created_at,
++        )
+\ No newline at end of file
+diff --git a/streaming/dao/views.py b/streaming/dao/views.py
+new file mode 100644
+index 0000000..65a2b82
+--- /dev/null
++++ b/streaming/dao/views.py
+@@ -0,0 +1,77 @@
++"""DAO des historiques de visionnage et des compteurs de vues (tables Q6, Q7, Q8)."""
++
++from __future__ import annotations
++
++import uuid
++from datetime import datetime, date
++from typing import Dict, List
++
++from cassandra.query import BatchStatement
++
++
++class ViewDAO:
++    """Accès aux tables d'historique et de statistiques de vues."""
++
++    def __init__(self, session, keyspace: str) -> None:
++        self._session = session
++        self._ks = keyspace
++        # INSERT Q6 : watch_history_by_user
++        self._stmt_insert_history = session.prepare(
++            f"INSERT INTO {keyspace}.watch_history_by_user "
++            "(user_id, watched_at, title_id, title, duration_watched_seconds, completed) "
++            "VALUES (?, ?, ?, ?, ?, ?)"
++        )
++        # UPDATE Q7 : title_stats.view_count
++        self._stmt_update_view_count = session.prepare(
++            f"UPDATE {keyspace}.title_stats SET view_count = view_count + 1 WHERE title_id = ?"
++        )
++        # UPDATE Q8 : daily_views_by_title.view_count
++        self._stmt_update_daily_view_count = session.prepare(
++            f"UPDATE {keyspace}.daily_views_by_title SET view_count = view_count + 1 "
++            "WHERE view_date = ? AND title_id = ?"
++        )
++        # SELECT Q6 : history per user
++        self._stmt_history = session.prepare(
++            f"SELECT watched_at, title_id, title, duration_watched_seconds, completed FROM {keyspace}.watch_history_by_user "
++            "WHERE user_id = ? LIMIT ?"
++        )
++        # SELECT Q8 : views per day
++        self._stmt_views_of_day = session.prepare(
++            f"SELECT title_id, view_count FROM {keyspace}.daily_views_by_title WHERE view_date = ?"
++        )
++
++    def record_view(self, user_id: uuid.UUID, title_id: uuid.UUID, viewed_at: datetime) -> None:
++        """Enregistre une visionnage et incrémente les compteurs."""
++        # Normal insert into history
++        batch = BatchStatement()
++        batch.add(self._stmt_insert_history, (
++            user_id,
++            viewed_at,
++            title_id,
++            "",  # title text not provided
++            0,    # duration_watched_seconds placeholder
++            False,  # completed placeholder
++        ))
++        self._session.execute(batch)
++        # Counter updates (separate)
++        self._session.execute(self._stmt_update_view_count, (title_id,))
++        self._session.execute(self._stmt_update_daily_view_count, (viewed_at.date(), title_id))
++
++    def history(self, user_id: uuid.UUID, limit: int = 20) -> List[Dict]:
++        """Retourne l'historique de visionnage d'un utilisateur."""
++        rows = self._session.execute(self._stmt_history, (user_id, limit))
++        return [
++            {
++                "watched_at": r.watched_at,
++                "title_id": r.title_id,
++                "title": r.title,
++                "duration_watched_seconds": r.duration_watched_seconds,
++                "completed": r.completed,
++            }
++            for r in rows
++        ]
++
++    def views_of_day(self, day: date) -> Dict[uuid.UUID, int]:
++        """Retourne un dictionnaire title_id -> nombre de vues pour le jour donné."""
++        rows = self._session.execute(self._stmt_views_of_day, (day,))
++        return {r.title_id: r.view_count for r in rows}
+diff --git a/streaming/models.py b/streaming/models.py
+new file mode 100644
+index 0000000..09b6df7
+--- /dev/null
++++ b/streaming/models.py
+@@ -0,0 +1,35 @@
++"""Modèles de données simples utilisés par les DAO.
++
++Ces dataclasses ne contiennent que les champs nécessaires aux tables Cassandra.
++"""
++
++from __future__ import annotations
++
++import datetime
++import uuid
++from dataclasses import dataclass
++from typing import Optional, Set
++
++
++@dataclass(frozen=True)
++class Title:
++    """Représente la fiche d'un titre (film ou série)."""
++
++    title_id: uuid.UUID
++    title: str
++    kind: str  # "movie" ou "series"
++    release_year: int
++    genres: Set[str]
++    synopsis: Optional[str] = None
++    duration_minutes: Optional[int] = None  # pour les films
++    episodes_count: Optional[int] = None  # pour les séries
++
++
++@dataclass(frozen=True)
++class User:
++    """Profil d'un utilisateur."""
++
++    user_id: uuid.UUID
++    email: str
++    username: str
++    created_at: datetime.datetime
