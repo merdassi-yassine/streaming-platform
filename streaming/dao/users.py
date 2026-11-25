@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 from typing import Optional
 
 from ..models import User
@@ -33,4 +32,14 @@ class UserDAO:
             user.created_at,
         ))
 
-    def get(self, user_id:
+    def get(self, user_id: uuid.UUID) -> Optional[User]:
+        """Retourne le profil d'un utilisateur ou ``None`` s'il n'existe pas."""
+        row = self._session.execute(self._stmt_get, (user_id,)).one()
+        if row is None:
+            return None
+        return User(
+            user_id=row.user_id,
+            email=row.email,
+            username=row.username,
+            created_at=row.created_at,
+        )
