@@ -1,0 +1,73 @@
+diff --git a/streaming/dao.py b/streaming/dao.py
+new file mode 100644
+index 0000000..7004fc4
+--- /dev/null
++++ b/streaming/dao.py
+@@ -0,0 +1,29 @@
++"""Couche DAO : SEULE couche qui parle à Cassandra.
++
++Chaque DAO reçoit ``session`` et ``keyspace`` au constructeur et prépare
++ses requêtes une seule fois. Les écritures multi-tables non counter d'une
++même entité utilisent un ``BatchStatement`` LOGGED ; les compteurs sont
++toujours exécutés séparément (Cassandra n'autorise pas de mélanger
++compteurs et écritures normales dans un même batch).
++"""
++
++from datetime import date, datetime
++from typing import Dict, List, Optional, Tuple
++from uuid import UUID
++
++from cassandra.query import BatchStatement, ConsistencyLevel
++
++from streaming.models import Title, User
++
++
++class TitleDAO:
++    """Accès aux tables ``title_by_id`` (Q1) et ``titles_by_genre`` (Q2)."""
++
++    def __init__(self, session, keyspace: str) -> None:
++        self._session = session
++        self._ks = keyspace
++        self._stmt_save = session.prepare(
++            f"""
++            INSERT INTO {keyspace}.title_by_id
++                (title_id, title, kind, release_year, genres,
++                 SYN,
+\ No newline at end of file
+diff --git a/streaming/models.py b/streaming/models.py
+new file mode 100644
+index 0000000..fb1c3b9
+--- /dev/null
++++ b/streaming/models.py
+@@ -0,0 +1,30 @@
++"""Modèles de données simples (dataclasses) partagés par la couche DAO."""
++
++from dataclasses import dataclass, field
++from datetime import datetime
++from typing import List, Optional
++from uuid import UUID
++
++
++@dataclass
++class Title:
++    """Fiche d'un titre (film ou série)."""
++
++    title_id: UUID
++    title: str
++    kind: str
++    release_year: int
++    genres: List[str] = field(default_factory=list)
++    synopsis: str = ""
++    duration_minutes: Optional[int] = None
++    episodes_count: Optional[int] = None
++
++
++@dataclass
++class User:
++    """Profil d'un utilisateur."""
++
++    user_id: UUID
++    email: str
++    username: str
++    created_at: datetime
+\ No newline at end of file

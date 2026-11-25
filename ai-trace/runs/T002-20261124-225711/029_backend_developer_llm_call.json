@@ -1,0 +1,75 @@
+{
+  "run_id": "T002-20261124-225711",
+  "seq": 29,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T22:00:19+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 1.12,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "czbh2b656",
+      "name": "write_file",
+      "content": "{\"ok\": true, \"written\": \"streaming/dao.py\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-b13d5419-9d62-4d56-9eb5-db27537bc28a",
+    "object": "chat.completion",
+    "created": 1795557619,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We attempted to write dao.py but content truncated. Need to open file to see what was written.",
+          "tool_calls": [
+            {
+              "id": "fc_9190dd18-e194-444f-bb80-3e5c14f1f9a4",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/dao.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.21424253,
+      "prompt_tokens": 2868,
+      "prompt_time": 0.148114035,
+      "completion_tokens": 44,
+      "completion_time": 0.092933918,
+      "total_tokens": 2912,
+      "total_time": 0.241047953,
+      "completion_tokens_details": {
+        "reasoning_tokens": 21
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_19b184c447",
+    "x_groq": {
+      "id": "req_01m87s5wyyeysvakwbxpdz1eha",
+      "seed": 1041431319
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 2868,
+    "output_tokens": 44
+  }
+}

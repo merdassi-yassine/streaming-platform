@@ -1,0 +1,90 @@
+{
+  "run_id": "T002-20261124-225711",
+  "seq": 15,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T21:57:52+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5258, Requested 3895. Please try again in 8.6475s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4558, Requested 3579. Please try again in 1.0275s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 400,
+      "message": "HTTP 400 : {\"error\":{\"message\":\"Tool call validation failed: tool call validation failed: attempted to call tool 'repo_browser.print_tree' which was not in request.tools\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"repo_browser.print_tree\\\", \\\"arguments\\"
+    }
+  ],
+  "latency_s": 16.43,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "9bzq1say9",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"import os\\n\\nimport pytest\\nfrom cassandra.cluster import EXEC_PROFILE_DEFAULT, Cluster, ExecutionProfile\\nfrom cassandra.policies import DCAwareRoundRobinPolicy\\n\\n\\n@pytest.fixture(scope=\\\"session\\\")\\ndef cluster():\\n    contact_points = os.environ.get(\\\"CASSANDRA_CONTACT_POINTS\\\", \\\"cassandra1\\\").split(\\\",\\\")\\n    profile = ExecutionProfile(\\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\\\"dc1\\\"),\\n        # Sur un portable, un DDL peut dépasser les 10 s par défaut (pauses JVM mesurées jusqu'à 24 s).\\n        request_timeout=60,\\n    )\\n    c = Cluster(\\n        contact_points,\\n        execution_profiles={EXEC_PROFILE_DEFAULT: profile},\\n        protocol_version=5,\\n        max_schema_agreement_wait=60,  # attendre que les 3 nœuds aient le même schéma après un DDL\\n    )\\n    yield c\\n    c.shutdown()\\n\\n\\n@pytest.fixture(scope=\\\"session\\\")\\ndef session(cluster):\\n    return cluster.connect()\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-cde6a279-882f-442d-9a26-c9e88e5e1846",
+    "object": "chat.completion",
+    "created": 1795557472,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "njb4d6eh1",
+              "type": "function",
+              "function": {
+                "name": "list_files",
+                "arguments": "{\"directory\":\"streaming\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.088360752,
+      "prompt_tokens": 3923,
+      "prompt_time": 0.270527119,
+      "completion_tokens": 27,
+      "completion_time": 0.072728073,
+      "total_tokens": 3950,
+      "total_time": 0.343255192
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_21e59ac2de",
+    "x_groq": {
+      "id": "req_01m87s1db6eg4a9g0k7shfwa6e",
+      "seed": 1742995222
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 3923,
+    "output_tokens": 27
+  }
+}

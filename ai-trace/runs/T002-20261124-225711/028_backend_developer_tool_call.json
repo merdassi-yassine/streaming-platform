@@ -1,0 +1,16 @@
+{
+  "run_id": "T002-20261124-225711",
+  "seq": 28,
+  "agent": "backend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-24T22:00:18+00:00",
+  "tool": "write_file",
+  "args": {
+    "content": "\"\"\"Couche DAO : SEULE couche qui parle à Cassandra.\n\nChaque DAO reçoit ``session`` et ``keyspace`` au constructeur et prépare\nses requêtes une seule fois. Les écritures multi-tables non counter d'une\nmême entité utilisent un ``BatchStatement`` LOGGED ; les compteurs sont\ntoujours exécutés séparément (Cassandra n'autorise pas de mélanger\ncompteurs et écritures normales dans un même batch).\n\"\"\"\n\nfrom datetime import date, datetime\nfrom typing import Dict, List, Optional, Tuple\nfrom uuid import UUID\n\nfrom cassandra.query import BatchStatement, ConsistencyLevel\n\nfrom streaming.models import Title, User\n\n\nclass TitleDAO:\n    \"\"\"Accès aux tables ``title_by_id`` (Q1) et ``titles_by_genre`` (Q2).\"\"\"\n\n    def __init__(self, session, keyspace: str) -> None:\n        self._session = session\n        self._ks = keyspace\n        self._stmt_save = session.prepare(\n            f\"\"\"\n            INSERT INTO {keyspace}.title_by_id\n                (title_id, title, kind, release_year, genres,\n                 SYN,",
+    "path": "streaming/dao.py"
+  },
+  "result": {
+    "ok": true,
+    "written": "streaming/dao.py"
+  }
+}

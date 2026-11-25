@@ -1,0 +1,41 @@
+{
+  "run_id": "T002-20261124-225711",
+  "seq": 1,
+  "agent": "orchestrator",
+  "kind": "task",
+  "timestamp": "2026-11-24T21:57:11+00:00",
+  "task": {
+    "id": "T002",
+    "title": "Couche DAO (accès aux données Cassandra)",
+    "role": "backend_developer",
+    "prompt_template": "prompts/backend_developer.v2.md",
+    "review": true,
+    "test_command": [
+      "docker",
+      "compose",
+      "--profile",
+      "tests",
+      "run",
+      "--rm",
+      "tests",
+      "pytest",
+      "-v",
+      "-p",
+      "no:cacheprovider",
+      "tests/"
+    ],
+    "test_timeout": 1800,
+    "write_allow": [
+      "streaming/"
+    ],
+    "description": "Crée le module `streaming/dao.py` : la SEULE couche qui parle à Cassandra. Lis d'abord\n`streaming/schema.py` pour connaître exactement les tables, colonnes et clés.\nClasses attendues (chacune reçoit `session` et `keyspace` au constructeur et PRÉPARE ses requêtes une fois) :\n- `TitleDAO` : save(title) écrit la fiche (Q1) ET la ligne de titles_by_genre (Q2) pour chaque genre ;\n  get(title_id) ; list_by_genre(genre, limit=20).\n- `UserDAO` : save(user) ; get(user_id).\n- `RatingDAO` : add(user_id, title_id, rating, comment) écrit les 2 tables d'avis (Q4, Q5) et met à jour\n  les compteurs de stats (Q7) ; list_for_title(title_id, limit) ; list_for_user(user_id, limit).\n- `ViewDAO` : record_view(user_id, title_id, viewed_at) écrit l'historique (Q6) et incrémente les compteurs\n  Q7 et Q8 (jour = date de viewed_at) ; history(user_id, limit) ; views_of_day(day) -> dict title_id -> vues.\n- `StatsDAO` : get(title_id) -> (vues, somme_notes, nb_notes).\nUtilise des dataclasses simples pour Title et User (dans streaming/models.py si besoin).\nLes écritures multi-tables non counter d'une même entité peuvent utiliser un BatchStatement LOGGED ;\nles compteurs ne peuvent pas être dans le même batch que des écritures normales.\nNe crée PAS de tests dans cette tâche (ils font l'objet de T003).\n",
+    "acceptance": [
+      "aucune requête avec ALLOW FILTERING ; chaque SELECT cible une partition",
+      "toutes les requêtes sont préparées une seule fois (dans __init__)",
+      "RatingDAO.add refuse une note hors de 1..5 (ValueError) avant toute écriture",
+      "les compteurs et les écritures normales ne sont jamais mélangés dans un même batch",
+      "le module ne contient aucune logique métier (pas de calcul de Top 10 ni de recommandation)"
+    ]
+  },
+  "branch": "squad/T002-225711"
+}

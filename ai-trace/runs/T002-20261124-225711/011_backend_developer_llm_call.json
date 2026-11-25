@@ -1,0 +1,94 @@
+{
+  "run_id": "T002-20261124-225711",
+  "seq": 11,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T21:57:19+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6065, Requested 2073. Please try again in 1.035s. Need more tokens? Upgrade to Dev Tier today at h"
+    }
+  ],
+  "latency_s": 5.44,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "1azwkyqq2",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"import os\\n\\nimport pytest\\nfrom cassandra.cluster import EXEC_PROFILE_DEFAULT, Cluster, ExecutionProfile\\nfrom cassandra.policies import DCAwareRoundRobinPolicy\\n\\n\\n@pytest.fixture(scope=\\\"session\\\")\\ndef cluster():\\n    contact_points = os.environ.get(\\\"CASSANDRA_CONTACT_POINTS\\\", \\\"cassandra1\\\").split(\\\",\\\")\\n    profile = ExecutionProfile(\\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\\\"dc1\\\"),\\n        # Sur un portable, un DDL peut dépasser les 10 s par défaut (pauses JVM mesurées jusqu'à 24 s).\\n        request_timeout=60,\\n    )\\n    c = Cluster(\\n        contact_points,\\n        execution_profiles={EXEC_PROFILE_DEFAULT: profile},\\n        protocol_version=5,\\n        max_schema_agreement_wait=60,  # attendre que les 3 nœuds aient le même schéma après un DDL\\n    )\\n    yield c\\n    c.shutdown()\\n\\n\\n@pytest.fixture(scope=\\\"session\\\")\\ndef session(cluster):\\n    return cluster.connect()\\n\"}"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "y822m74n3",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"Package streaming – accès au schéma Cassandra.\\\"\\\"\\\"\\n\"}"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "6r2s1w1qh",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"# streaming-platform\\n\\nPlateforme de streaming (type Netflix) sur Apache Cassandra — projet académique NoSQL, exécuté **uniquement en local**.\\nLe code applicatif sera développé par l'équipe d'agents IA du dépôt voisin `streaming-ai-squad`, sous supervision humaine.\\n\\n## Prérequis\\n- Docker Desktop (≈ 5,5 Go de RAM libres pour les 3 nœuds)\\n- Python 3.13 (le pilote `cassandra-driver` 3.30 ne supporte pas 3.15)\\n\\n## Démarrer le cluster (3 nœuds, dc1)\\n```\\ndocker compose up -d --wait        # les nœuds rejoignent l'anneau un par un (plusieurs minutes)\\ndocker compose exec cassandra1 nodetool status\\n```\\nCQL depuis le PC : `localhost:9142` (cqlsh : `docker compose exec cassandra1 cqlsh`).\\n\\n## Lancer les tests\\n```\\ndocker compose run --rm tests\\n```\\nLes tests tournent dans le réseau Docker. Sous Windows avec Python ≥ 3.12, le pilote n'a pas de boucle\\nd'événements par défaut (ni libev ni asyncore) : le `.venv` local sert à l'éditeur, pas à exécuter les tests.\\n\\n## Arrêter\\n```\\ndocker compose stop      # conserve les données\\ndocker compose down -v   # SUPPRIME les données\\n```\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-44a67971-1622-4193-9aa8-9ddb2de60548",
+    "object": "chat.completion",
+    "created": 1795557439,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to view schema to know tables.",
+          "tool_calls": [
+            {
+              "id": "fc_b8d3145a-406e-4cb2-a2da-9e636e394eca",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.047846558,
+      "prompt_tokens": 2041,
+      "prompt_time": 0.091285476,
+      "completion_tokens": 32,
+      "completion_time": 0.066590853,
+      "total_tokens": 2073,
+      "total_time": 0.157876329,
+      "completion_tokens_details": {
+        "reasoning_tokens": 19
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_64b2f1c926",
+    "x_groq": {
+      "id": "req_01m87s0drqea5bd6dxhft0v5rv",
+      "seed": 106597256
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 2041,
+    "output_tokens": 32
+  }
+}

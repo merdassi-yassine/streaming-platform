@@ -1,0 +1,11 @@
+{
+  "run_id": "T002-20261124-225711",
+  "seq": 40,
+  "agent": "reviewer",
+  "kind": "review",
+  "timestamp": "2026-11-24T22:04:33+00:00",
+  "iteration": 1,
+  "review": "Critères :\n✗ aucune requête avec ALLOW FILTERING ; chaque SELECT cible une partition\n✗ toutes les requêtes sont préparées une seule fois (dans __init__)\n✗ RatingDAO.add refuse une note hors de 1..5 (ValueError) avant toute écriture\n✗ les compteurs et les écritures normales ne sont jamais mélangés dans un même batch\n✗ le module ne contient aucune logique métier (pas de logique métier détectée, mais le module est incomplet)\n✗ toutes les classes DAO attendues sont présentes et implémentées\n\nRemarques :\n- BLOQUANT : `streaming/dao.py` est tronqué ; l’instruction INSERT n’est pas terminée, il manque la fermeture de la chaîne et du bloc de code.\n- BLOQUANT : seules les premières lignes de `TitleDAO` sont présentes ; les méthodes `save`, `get`, `list_by_genre` sont absentes.\n- BLOQUANT : les classes `UserDAO`, `RatingDAO`, `ViewDAO` et `StatsDAO` n’existent pas dans le fichier.\n- BLOQUANT : aucune requête SELECT n’est définie, donc on ne peut pas vérifier le respect du partition‑only et l’absence d’`ALLOW FILTERING`.\n- BLOQUANT : aucune validation de note dans `RatingDAO.add` n’est implémentée.\n- BLOQUANT : aucune gestion de batch séparé pour les compteurs n’est visible.\n- BLOQUANT : aucune consistance explicite (`ConsistencyLevel`) n’est appliquée aux requêtes.\n- MINEUR : les imports inutilisés (`date`, `datetime`, `Dict`, `List`, `Optional`, `Tuple`, `UUID`) restent dans le fichier.\n- MINEUR : absence de docstrings détaillées pour les méthodes (une fois implémentées).\n\nRecommandation : REJETER — le module DAO est incomplet, syntaxiquement erroné et ne satisfait aucun des critères d’acceptation.",
+  "steps": 1,
+  "stop_reason": "done"
+}

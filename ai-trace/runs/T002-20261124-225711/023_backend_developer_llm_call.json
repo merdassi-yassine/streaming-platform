@@ -1,0 +1,75 @@
+{
+  "run_id": "T002-20261124-225711",
+  "seq": 23,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-24T21:59:01+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "qwen/qwen3.8-27b",
+    "openai/gpt-oss-20b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 0.6,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "yd76yg0r4",
+      "name": "write_file",
+      "content": "{\"ok\": true, \"written\": \"streaming/models.py\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-dc0fae99-1b15-4eba-a8ae-f327131955d0",
+    "object": "chat.completion",
+    "created": 1795557541,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to read schema to know tables. Let's open schema file.",
+          "tool_calls": [
+            {
+              "id": "fc_945f1134-b785-43cd-8a77-2f0afebc985c",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/schema.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.087064046,
+      "prompt_tokens": 2443,
+      "prompt_time": 0.102189081,
+      "completion_tokens": 37,
+      "completion_time": 0.076297765,
+      "total_tokens": 2480,
+      "total_time": 0.178486846,
+      "completion_tokens_details": {
+        "reasoning_tokens": 24
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_05e76be18c",
+    "x_groq": {
+      "id": "req_01m87s3hfse07vcab0pp5h7wrz",
+      "seed": 618594799
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 2443,
+    "output_tokens": 37
+  }
+}

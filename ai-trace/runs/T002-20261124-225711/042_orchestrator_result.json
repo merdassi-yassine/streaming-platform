@@ -1,0 +1,8 @@
+{
+  "run_id": "T002-20261124-225711",
+  "seq": 42,
+  "agent": "orchestrator",
+  "kind": "result",
+  "timestamp": "2026-11-25T17:30:32+00:00",
+  "result": "rejected"
+}

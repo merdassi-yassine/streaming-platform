@@ -1,0 +1,82 @@
+2026-11-24T21:57:11+00:00 [orchestrator] tâche T002 « Couche DAO (accès aux données Cassandra) » → branche squad/T002-225711 → backend_developer
+2026-11-24T21:57:11+00:00 [backend_developer] itération 1 : démarrage (prompt backend_developer v2)
+2026-11-24T21:57:12+00:00 [backend_developer] réponse de groq:openai/gpt-oss-120b (1 s)
+2026-11-24T21:57:12+00:00 [backend_developer] list_files . ✓
+2026-11-24T21:57:12+00:00 [backend_developer] réponse de groq:openai/gpt-oss-120b (0 s)
+2026-11-24T21:57:12+00:00 [backend_developer] read_file streaming/schema.py ✓
+2026-11-24T21:57:13+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 400 → nouvel essai / modèle suivant
+2026-11-24T21:57:14+00:00 [backend_developer] réponse de groq:qwen/qwen3.8-27b (1 s)
+2026-11-24T21:57:14+00:00 [backend_developer] read_file tests/conftest.py ✓
+2026-11-24T21:57:14+00:00 [backend_developer] read_file streaming/__init__.py ✓
+2026-11-24T21:57:14+00:00 [backend_developer] read_file README.md ✓
+2026-11-24T21:57:14+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:57:19+00:00 [backend_developer] réponse de groq:openai/gpt-oss-120b (5 s)
+2026-11-24T21:57:19+00:00 [backend_developer] read_file streaming/schema.py ✓
+2026-11-24T21:57:19+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:57:24+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:57:34+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 3 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:57:35+00:00 [backend_developer] réponse de groq:qwen/qwen3.8-27b (16 s)
+2026-11-24T21:57:35+00:00 [backend_developer] read_file tests/conftest.py ✓
+2026-11-24T21:57:35+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:57:40+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:57:51+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 3 : erreur 400 → nouvel essai / modèle suivant
+2026-11-24T21:57:52+00:00 [backend_developer] réponse de groq:qwen/qwen3.8-27b (16 s)
+2026-11-24T21:57:52+00:00 [backend_developer] list_files streaming ✓
+2026-11-24T21:57:52+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:57:57+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:58:07+00:00 [backend_developer] réponse de groq:openai/gpt-oss-120b (16 s)
+2026-11-24T21:58:07+00:00 [backend_developer] read_file streaming/schema.py ✓
+2026-11-24T21:58:07+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:58:13+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:58:23+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 3 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:58:24+00:00 [backend_developer] réponse de groq:qwen/qwen3.8-27b (16 s)
+2026-11-24T21:58:24+00:00 [backend_developer] read_file tests/conftest.py ✓
+2026-11-24T21:58:24+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:58:29+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:58:43+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 3 : erreur 400 → nouvel essai / modèle suivant
+2026-11-24T21:58:43+00:00 [backend_developer] ⚠ qwen/qwen3.8-27b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:58:48+00:00 [backend_developer] ⚠ qwen/qwen3.8-27b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:59:01+00:00 [backend_developer] réponse de groq:qwen/qwen3.8-27b (37 s)
+2026-11-24T21:59:01+00:00 [backend_developer] write_file streaming/models.py (30 lignes) ✓
+2026-11-24T21:59:01+00:00 [backend_developer] réponse de groq:openai/gpt-oss-120b (1 s)
+2026-11-24T21:59:01+00:00 [backend_developer] read_file streaming/schema.py ✓
+2026-11-24T21:59:02+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:59:08+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:59:28+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 3 : erreur 400 → nouvel essai / modèle suivant
+2026-11-24T21:59:29+00:00 [backend_developer] ⚠ qwen/qwen3.8-27b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:59:35+00:00 [backend_developer] réponse de groq:qwen/qwen3.8-27b (33 s)
+2026-11-24T21:59:35+00:00 [backend_developer] read_file tests/conftest.py ✓
+2026-11-24T21:59:35+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:59:42+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T21:59:59+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 3 : erreur 400 → nouvel essai / modèle suivant
+2026-11-24T22:00:00+00:00 [backend_developer] ⚠ qwen/qwen3.8-27b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T22:00:05+00:00 [backend_developer] ⚠ qwen/qwen3.8-27b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T22:00:18+00:00 [backend_developer] réponse de groq:qwen/qwen3.8-27b (43 s)
+2026-11-24T22:00:18+00:00 [backend_developer] write_file streaming/dao.py (29 lignes) ✓
+2026-11-24T22:00:19+00:00 [backend_developer] réponse de groq:openai/gpt-oss-120b (1 s)
+2026-11-24T22:00:19+00:00 [backend_developer] read_file streaming/dao.py ✓
+2026-11-24T22:00:19+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T22:00:25+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T22:00:36+00:00 [backend_developer] réponse de groq:openai/gpt-oss-120b (17 s)
+2026-11-24T22:00:36+00:00 [backend_developer] read_file streaming/schema.py ✓
+2026-11-24T22:00:37+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T22:00:43+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T22:00:55+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 3 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T22:00:55+00:00 [backend_developer] ⚠ qwen/qwen3.8-27b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T22:01:03+00:00 [backend_developer] réponse de groq:qwen/qwen3.8-27b (27 s)
+2026-11-24T22:01:03+00:00 [backend_developer] read_file tests/conftest.py ✓
+2026-11-24T22:01:10+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 400 → nouvel essai / modèle suivant
+2026-11-24T22:01:11+00:00 [backend_developer] ⚠ qwen/qwen3.8-27b essai 1 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T22:01:16+00:00 [backend_developer] ⚠ qwen/qwen3.8-27b essai 2 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T22:01:28+00:00 [backend_developer] ⚠ qwen/qwen3.8-27b essai 3 : erreur 429 → nouvel essai / modèle suivant
+2026-11-24T22:01:31+00:00 [backend_developer] ⚠ openai/gpt-oss-20b essai 1 : erreur 400 → nouvel essai / modèle suivant
+2026-11-24T22:01:31+00:00 [backend_developer] ⏳ tous les modèles saturés : pause de 120 s puis nouvelle série (2/5)
+2026-11-24T22:03:38+00:00 [backend_developer] ⚠ openai/gpt-oss-120b essai 1 : erreur 400 → nouvel essai / modèle suivant
+2026-11-24T22:03:40+00:00 [backend_developer] réponse de groq:qwen/qwen3.8-27b (157 s)
+2026-11-24T22:03:41+00:00 [orchestrator] commit df2efa4 sur squad/T002-225711
+2026-11-24T22:03:41+00:00 [orchestrator] tests réels : docker compose --profile tests run --rm tests pytest -v -p no:cacheprovider tests/
+2026-11-24T22:04:30+00:00 [orchestrator] tests ✓ OK → tests_iter1.log
+2026-11-24T22:04:30+00:00 [reviewer] itération 1 : relecture (prompt reviewer v1)
+2026-11-24T22:04:33+00:00 [reviewer] réponse de groq:openai/gpt-oss-120b (2 s)
+2026-11-25T17:30:32+00:00 [human] décision : reject
+2026-11-25T17:30:32+00:00 [orchestrator] branche squad/T002-225711 supprimée (travail rejeté, conservé dans la trace)
