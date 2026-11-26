@@ -31,7 +31,7 @@ class TitleDAO:
         # SELECT Q1
         self._stmt_get_q1 = session.prepare(
             f"SELECT title_id, title, kind, release_year, genres, synopsis, "
-            "duration_minutes, episodes_count FROM {keyspace}.title_by_id WHERE title_id = ?"
+            f"duration_minutes, episodes_count FROM {keyspace}.title_by_id WHERE title_id = ?"
         )
         # SELECT Q2 (liste par genre)
         self._stmt_list_by_genre = session.prepare(
