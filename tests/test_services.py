@@ -7,7 +7,7 @@ from streaming.models import Title, User
 from streaming.schema import create_schema, drop_schema
 from streaming.services import CatalogService, ReviewService, TrendingService
 
-KS_SRV = "streaming_test_services"
+KS_SRV = "test_services_ks"
 
 
 @pytest.fixture(scope="module")
@@ -50,7 +50,7 @@ def test_services_catalog_and_review(session, schema_srv):
 
 def test_trending_service_top10(session, schema_srv):
     t_dao = TitleDAO(session, KS_SRV)
-    v_dao = ViewDAO(session, KS_DAOMock if False else ViewDAO(session, KS_SRV))
+    v_dao = ViewDAO(session, KS_SRV)
     trend_srv = TrendingService(v_dao, t_dao)
 
     today = datetime.date.today()
@@ -69,3 +69,12 @@ def test_trending_service_top10(session, schema_srv):
     # Vérifier l'ordre décroissant par vues
     views_list = [item["views"] for item in top]
     assert views_list == sorted(views_list, reverse=True)
+
+
+def test_catalog_service_genre(session, schema_srv):
+    t_dao = TitleDAO(session, KS_SRV)
+    s_dao = StatsDAO(session, KS_SRV)
+    cat_srv = CatalogService(t_dao, s_dao)
+
+    titles = cat_srv.titles_of_genre("Drama", limit=5)
+    assert isinstance(titles, list)

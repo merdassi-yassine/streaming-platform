@@ -6,8 +6,8 @@ from streaming.dao import RatingDAO, StatsDAO, TitleDAO, UserDAO, ViewDAO
 from streaming.models import Title, User
 from streaming.schema import create_schema, drop_schema
 
-KS_DAO = "streaming_test_dao"
-KS_ACT = "streaming_test_activity"
+KS_DAO = "test_dao_ks"
+KS_ACT = "test_act_ks"
 
 
 @pytest.fixture(scope="module")
@@ -89,3 +89,13 @@ def test_view_dao_history_and_day(session, schema_act):
 
     daily = v_dao.views_of_day(today)
     assert daily.get(tid, 0) >= 1
+
+
+def test_extra_dao_coverage_users(session, schema_dao):
+    dao = UserDAO(session, KS_DAO)
+    assert dao.get(uuid.uuid4()) is None
+
+
+def test_extra_dao_coverage_titles(session, schema_dao):
+    dao = TitleDAO(session, KS_DAO)
+    assert dao.get(uuid.uuid4()) is None
