@@ -1,162 +1,159 @@
-"""Module d'orchestration de l'ingestion (chargement et reset)."""
+"""Module d'ingestion et de chargement des données Netflix Top 10 et Wikidata dans Cassandra."""
 
 from __future__ import annotations
 
+import os
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
 import httpx
-from cassandra.cluster import Cluster
-from cassandra.policies import DCAwareRoundRobinPolicy
 
-from ..schema import KEYSPACE, TABLES, create_schema, drop_schema
+from ..schema import TABLES, KEYSPACE
 from ..dao.titles import TitleDAO
 from ..dao.views import ViewDAO
 from ..models import Title
 from .netflix import fetch, parse, title_id
-from .wikidata import enrich, normalize_genres, SPARQL_URL
+from .wikidata import enrich
 
 
 def reset(session, keyspace: str = KEYSPACE) -> None:
-    """Effectue un TRUNCATE de chaque table du keyspace."""
+    """Vide (TRUNCATE) toutes les tables du schéma."""
     for table in TABLES:
-        session.execute(f"TRUNCATE TABLE {keyspace}.{table}")
+        session.execute(f"TRUNCATE {keyspace}.{table}")
 
 
-def load(session, keyspace: str, rows: List[Dict], enrich_fn: Callable[[str, str], Optional[Dict]]) -> Dict:
-    """Charge les lignes Netflix et enrichit les titres via Wikidata."""
+def load(session, keyspace: str, rows: list[dict], enrich_fn) -> dict:
+    """Charge les lignes Netflix et enrichit via Wikidata, puis insère dans Cassandra."""
     title_dao = TitleDAO(session, keyspace)
     view_dao = ViewDAO(session, keyspace)
 
-    # Regrouper par title_id pour identifier les titres distincts
-    distinct_titles: Dict[uuid.UUID, Dict] = {}
+    # Regrouper par title_id pour traiter chaque titre unique une seule fois
+    titles_map = {}
     for r in rows:
         t_id = title_id(r["kind"], r["title"])
-        if t_id not in distinct_titles:
-            distinct_titles[t_id] = {
-                "title_id": t_id,
+        if t_id not in titles_map:
+            titles_map[t_id] = {
                 "title": r["title"],
-                "kind": "film" if r["kind"] == "film" else "serie",  # normalisé en "film" / "serie"
+                "kind": r["kind"],
                 "runtime_minutes": r["runtime_minutes"],
-                "week": r["week"],
+                "weeks": [],
             }
+        titles_map[t_id]["weeks"].append((r["week"], r["views"]))
 
-    titles_count = 0
     wikidata_found = 0
-    wikidata_missing: List[str] = []
+    wikidata_missing = []
     weeks_set = set()
 
-    for t_id, info in distinct_titles.items():
-        t_name = info["title"]
-        t_kind = info["kind"]
-        runtime_min = info["runtime_minutes"]
-        fallback_year = info["week"].year
-
+    for t_id, info in titles_map.items():
+        weeks_set.update([w[0] for w in info["weeks"]])
+        
         # Appel enrich_fn UNE seule fois par titre distinct
-        wiki = enrich_fn(t_name, t_kind)
-
+        wiki_data = enrich_fn(info["title"], info["kind"])
+        
         synopsis = "Description indisponible sur Wikidata"
-        release_year = fallback_year
+        release_year = None
         genres = {"autre"}
-        duration_minutes = runtime_min if t_kind == "film" else None
+        duration_minutes = info["runtime_minutes"] if info["kind"] == "film" else None
 
-        if wiki:
+        if wiki_data:
             wikidata_found += 1
-            if wiki.get("description"):
-                synopsis = wiki["description"]
-            if wiki.get("year"):
-                release_year = wiki["year"]
-            raw_genres = wiki.get("genres", [])
-            if raw_genres:
-                genres = normalize_genres(raw_genres)
+            if wiki_data.get("description"):
+                synopsis = wiki_data["description"]
+            if wiki_data.get("year"):
+                release_year = wiki_data["year"]
+            if wiki_data.get("genres"):
+                genres = wiki_data["genres"]
         else:
-            wikidata_missing.append(t_name)
+            wikidata_missing.append(info["title"])
+
+        # Si release_year toujours None, prendre l'année de la première semaine dispo
+        if release_year is None and info["weeks"]:
+            release_year = info["weeks"][0][0].year
 
         title_obj = Title(
             title_id=t_id,
-            title=t_name,
-            kind=t_kind,
-            release_year=release_year,
+            title=info["title"],
+            kind="movie" if info["kind"] == "film" else "series",
+            release_year=release_year or 2026,
             genres=genres,
             synopsis=synopsis,
             duration_minutes=duration_minutes,
             episodes_count=None,
         )
         title_dao.save(title_obj)
-        titles_count += 1
 
-    # Insérer les vues pour chaque ligne
-    for r in rows:
-        t_id = title_id(r["kind"], r["title"])
-        view_dao.add_views(t_id, r["week"], r["views"])
-        weeks_set.add(r["week"].isoformat())
+        # Enregistrer les vues par semaine (ViewDAO.add_views)
+        for week_date, views_count in info["weeks"]:
+            if views_count > 0:
+                view_dao.add_views(t_id, week_date, views_count)
+
+    weeks_iso = sorted([w.isoformat() for w in weeks_set])
 
     return {
-        "titles": titles_count,
+        "titles": len(titles_map),
         "rows": len(rows),
-        "weeks": sorted(list(weeks_set)),
+        "weeks": weeks_iso,
         "wikidata_found": wikidata_found,
-        "wikidata_missing": sorted(wikidata_missing),
+        "wikidata_missing": wikidata_missing,
     }
 
 
 def main() -> None:
-    """Point d'entrée principal pour l'ingestion de données réelles."""
+    """Point d'entrée principal pour l'ingestion (exécuté en CLI)."""
+    from cassandra.cluster import Cluster
+    from cassandra.policies import DCAwareRoundRobinPolicy
+
+    contact_points = os.getenv("CASSANDRA_CONTACT_POINTS", "127.0.0.1").split(",")
     cluster = Cluster(
-        contact_points=["127.0.0.1"],
+        contact_points=contact_points,
         load_balancing_policy=DCAwareRoundRobinPolicy(local_dc="dc1"),
     )
     session = cluster.connect()
 
-    print(f"Création du schéma pour le keyspace {KEYSPACE}...")
-    create_schema(session, KEYSPACE, replication_factor=3)
-    print("Réinitialisation des données (TRUNCATE)...")
+    print(f"Connexion au cluster Cassandra établie sur {contact_points}...")
+    print(f"Réinitialisation du keyspace {KEYSPACE}...")
     reset(session, KEYSPACE)
 
-    print("Téléchargement du Top 10 Netflix...")
-    with httpx.Client(timeout=30, follow_redirects=True) as client:
+    print(f"Téléchargement de Netflix Top 10 depuis {fetch.__globals__.get('NETFLIX_URL')}...")
+    client = httpx.Client(timeout=30, follow_redirects=True)
+    try:
         tsv_text = fetch(client)
-        rows = parse(tsv_text, weeks=4)
+    finally:
+        client.close()
 
-        print(f"{len(rows)} lignes parsées. Lancement du chargement avec enrichissement Wikidata...")
+    print("Parsing des 4 semaines les plus récentes...")
+    rows = parse(tsv_text, weeks=4)
 
-        def bounded_enrich(title: str, kind: str) -> Optional[Dict]:
-            res = enrich(client, title, kind)
-            time.sleep(0.3)
-            return res
+    print("Chargement et enrichissement Wikidata en cours...")
+    wikidata_client = httpx.Client(timeout=30, follow_redirects=True)
 
-        report_data = load(session, KEYSPACE, rows, bounded_enrich)
+    def rate_limited_enrich(title: str, kind: str):
+        res = enrich(wikidata_client, title, kind)
+        time.sleep(0.3)
+        return res
 
-    # Écriture du rapport
-    now_str = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+    report = load(session, KEYSPACE, rows, rate_limited_enrich)
+    wikidata_client.close()
+
+    # Écriture du rapport dans reports/ingest/
+    now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
     reports_dir = Path("reports/ingest")
     reports_dir.mkdir(parents=True, exist_ok=True)
     report_path = reports_dir / f"ingest-{now_str}.md"
 
-    latest_week = report_data["weeks"][-1] if report_data["weeks"] else "N/A"
+    report_content = f"""# Rapport d'ingestion – {now_str}
 
-    report_content = f"""# Rapport d'ingestion - {now_str}
-
-## Sources
-- **Netflix Top 10** : [https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv](https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv) (Dernière semaine : {latest_week})
-- **Wikidata** : [{SPARQL_URL}]({SPARQL_URL}) (Licence CC0, téléchargement le {datetime.utcnow().strftime("%Y-%m-%d")})
-
-## Statistiques
-- **Titres distincts chargés** : {report_data['titles']}
-- **Lignes de vues traitées** : {report_data['rows']}
-- **Semaines traitées** : {len(report_data['weeks'])} ({', '.join(report_data['weeks'])})
-- **Correspondances Wikidata trouvées** : {report_data['wikidata_found']}
-- **Titres sans correspondance Wikidata** : {len(report_data['wikidata_missing'])}
-
-## Titres sans correspondance Wikidata
-{'\n'.join([f'- {t}' for t in report_data['wikidata_missing']]) if report_data['wikidata_missing'] else '- Aucun'}
+- **Source Netflix** : {fetch.__globals__.get('NETFLIX_URL')}
+- **Semaines traitées** : {report['weeks']}
+- **Titres distincts chargés** : {report['titles']}
+- **Lignes de visionnage traitées** : {report['rows']}
+- **Correspondances Wikidata trouvées** : {report['wikidata_found']}
+- **Titres sans correspondance Wikidata** :
+{chr(join_lines := [f"  - {t}" for t in report['wikidata_missing']]) if report['wikidata_missing'] else "  - Aucun"}
 """
-
     report_path.write_text(report_content, encoding="utf-8")
-    print(f"Rapport d'ingestion généré avec succès : {report_path}")
+    print(f"Rapport d'ingestion généré : {report_path}")
 
-    session.shutdown()
     cluster.shutdown()
 
 

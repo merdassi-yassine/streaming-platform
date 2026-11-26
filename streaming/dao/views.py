@@ -66,7 +66,7 @@ class ViewDAO:
         self._session.execute(self._stmt_update_daily_view_count, (viewed_at.date(), title_id))
 
     def add_views(self, title_id: uuid.UUID, day: date, count: int) -> None:
-        """Incrémente les compteurs de vues de `count` pour title_stats et daily_views_by_title."""
+        """Incrémente les compteurs de vues de `count` pour title_stats et daily_views_by_title sans écrire d'historique."""
         self._session.execute(self._stmt_add_views_stats, (count, title_id))
         self._session.execute(self._stmt_add_views_daily, (count, day, title_id))
 

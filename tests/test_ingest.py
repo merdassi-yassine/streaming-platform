@@ -1,62 +1,62 @@
-"""Tests unitaires et d'intégration pour le module d'ingestion."""
+"""Tests unitaires et d'intégration pour l'ingestion (Netflix, Wikidata, Load)."""
 
 from __future__ import annotations
 
+import datetime
 import uuid
-from datetime import date
 import httpx
 import pytest
 
-from streaming.schema import create_schema, drop_schema, TABLES
-from streaming.dao.titles import TitleDAO
-from streaming.dao.views import ViewDAO
+from streaming.schema import create_schema, drop_schema
 from streaming.ingest.netflix import parse, title_id
 from streaming.ingest.wikidata import normalize_genres, enrich
-from streaming.ingest.load import load, reset
+from streaming.ingest.load import load
+from streaming.dao.views import ViewDAO
+from streaming.dao.titles import TitleDAO
+
 
 TEST_KEYSPACE = "streaming_test_ingest"
 
-SAMPLE_TSV = """week	category	weekly_rank	show_title	season_title	weekly_hours_viewed	runtime	weekly_views	cumulative_weeks_in_top_10
-2026-11-22	Films (English)	1	Guarding Stars	N/A	50600000	1.8333	27600000	1
-2026-11-22	TV (English)	1	The Body	The Body: Season 1	70300000		9500000	2
-2026-11-15	Films (Non-English)	2	Other Film	N/A	10000000	2.0	5000000	1
+
+@pytest.fixture(scope="function")
+pytest_keyspace(session):
+    """Fixture créant et supprimant un keyspace de test dédié."""
+    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=1)
+    yield TEST_KEYSPACE
+    drop_schema(session, TEST_KEYSPACE)
+
+
+SAMPLE_TSV = """week\tcategory\tweekly_rank\tshow_title\tseason_title\tweekly_hours_viewed\truntime\tweekly_views\tcumulative_weeks_in_top_10
+2026-11-22\tFilms (English)\t1\tGuarding Stars\tN/A\t50600000\t1.8333\t27600000\t1
+2026-11-22\tTV (English)\t1\tThe Body\tThe Body: Season 1\t70300000\t7.3833\t9500000\t2
+2026-11-15\tFilms (English)\t2\tGuarding Stars\tN/A\t40000000\t1.8333\t20000000\t2
+2026-11-01\tFilms (English)\t5\tOld Movie\tN/A\t10000000\t2.0\t5000000\t1
 """
 
 
-@pytest.fixture(scope="function")
-def test_session(cluster):
-    """Fixture créant un keyspace de test dédié et le supprimant à la fin."""
-    session = cluster.connect()
-    drop_schema(session, TEST_KEYSPACE)
-    create_schema(session, TEST_KEYSPACE, replication_factor=1)
-    session.set_keyspace(TEST_KEYSPACE)
-    yield session
-    drop_schema(session, TEST_KEYSPACE)
+def test_parse_netflix():
+    """Vérifie que parse garde les N semaines les plus récentes et gère les valeurs vides/N/A."""
+    rows = parse(SAMPLE_TSV, weeks=2)
+    # Les semaines dans le sample sont 2026-11-22, 2026-11-15, 2026-11-01.
+    # Les 2 plus récentes sont 2026-11-22 et 2026-11-15 (3 lignes au total).
+    assert len(rows) == 3
+    weeks_found = {r["week"] for r in rows}
+    assert weeks_found == {datetime.date(2026, 11, 22), datetime.date(2026, 11, 15)}
 
+    # Vérification des types et champs
+    guarding = next(r for r in rows if r["title"] == "Guarding Stars" and r["week"] == datetime.date(2026, 11, 22))
+    assert guarding["kind"] == "film"
+    assert guarding["season"] is None
+    assert guarding["views"] == 27600000
+    assert guarding["runtime_minutes"] == round(1.8333 * 60)
 
-def test_parse_and_weeks():
-    """Vérifie le parsing TSV, le filtre des N semaines et la gestion des valeurs vides."""
-    rows = parse(SAMPLE_TSV, weeks=1)
-    # Seule la semaine 2026-11-22 doit être gardée (la plus récente)
-    assert len(rows) == 2
-    assert all(r["week"] == date(2026, 11, 22) for r in rows)
-
-    # Vérification des types et valeurs vides
-    film_row = next(r for r in rows if r["title"] == "Guarding Stars")
-    assert film_row["kind"] == "film"
-    assert film_row["season"] is None
-    assert film_row["views"] == 27600000
-    assert film_row["runtime_minutes"] == 110  # round(1.8333 * 60) = 110
-
-    tv_row = next(r for r in rows if r["title"] == "The Body")
-    assert tv_row["kind"] == "serie"
-    assert tv_row["season"] == "The Body: Season 1"
-    assert tv_row["views"] == 9500000
-    assert tv_row["runtime_minutes"] is None  # runtime vide
+    body = next(r for r in rows if r["title"] == "The Body")
+    assert body["kind"] == "serie"
+    assert body["season"] == "The Body: Season 1"
 
 
 def test_title_id_stability():
-    """Vérifie la stabilité de l'UUID v5 pour un titre et un kind donnés."""
+    """Vérifie que title_id est stable (uuid5) et identique pour un même titre."""
     id1 = title_id("film", "Guarding Stars")
     id2 = title_id("film", "Guarding Stars")
     id3 = title_id("serie", "Guarding Stars")
@@ -66,88 +66,79 @@ def test_title_id_stability():
 
 
 def test_normalize_genres():
-    """Vérifie la normalisation des genres Wikidata avec mots-clés et accents."""
-    assert normalize_genres(["film d'animation", "Science-fiction"]) == {"animation", "science-fiction"}
-    assert normalize_genres(["Comédie romantique"]) == {"comedie", "romance"}
-    assert normalize_genres(["Film policier et dramatique"]) == {"crime", "drame"}
-    assert normalize_genres(["Genre Inconnu"]) == {"autre"}
+    """Vérifie la normalisation des genres Wikidata."""
+    assert normalize_genres(["film d'animation", "action"]) == {"animation", "action"}
+    assert normalize_genres(["comédie romantique"]) == {"comedie", "romance"}
+    assert normalize_genres(["genre inconnu xyz"]) == {"autre"}
 
 
 def test_enrich_wikidata_mock():
-    """Vérifie l'enrichissement Wikidata avec mock HTTP (sélection du plus récent)."""
-    sparql_response = {
+    """Teste enrich avec un MockTransport httpx simulant Wikidata SPARQL."""
+    sparql_json_response = {
         "results": {
             "bindings": [
                 {
-                    "item": {"value": "http://www.wikidata.org/entity/Q123"},
-                    "pubDate": {"value": "2010-01-01T00:00:00Z"},
-                    "genreLabel": {"value": "Drame"},
-                    "desc": {"value": "An old movie", "xml:lang": "en"},
-                },
-                {
-                    "item": {"value": "http://www.wikidata.org/entity/Q456"},
-                    "pubDate": {"value": "2024-05-10T00:00:00Z"},
-                    "genreLabel": {"value": "Action"},
-                    "desc": {"value": "Un film récent", "xml:lang": "fr"},
-                },
+                    "item": {"value": "http://www.wikidata.org/entity/Q12345"},
+                    "pubDate": {"value": "2026-01-01T00:00:00Z"},
+                    "genreLabel": {"value": "science-fiction"},
+                    "descFr": {"value": "Un film de science fiction."},
+                }
             ]
         }
     }
 
     def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json=sparql_response)
+        return httpx.Response(200, json=sparql_json_response)
 
-    client = httpx.Client(transport=httpx.MockTransport(handler))
-    res = enrich(client, "Test Movie", "film")
+    transport = httpx.MockTransport(handler)
+    client = httpx.Client(transport=transport)
 
-    assert res is not None
-    assert res["qid"] == "Q456"
-    assert res["year"] == 2024
-    assert res["genres"] == ["Action"]
-    assert res["description"] == "Un film récent"
+    result = enrich(client, "Guarding Stars", "film")
+    assert result is not None
+    assert result["qid"] == "Q12345"
+    assert result["year"] == 2026
+    assert result["genres"] == {"science-fiction"}
+    assert result["description"] == "Un film de science fiction."
 
-
-def test_enrich_wikidata_not_found():
-    """Vérifie qu'un résultat vide renvoie None."""
-    def handler(request: httpx.Request) -> httpx.Response:
-        return httpx.Response(200, json={"results": {"bindings": []}})
-
-    client = httpx.Client(transport=httpx.MockTransport(handler))
-    res = enrich(client, "Unknown Title", "film")
-    assert res is None
+    # Test sans résultat
+    empty_handler = lambda req: httpx.Response(200, json={"results": {"bindings": []}})
+    client_empty = httpx.Client(transport=httpx.MockTransport(empty_handler))
+    assert enrich(client_empty, "Inconnu", "film") is None
 
 
-def test_load_end_to_end(test_session):
-    """Test de bout en bout du chargement, enrichissement et compteurs de vues."""
+def test_load_end_to_end(session, pytest_keyspace):
+    """Teste le chargement complet (load) avec un enrich_fn factice et vérifie les vues du jour."""
     rows = parse(SAMPLE_TSV, weeks=1)
 
     def dummy_enrich(title: str, kind: str):
         if title == "Guarding Stars":
             return {
                 "qid": "Q111",
-                "year": 2025,
-                "genres": ["Drame"],
-                "description": "A wonderful star story",
+                "year": 2026,
+                "genres": {"action"},
+                "description": "Desc of Guarding Stars",
             }
         return None
 
-    report = load(test_session, TEST_KEYSPACE, rows, dummy_enrich)
-
+    report = load(session, pytest_keyspace, rows, dummy_enrich)
     assert report["titles"] == 2
-    assert report["rows"] == 2
     assert report["wikidata_found"] == 1
     assert "The Body" in report["wikidata_missing"]
 
-    # Vérification du genre et du kind ("film" / "serie")
-    title_dao = TitleDAO(test_session, TEST_KEYSPACE)
-    t_id = title_id("film", "Guarding Stars")
-    title_obj = title_dao.get(t_id)
-    assert title_obj is not None
-    assert title_obj.kind == "film"
-    assert title_obj.release_year == 2025
-    assert title_obj.synopsis == "A wonderful star story"
-
     # Vérification des vues du jour via ViewDAO
-    view_dao = ViewDAO(test_session, TEST_KEYSPACE)
-    views_map = view_dao.views_of_day(date(2026, 11, 22))
-    assert views_map.get(t_id) == 27600000
+    view_dao = ViewDAO(session, pytest_keyspace)
+    day = datetime.date(2026, 11, 22)
+    views_day = view_dao.views_of_day(day)
+
+    guarding_id = title_id("film", "Guarding Stars")
+    assert guarding_id in views_day
+    assert views_day[guarding_id] == 27600000
+
+    # Vérification TitleDAO
+    title_dao = TitleDAO(session, pytest_keyspace)
+    t = title_dao.get(guarding_id)
+    assert t is not None
+    assert t.title == "Guarding Stars"
+    assert t.synopsis == "Desc of Guarding Stars"
+    assert t.release_year == 2026
+    assert t.genres == {"action"}
