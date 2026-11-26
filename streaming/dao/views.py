@@ -23,9 +23,18 @@ class ViewDAO:
         self._stmt_update_view_count = session.prepare(
             f"UPDATE {keyspace}.title_stats SET view_count = view_count + 1 WHERE title_id = ?"
         )
+        # UPDATE Q7 (with custom count) : title_stats.view_count
+        self._stmt_add_views_stats = session.prepare(
+            f"UPDATE {keyspace}.title_stats SET view_count = view_count + ? WHERE title_id = ?"
+        )
         # UPDATE Q8 : daily_views_by_title.view_count
         self._stmt_update_daily_view_count = session.prepare(
             f"UPDATE {keyspace}.daily_views_by_title SET view_count = view_count + 1 "
+            "WHERE view_date = ? AND title_id = ?"
+        )
+        # UPDATE Q8 (with custom count) : daily_views_by_title.view_count
+        self._stmt_add_views_daily = session.prepare(
+            f"UPDATE {keyspace}.daily_views_by_title SET view_count = view_count + ? "
             "WHERE view_date = ? AND title_id = ?"
         )
         # SELECT Q6 : history per user
@@ -55,6 +64,11 @@ class ViewDAO:
         # Counter updates (separate)
         self._session.execute(self._stmt_update_view_count, (title_id,))
         self._session.execute(self._stmt_update_daily_view_count, (viewed_at.date(), title_id))
+
+    def add_views(self, title_id: uuid.UUID, day: date, count: int) -> None:
+        """Incrémente les compteurs de vues de `count` pour title_stats et daily_views_by_title, sans écrire d'historique."""
+        self._session.execute(self._stmt_add_views_stats, (count, title_id))
+        self._session.execute(self._stmt_add_views_daily, (count, day, title_id))
 
     def history(self, user_id: uuid.UUID, limit: int = 20) -> List[Dict]:
         """Retourne l'historique de visionnage d'un utilisateur."""
