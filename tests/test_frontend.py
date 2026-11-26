@@ -9,6 +9,7 @@ import django
 django.setup()
 
 from django.test import Client
+from django.core.servers.basehttp import get_internal_wsgi_application
 from frontend import api_client
 
 
@@ -16,6 +17,12 @@ from frontend import api_client
 def client():
     """Client de test Django."""
     return Client()
+
+
+def test_wsgi_application():
+    """Vérifie que l'application WSGI interne peut être chargée et est appelable."""
+    app = get_internal_wsgi_application()
+    assert callable(app)
 
 
 def test_home_view(monkeypatch, client):
