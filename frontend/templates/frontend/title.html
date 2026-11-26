@@ -1,0 +1,67 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}{{ title_data.title.title }} - StreamingPlatform{% endblock %}
+
+{% block content %}
+<div class="card">
+    <p><a href="{% url 'home' %}">&larr; Retour à l'accueil</a></p>
+    
+    <h2>{{ title_data.title.title }}</h2>
+    <p>
+        <strong>Type :</strong> {{ title_data.title.kind|default:"film" }} |
+        <strong>Année :</strong> {{ title_data.title.release_year|default:"-" }}
+    </p>
+    <p>
+        <strong>Genres :</strong>
+        {% if title_data.title.genres %}
+            {% for g in title_data.title.genres %}<span class="badge"><a href="{% url 'genre_detail' g %}">{{ g }}</a></span> {% endfor %}
+        {% else %}
+            -
+        {% endif %}
+    </p>
+    <hr style="border-color: #333;">
+    <p>
+        <strong>Vues totales :</strong> {{ title_data.views|default:0 }} |
+        <strong>Note moyenne :</strong> {{ title_data.average_rating|default:"Aucune" }} / 5 ({{ title_data.rating_count|default:0 }} avis)
+    </p>
+</div>
+
+<div class="card">
+    <h3>Donner un avis</h3>
+
+    {% if success_msg %}
+    <div class="alert-success">{{ success_msg }}</div>
+    {% endif %}
+
+    {% if error_msg %}
+    <div class="alert-error">{{ error_msg }}</div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="margin-bottom: 1rem;">
+            <label for="user_id" style="display: block; margin-bottom: 0.3rem;">Identifiant utilisateur (UUID) :</label>
+            <input type="text" id="user_id" name="user_id" value="{{ form_data.user_id|default:'' }}" required style="width: 100%; max-width: 400px;">
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label for="rating" style="display: block; margin-bottom: 0.3rem;">Note (1 à 5) :</label>
+            <select id="rating" name="rating" required style="width: 100%; max-width: 150px;">
+                <option value="">-- Choisir --</option>
+                <option value="5" {% if form_data.rating == "5" %}selected{% endif %}>5 - Excellent</option>
+                <option value="4" {% if form_data.rating == "4" %}selected{% endif %}>4 - Très bon</option>
+                <option value="3" {% if form_data.rating == "3" %}selected{% endif %}>3 - Moyen</option>
+                <option value="2" {% if form_data.rating == "2" %}selected{% endif %}>2 - Décevant</option>
+                <option value="1" {% if form_data.rating == "1" %}selected{% endif %}>1 - Mauvais</option>
+            </select>
+        </div>
+
+        <div style="margin-bottom: 1rem;">
+            <label for="comment" style="display: block; margin-bottom: 0.3rem;">Commentaire (optionnel) :</label>
+            <textarea id="comment" name="comment" rows="3" style="width: 100%; max-width: 500px; background: #222; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 0.5rem;">{{ form_data.comment|default:'' }}</textarea>
+        </div>
+
+        <button type="submit">Envoyer l'avis</button>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Genre : {{ genre }} - StreamingPlatform{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Titres du genre : {{ genre }}</h2>
+    <p><a href="{% url 'home' %}">&larr; Retour à l'accueil</a></p>
+
+    {% if titles %}
+    <table>
+        <thead>
+            <tr>
+                <th>Titre</th>
+                <th>Type</th>
+                <th>Année</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in titles %}
+            <tr>
+                <td><a href="{% url 'title_detail' t.title_id %}">{{ t.title }}</a></td>
+                <td><span class="badge">{{ t.kind|default:"film" }}</span></td>
+                <td>{{ t.release_year|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucun titre trouvé pour ce genre.</p>
+    {% endif %}
+</div>
+{% endblock %}

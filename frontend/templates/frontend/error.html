@@ -1,0 +1,11 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Service indisponible - StreamingPlatform{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align: center; padding: 3rem;">
+    <h2 style="color: #e50914; font-size: 2rem;">503 - Service Indisponible</h2>
+    <p style="font-size: 1.1rem; margin: 1.5rem 0;">{{ message }}</p>
+    <p><a href="{% url 'home' %}">&larr; Retour à l'accueil</a></p>
+</div>
+{% endblock %}
