@@ -1,0 +1,120 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 31,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T00:09:06+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198558, Requested 6077. Please try again in 33m22.32s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198543, Requested 6743. Please try again in 38m3.551999999s. Need more tokens? Upgrade to Dev Tier "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198520, Requested 6743. Please try again in 37m53.616s. Need more tokens? Upgrade to Dev Tier today"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5068, Requested 6392. Please try again in 25.95s. Need more tokens? Upgrade to Dev Tier today at ht"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4364, Requested 5788. Please try again in 16.14s. Need more tokens? Upgrade to Dev Tier today at ht"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3008, Requested 6198. Please try again in 9.045s. Need more tokens? Upgrade to Dev Tier today at ht"
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Request too large for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1024. The request's expected output tokens exceed the enforced limit; reduce max_tokens ("
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Request too large for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on output tokens per minute (OTPM): Limit 1000, Requested 1024. The request's expected output tokens exceed the enforced limit; reduce max_tokens ("
+    }
+  ],
+  "latency_s": 48.36,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_46edda5c-52ab-49ae-8585-44e8da93d7cc",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"Tests des DAO sur un keyspace de test dédié.\\\"\\\"\\\"\\n\\nimport uuid\\nfrom datetime import date, datetime, timezone\\n\\nimport pytest\\n\\nfrom streaming.dao import RatingDAO, StatsDAO, TitleDAO, UserDAO, ViewDAO\\nfrom streaming.models import Title, User\\nfrom streaming.schema import create_schema, drop_schema\\n\\nKS = \\\"streaming_test_dao\\\"\\n\\n\\n@pytest.fixture(scope=\\\"module\\\")\\ndef ks(session):\\n    create_schema(session, KS, replication_factor=3)\\n    yield KS\\n    drop_schema(session, KS)\\n\\n\\ndef _make_title(title_id\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-93bef9d9-aa3b-4f09-bc82-8ee1a1e1adb2",
+    "object": "chat.completion",
+    "created": 1795651745,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "98s5y81qn",
+              "type": "function",
+              "function": {
+                "name": "write_file",
+                "arguments": "{\"content\":\"\\\"\\\"\\\"Tests des DAO sur un keyspace de test dédié.\\\"\\\"\\\"\\n\\nimport uuid\\nfrom datetime import date, datetime, timezone\\n\\nimport pytest\\n\\nfrom streaming.dao import RatingDAO, StatsDAO, TitleDAO, UserDAO, ViewDAO\\nfrom streaming.models import Title, User\\nfrom streaming.schema import create_schema, drop_schema\\n\\nKS = \\\"streaming_test_dao\\\"\\n\\n\\n@pytest.fixture(scope=\\\"module\\\")\\ndef ks(session):\\n    create_schema(session, KS, replication_factor=3)\\n    yield KS\\n    drop_schema(session, KS)\\n\\n\\ndef _make_title(title_id\",\"path\":\"tests/test_dao.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.089024706,
+      "prompt_tokens": 6259,
+      "prompt_time": 0.445874888,
+      "completion_tokens": 159,
+      "completion_time": 0.649971838,
+      "total_tokens": 6418,
+      "total_time": 1.095846726
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_21e59ac2de",
+    "x_groq": {
+      "id": "req_01m8ajycvfe2etx1g67qqc5cnr",
+      "seed": 1695419442
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 6259,
+    "output_tokens": 159
+  }
+}

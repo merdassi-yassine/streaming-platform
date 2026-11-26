@@ -1,0 +1,11 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 42,
+  "agent": "reviewer",
+  "kind": "review",
+  "timestamp": "2026-11-26T00:13:20+00:00",
+  "iteration": 1,
+  "review": "Critères :\n✗ services.py n'importe pas cassandra et n'écrit aucune requête CQL  \n✓ top10 renvoie au plus 10 titres triés par vues décroissantes  \n✓ rate lève LookupError pour un titre ou un utilisateur inconnu  \n✗ tests/test_dao.py couvre les 5 classes DAO (au moins 7 tests)  \n? tests/test_services.py couvre les 3 services (au moins 4 tests)  \n? les keyspaces de test sont dédiés et supprimés à la fin ; « streaming » n'est jamais utilisé  \n\nRemarques :  \n- BLOQUANT : `tests/test_dao.py` est syntaxiquement invalide (déclaration de fonction incomplète).  \n- À AMÉLIORER : les tests ne couvrent pas explicitement les cas d'erreur de DAO (ex. ValueError pour note hors 1..5).  \n- MINEUR : import de `timezone` non utilisé dans `tests/test_dao.py`.  \n\nRecommandation : DEMANDER DES CORRECTIONS — le fichier de test incomplet empêche l'exécution des tests.",
+  "steps": 1,
+  "stop_reason": "done"
+}

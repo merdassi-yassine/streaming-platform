@@ -1,0 +1,120 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 63,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T00:20:46+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196935, Requested 4833. Please try again in 12m43.776s. Need more tokens? Upgrade to Dev Tier today"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196923, Requested 4833. Please try again in 12m38.592s. Need more tokens? Upgrade to Dev Tier today"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196900, Requested 4853. Please try again in 12m37.296s. Need more tokens? Upgrade to Dev Tier today"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 197633, Requested 4705. Please try again in 16m50.016s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 197621, Requested 4680. Please try again in 16m34.031999999s. Need more tokens? Upgrade to Dev Tier "
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 197597, Requested 4705. Please try again in 16m34.464s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 2600, Requested 5028. Please try again in 5.382857142s. Need more tokens? Upgrade to Dev Tier "
+    },
+    {
+      "model": "qwen/qwen3.8-27b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `qwen/qwen3.8-27b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on input tokens per minute (ITPM): Limit 7000, Used 1994, Requested 5028. Please try again in 188.571428ms. Need more tokens? Upgrade to Dev Tier "
+    }
+  ],
+  "latency_s": 47.2,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "brk144dsk",
+      "name": "read_file",
+      "content": "{\"ok\": false, \"refused\": true, \"error\": \"'streaming/services.py' a déjà été lu 2 fois : ne le relis plus, écris maintenant tes fichiers avec write_file\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-1e40dc48-5fc8-4cf5-82d6-e1c2edaa8228",
+    "object": "chat.completion",
+    "created": 1795652445,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "afkndkj4b",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"tests/test_dao.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.023888785,
+      "prompt_tokens": 5028,
+      "prompt_time": 0.376675289,
+      "completion_tokens": 29,
+      "completion_time": 0.086635301,
+      "total_tokens": 5057,
+      "total_time": 0.46331059
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_8999620a6e",
+    "x_groq": {
+      "id": "req_01m8akkrqqevea0n6kky41qmta",
+      "seed": 1972506081
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 5028,
+    "output_tokens": 29
+  }
+}

@@ -1,0 +1,18 @@
+*** Error compiling 'tests/test_dao.py'...
+  File "tests/test_dao.py", line 22
+    def _make_title(title_id
+                   ^
+SyntaxError: '(' was never closed
+
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-e836953af574 Creating 
+ Container streaming-platform-tests-run-e836953af574 Created 
+

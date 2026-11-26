@@ -1,0 +1,11 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 129,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T00:36:43+00:00",
+  "iteration": 3,
+  "decision": "changes",
+  "feedback": "Très bien : 9 tests passent. Les 4 échecs viennent d'un bug de la DAO (T002) révélé par tes tests : dans streaming/dao/titles.py, la requête _stmt_get_q1 est écrite sur deux chaînes et la 2e ('duration_minutes, episodes_count FROM {keyspace}.title_by_id ...') n'a PAS le préfixe f, donc '{keyspace}' part tel quel à Cassandra. Lis streaming/dao/titles.py, ajoute le préfixe f à cette 2e chaîne (et vérifie les autres requêtes du fichier), puis réécris le fichier complet. Ne modifie pas les tests sauf s'ils sont faux.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

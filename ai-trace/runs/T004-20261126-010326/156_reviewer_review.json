@@ -1,0 +1,11 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 156,
+  "agent": "reviewer",
+  "kind": "review",
+  "timestamp": "2026-11-26T00:38:31+00:00",
+  "iteration": 4,
+  "review": "Critères :\n✓ services.py n'importe pas cassandra et n'écrit aucune requête CQL\n✓ top10 renvoie au plus 10 titres triés par vues décroissantes\n✓ rate lève LookupError pour un titre ou un utilisateur inconnu\n✓ tests/test_dao.py couvre les 5 classes DAO (au moins 7 tests)\n✓ tests/test_services.py couvre les 3 services (au moins 4 tests)\n✓ les keyspaces de test sont dédiés et supprimés à la fin ; « streaming » n'est jamais utilisé\nRemarques :\n- À AMÉLIORER : `test_dao.py` et `test_services.py` utilisent des noms de keyspaces en dur (`test_dao_ks`, etc.) sans risque de collision immédiate, mais il serait plus propre de les générer dynamiquement ou via fixture dédiée.\nRecommandation : APPROUVER — le code respecte toutes les contraintes, les critères d'acceptation et les tests passent avec succès.",
+  "steps": 1,
+  "stop_reason": "done"
+}

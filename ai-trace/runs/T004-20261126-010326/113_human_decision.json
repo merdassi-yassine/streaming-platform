@@ -1,0 +1,11 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 113,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T00:34:45+00:00",
+  "iteration": 2,
+  "decision": "changes",
+  "feedback": "Itération précédente : aucune écriture (relectures en boucle, refusées). NE RELIS RIEN : services.py est correct et tu connais les signatures (voir la tâche). Écris directement, un write_file chacun, contenu complet et court (moins de 60 lignes) : tests/test_dao.py (TitleDAO, UserDAO), tests/test_dao_activity.py (RatingDAO, ViewDAO, StatsDAO), tests/test_services.py (CatalogService, TrendingService, ReviewService). Chaque fichier : fixture de module qui appelle create_schema(session, KS, replication_factor=3) puis drop_schema(session, KS), keyspaces streaming_test_dao / streaming_test_activity / streaming_test_services.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

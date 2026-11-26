@@ -1,0 +1,24 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 125,
+  "agent": "orchestrator",
+  "kind": "test_run",
+  "timestamp": "2026-11-26T00:36:20+00:00",
+  "iteration": 3,
+  "command": [
+    "docker",
+    "compose",
+    "--profile",
+    "tests",
+    "run",
+    "--rm",
+    "tests",
+    "sh",
+    "-c",
+    "python -m compileall -q streaming tests && pytest -v -p no:cacheprovider tests/"
+  ],
+  "exit_code": 1,
+  "passed": false,
+  "log": "tests_iter3.log",
+  "tail": "cassandra.protocol.SyntaxException: <Error from server: code=2000 [Syntax error in CQL query] message=\"line 1:100 no viable alternative at input '{' (...synopsis, duration_minutes, episodes_count FROM [{]...)\">\n=============================== warnings summary ===============================\ntests/test_dao.py::test_rating_dao_and_stats\ntests/test_dao.py::test_rating_dao_and_stats\n  /workspace/streaming/dao/ratings.py:69: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).\n    created_at = datetime.utcnow()\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_dao.py::test_title_dao_roundtrip - cassandra.protocol.Synta...\nFAILED tests/test_dao.py::test_list_by_genre - cassandra.protocol.SyntaxExcep...\nFAILED tests/test_services.py::test_services_catalog_and_review - cassandra.p...\nFAILED tests/test_services.py::test_trending_service_top10 - cassandra.protoc...\n============== 4 failed, 9 passed, 2 warnings in 83.17s (0:01:23) ==============\n Container streaming-platform-cassandra2-1 Running \n Container streaming-platform-cassandra3-1 Running \n Container streaming-platform-cassandra1-1 Running \n Container streaming-platform-cassandra1-1 Waiting \n Container streaming-platform-cassandra1-1 Healthy \n Container streaming-platform-cassandra2-1 Waiting \n Container streaming-platform-cassandra2-1 Healthy \n Container streaming-platform-cassandra3-1 Waiting \n Container streaming-platform-cassandra3-1 Healthy \n Container streaming-platform-tests-run-84ef6b48c35d Creating \n Container streaming-platform-tests-run-84ef6b48c35d Created"
+}

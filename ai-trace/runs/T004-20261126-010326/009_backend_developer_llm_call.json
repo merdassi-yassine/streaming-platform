@@ -1,0 +1,90 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 9,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T00:04:32+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-20b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 199118, Requested 3792. Please try again in 20m57.12s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 199104, Requested 3815. Please try again in 21m1.008s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 199080, Requested 3815. Please try again in 20m50.64s. Need more tokens? Upgrade to Dev Tier today "
+    }
+  ],
+  "latency_s": 17.25,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_cc5ed9c2-3a98-440e-9719-f113cae7f22d",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"DAO des utilisateurs (table Q3).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport uuid\\nfrom typing import Optional\\n\\nfrom ..models import User\\n\\n\\nclass UserDAO:\\n    \\\"\\\"\\\"Accès à la table ``user_by_id`` (Q3).\\\"\\\"\\\"\\n\\n    def __init__(self, session, keyspace: str) -> None:\\n        self._session = session\\n        self._ks = keyspace\\n        self._stmt_save = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.user_by_id \\\"\\n            \\\"(user_id, email, username, created_at) VALUES (?, ?, ?, ?)\\\"\\n        )\\n        self._stmt_get = session.prepare(\\n            f\\\"SELECT user_id, email, username, created_at \\\"\\n            f\\\"FROM {keyspace}.user_by_id WHERE user_id = ?\\\"\\n        )\\n\\n    def save(self, user: User) -> None:\\n        \\\"\\\"\\\"Enregistre ou met à jour le profil d'un utilisateur.\\\"\\\"\\\"\\n        self._session.execute(self._stmt_save, (\\n            user.user_id,\\n            user.email,\\n            user.username,\\n            user.created_at,\\n        ))\\n\\n    def get(self, user_id: uuid.UUID) -> Optional[User]:\\n        \\\"\\\"\\\"Retourne le profil d'un utilisateur ou ``None`` s'il n'existe pas.\\\"\\\"\\\"\\n        row = self._session.execute(self._stmt_get, (user_id,)).one()\\n        if row is None:\\n            return None\\n        return User(\\n            user_id=row.user_id,\\n            email=row.email,\\n            username=row.username,\\n            created_at=row.created_at,\\n        )\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-92fbd71d-59d5-4872-8e0d-db4084b270a9",
+    "object": "chat.completion",
+    "created": 1795651472,
+    "model": "openai/gpt-oss-20b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "fc_7fb22e00-dd19-41b0-bdfa-d44482c6a2c4",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"content\":\"\",\"path\":\"streaming/dao/ratings.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.017663215,
+      "prompt_tokens": 3468,
+      "prompt_time": 0.195012346,
+      "completion_tokens": 22,
+      "completion_time": 0.024586515,
+      "total_tokens": 3490,
+      "total_time": 0.219598861
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_565badff47",
+    "x_groq": {
+      "id": "req_01m8ajp2fsewp8eej0rh0jdspg",
+      "seed": 1612738506
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 3468,
+    "output_tokens": 22
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 25,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T00:07:43+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198711, Requested 6484. Please try again in 37m24.24s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198700, Requested 5669. Please try again in 31m27.408s. Need more tokens? Upgrade to Dev Tier today"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 198677, Requested 5652. Please try again in 31m10.128s. Need more tokens? Upgrade to Dev Tier today"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4590, Requested 6021. Please try again in 19.5825s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3880, Requested 6021. Please try again in 14.2575s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 2513, Requested 6021. Please try again in 4.005s. Need more tokens? Upgrade to Dev Tier today at ht"
+    }
+  ],
+  "latency_s": 32.66,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_129ef9ca-7a4d-47b0-9ffb-ab36c2780aba",
+      "name": "write_file",
+      "content": "{\"ok\": true, \"written\": \"streaming/services.py\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-971a13e7-5eef-4a12-a357-98df08fc5c29",
+    "object": "chat.completion",
+    "created": 1795651663,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "cww40jp2y",
+              "type": "function",
+              "function": {
+                "name": "write_file",
+                "arguments": "{\"content\":\"\\\"\\\"\\\"Tests des DAO sur un keyspace de test dédié.\\\"\\\"\\\"\\n\\nimport uuid\\nfrom datetime import date, datetime, timezone\\n\\nimport pytest\\n\\nfrom streaming.dao import RatingDAO, StatsDAO, TitleDAO, UserDAO, ViewDAO\\nfrom streaming.models import Title, User\\nfrom streaming.schema import create_schema, drop_schema\\n\\nKS = \\\"streaming_test_dao\\\"\\n\\n\\n@pytest.fixture(scope=\\\"module\\\")\\ndef ks(session):\\n    create_schema(session, KS, replication_factor=3)\\n    yield KS\\n    drop_schema(session, KS)\\n\\n\\ndef _make_title(title_id\",\"path\":\"tests/test_dao.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.022495006,
+      "prompt_tokens": 5813,
+      "prompt_time": 0.495493681,
+      "completion_tokens": 159,
+      "completion_time": 0.665849914,
+      "total_tokens": 5972,
+      "total_time": 1.161343595
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_8999620a6e",
+    "x_groq": {
+      "id": "req_01m8ajvw22e4p9mg9205mct1mv",
+      "seed": 378662121
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 5813,
+    "output_tokens": 159
+  }
+}

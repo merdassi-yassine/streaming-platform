@@ -1,0 +1,169 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /usr/local/bin/python3.13
+rootdir: /workspace
+configfile: pytest.ini
+collecting ... collected 13 items
+
+tests/test_cluster.py::test_version_cassandra_5 PASSED                   [  7%]
+tests/test_cluster.py::test_trois_noeuds_visibles_et_up PASSED           [ 15%]
+tests/test_cluster.py::test_replication_rf3 PASSED                       [ 23%]
+tests/test_dao.py::test_title_dao_roundtrip FAILED                       [ 30%]
+tests/test_dao.py::test_user_dao_roundtrip PASSED                        [ 38%]
+tests/test_dao.py::test_list_by_genre FAILED                             [ 46%]
+tests/test_dao.py::test_rating_dao_and_stats PASSED                      [ 53%]
+tests/test_dao.py::test_view_dao_history_and_day PASSED                  [ 61%]
+tests/test_schema.py::test_create_schema_and_idempotence PASSED          [ 69%]
+tests/test_schema.py::test_primary_keys_and_clustering PASSED            [ 76%]
+tests/test_schema.py::test_drop_schema PASSED                            [ 84%]
+tests/test_services.py::test_services_catalog_and_review FAILED          [ 92%]
+tests/test_services.py::test_trending_service_top10 FAILED               [100%]
+
+=================================== FAILURES ===================================
+___________________________ test_title_dao_roundtrip ___________________________
+
+session = <cassandra.cluster.Session object at 0x7c5aa55306e0>
+schema_dao = None
+
+    def test_title_dao_roundtrip(session, schema_dao):
+>       dao = TitleDAO(session, KS_DAO)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_dao.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/dao/titles.py:32: in __init__
+    self._stmt_get_q1 = session.prepare(
+cassandra/cluster.py:3188: in cassandra.cluster.Session.prepare
+    raise
+cassandra/cluster.py:3185: in cassandra.cluster.Session.prepare
+    response = future.result().one()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.protocol.SyntaxException: <Error from server: code=2000 [Syntax error in CQL query] message="line 1:100 no viable alternative at input '{' (...synopsis, duration_minutes, episodes_count FROM [{]...)">
+
+cassandra/cluster.py:5013: SyntaxException
+------------------------------ Captured log call -------------------------------
+ERROR    cassandra.cluster:titles.py:32 Error preparing query:
+Traceback (most recent call last):
+  File "cassandra/cluster.py", line 3185, in cassandra.cluster.Session.prepare
+  File "cassandra/cluster.py", line 5013, in cassandra.cluster.ResponseFuture.result
+    raise self._final_exception
+cassandra.protocol.SyntaxException: <Error from server: code=2000 [Syntax error in CQL query] message="line 1:100 no viable alternative at input '{' (...synopsis, duration_minutes, episodes_count FROM [{]...)">
+______________________________ test_list_by_genre ______________________________
+
+session = <cassandra.cluster.Session object at 0x7c5aa55306e0>
+schema_dao = None
+
+    def test_list_by_genre(session, schema_dao):
+>       dao = TitleDAO(session, KS_DAO)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_dao.py:49: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/dao/titles.py:32: in __init__
+    self._stmt_get_q1 = session.prepare(
+cassandra/cluster.py:3188: in cassandra.cluster.Session.prepare
+    raise
+cassandra/cluster.py:3185: in cassandra.cluster.Session.prepare
+    response = future.result().one()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.protocol.SyntaxException: <Error from server: code=2000 [Syntax error in CQL query] message="line 1:100 no viable alternative at input '{' (...synopsis, duration_minutes, episodes_count FROM [{]...)">
+
+cassandra/cluster.py:5013: SyntaxException
+------------------------------ Captured log call -------------------------------
+ERROR    cassandra.cluster:titles.py:32 Error preparing query:
+Traceback (most recent call last):
+  File "cassandra/cluster.py", line 3185, in cassandra.cluster.Session.prepare
+    response = future.result().one()
+  File "cassandra/cluster.py", line 5013, in cassandra.cluster.ResponseFuture.result
+    raise self._final_exception
+cassandra.protocol.SyntaxException: <Error from server: code=2000 [Syntax error in CQL query] message="line 1:100 no viable alternative at input '{' (...synopsis, duration_minutes, episodes_count FROM [{]...)">
+_______________________ test_services_catalog_and_review _______________________
+
+session = <cassandra.cluster.Session object at 0x7c5aa55306e0>
+schema_srv = None
+
+    def test_services_catalog_and_review(session, schema_srv):
+>       t_dao = TitleDAO(session, KS_SRV)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_services.py:21: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/dao/titles.py:32: in __init__
+    self._stmt_get_q1 = session.prepare(
+cassandra/cluster.py:3188: in cassandra.cluster.Session.prepare
+    raise
+cassandra/cluster.py:3185: in cassandra.cluster.Session.prepare
+    response = future.result().one()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.protocol.SyntaxException: <Error from server: code=2000 [Syntax error in CQL query] message="line 1:100 no viable alternative at input '{' (...synopsis, duration_minutes, episodes_count FROM [{]...)">
+
+cassandra/cluster.py:5013: SyntaxException
+------------------------------ Captured log call -------------------------------
+ERROR    cassandra.cluster:titles.py:32 Error preparing query:
+Traceback (most recent call last):
+  File "cassandra/cluster.py", line 3185, in cassandra.cluster.Session.prepare
+    response = future.result().one()
+  File "cassandra/cluster.py", line 5013, in cassandra.cluster.ResponseFuture.result
+    raise self._final_exception
+cassandra.protocol.SyntaxException: <Error from server: code=2000 [Syntax error in CQL query] message="line 1:100 no viable alternative at input '{' (...synopsis, duration_minutes, episodes_count FROM [{]...)">
+_________________________ test_trending_service_top10 __________________________
+
+session = <cassandra.cluster.Session object at 0x7c5aa55306e0>
+schema_srv = None
+
+    def test_trending_service_top10(session, schema_srv):
+>       t_dao = TitleDAO(session, KS_SRV)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_services.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/dao/titles.py:32: in __init__
+    self._stmt_get_q1 = session.prepare(
+cassandra/cluster.py:3188: in cassandra.cluster.Session.prepare
+    raise
+cassandra/cluster.py:3185: in cassandra.cluster.Session.prepare
+    response = future.result().one()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.protocol.SyntaxException: <Error from server: code=2000 [Syntax error in CQL query] message="line 1:100 no viable alternative at input '{' (...synopsis, duration_minutes, episodes_count FROM [{]...)">
+
+cassandra/cluster.py:5013: SyntaxException
+------------------------------ Captured log call -------------------------------
+ERROR    cassandra.cluster:titles.py:32 Error preparing query:
+Traceback (most recent call last):
+  File "cassandra/cluster.py", line 3185, in cassandra.cluster.Session.prepare
+    response = future.result().one()
+  File "cassandra/cluster.py", line 5013, in cassandra.cluster.ResponseFuture.result
+    raise self._final_exception
+cassandra.protocol.SyntaxException: <Error from server: code=2000 [Syntax error in CQL query] message="line 1:100 no viable alternative at input '{' (...synopsis, duration_minutes, episodes_count FROM [{]...)">
+=============================== warnings summary ===============================
+tests/test_dao.py::test_rating_dao_and_stats
+tests/test_dao.py::test_rating_dao_and_stats
+  /workspace/streaming/dao/ratings.py:69: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at = datetime.utcnow()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_dao.py::test_title_dao_roundtrip - cassandra.protocol.Synta...
+FAILED tests/test_dao.py::test_list_by_genre - cassandra.protocol.SyntaxExcep...
+FAILED tests/test_services.py::test_services_catalog_and_review - cassandra.p...
+FAILED tests/test_services.py::test_trending_service_top10 - cassandra.protoc...
+============== 4 failed, 9 passed, 2 warnings in 83.17s (0:01:23) ==============
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-84ef6b48c35d Creating 
+ Container streaming-platform-tests-run-84ef6b48c35d Created 
+

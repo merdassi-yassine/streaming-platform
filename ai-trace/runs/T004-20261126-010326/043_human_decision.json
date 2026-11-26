@@ -1,0 +1,11 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 43,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T00:15:23+00:00",
+  "iteration": 1,
+  "decision": "changes",
+  "feedback": "streaming/services.py est correct (il n'importe pas cassandra, contrairement à ce que dit le relecteur) : ne le modifie pas. tests/test_dao.py est tronqué à 22 lignes. Remplace-le par 3 PETITS fichiers (moins de 60 lignes chacun, un write_file chacun) : tests/test_dao.py (TitleDAO et UserDAO), tests/test_dao_activity.py (RatingDAO, ViewDAO, StatsDAO), tests/test_services.py (les 3 services). Chaque fichier a sa propre fixture de module create_schema/drop_schema sur un keyspace dédié (streaming_test_dao, streaming_test_activity, streaming_test_services).",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

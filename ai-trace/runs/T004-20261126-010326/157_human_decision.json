@@ -1,0 +1,11 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 157,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T00:38:54+00:00",
+  "iteration": 4,
+  "decision": "approve",
+  "feedback": "Approuvé : 16 tests réels OK, bug f-string de la DAO (T002) corrigé. Écart noté : tests/test_services.py contient 3 tests au lieu de 4 demandés (le relecteur ne l'a pas relevé), mais les 3 services et les cas LookupError/top10/moyenne sont couverts.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

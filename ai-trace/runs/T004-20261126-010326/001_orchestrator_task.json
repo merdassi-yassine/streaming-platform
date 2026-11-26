@@ -1,0 +1,41 @@
+{
+  "run_id": "T004-20261126-010326",
+  "seq": 1,
+  "agent": "orchestrator",
+  "kind": "task",
+  "timestamp": "2026-11-26T00:03:26+00:00",
+  "task": {
+    "id": "T004",
+    "title": "Couche métier + tests DAO et métier (fusion T003/T004)",
+    "role": "backend_developer",
+    "prompt_template": "prompts/backend_developer.v2.md",
+    "review": true,
+    "test_command": [
+      "docker",
+      "compose",
+      "--profile",
+      "tests",
+      "run",
+      "--rm",
+      "tests",
+      "sh",
+      "-c",
+      "python -m compileall -q streaming tests && pytest -v -p no:cacheprovider tests/"
+    ],
+    "test_timeout": 1800,
+    "write_allow": [
+      "streaming/",
+      "tests/"
+    ],
+    "description": "NE LIS PAS les fichiers de streaming/dao/ ni streaming/models.py : leurs signatures exactes sont ci-dessous\n(extraites automatiquement du code fusionné). Tu peux lire tests/conftest.py si besoin.\nÉcris des fichiers COURTS (moins de 120 lignes), un write_file par fichier, contenu complet.\n\nImports disponibles :\n  from streaming.models import Title, User\n  from streaming.dao import TitleDAO, UserDAO, RatingDAO, ViewDAO, StatsDAO\n  from streaming.schema import create_schema, drop_schema\nSignatures :\n  @dataclass Title(title_id: uuid.UUID, title: str, kind: str, release_year: int, genres: Set[str],\n                   synopsis: Optional[str], duration_minutes: Optional[int], episodes_count: Optional[int])\n  @dataclass User(user_id: uuid.UUID, email: str, username: str, created_at: datetime.datetime)\n  TitleDAO(session, keyspace) : save(title: Title) ; get(title_id) -> Optional[Title] ;\n                                list_by_genre(genre: str, limit=20) -> List[dict]\n  UserDAO(session, keyspace) : save(user: User) ; get(user_id) -> Optional[User]\n  RatingDAO(session, keyspace) : add(user_id, title_id, rating: int, comment=None, username=None, title=None)\n                                 (ValueError si note hors 1..5) ; list_for_title(title_id, limit=20) -> List[Dict] ;\n                                 list_for_user(user_id, limit=20) -> List[Dict]\n  ViewDAO(session, keyspace) : record_view(user_id, title_id, viewed_at: datetime) ;\n                               history(user_id, limit=20) -> List[Dict] ; views_of_day(day: date) -> Dict[uuid.UUID, int]\n  StatsDAO(session, keyspace) : get(title_id) -> Tuple[int, int, int]  # (vues, somme_notes, nb_notes)\n\n1) `streaming/services.py` — utilise UNIQUEMENT les classes de streaming.dao (aucune requête CQL ici) :\n   - `CatalogService(titles, stats)` : `title_details(title_id)` → dict avec la fiche + `average_rating`\n     (somme/nb, None si aucune note) + `views` ; `titles_of_genre(genre, limit=20)`.\n   - `TrendingService(views, titles)` : `top10(day)` → au plus 10 titres les plus vus du jour, triés par vues\n     décroissantes (égalité départagée par title_id), chacun avec sa fiche.\n   - `ReviewService(users, titles, ratings)` : `rate(user_id, title_id, rating, comment)` → lève LookupError si\n     l'utilisateur ou le titre n'existe pas, sinon enregistre l'avis via RatingDAO.add.\n\n2) Dans chaque fichier de test, une fixture de module fait `create_schema(session, KS, replication_factor=3)`\n   sur un keyspace dédié, puis `drop_schema(session, KS)` à la fin. Utilise la fixture `session` de tests/conftest.py.\n\n3) `tests/test_dao.py` (keyspace `streaming_test_dao`) : aller-retour save/get d'un titre et d'un utilisateur ;\n   list_by_genre ; avis visible côté titre ET côté utilisateur ; note 0 ou 6 → ValueError ; compteurs de stats\n   après 2 avis ; record_view puis history et views_of_day.\n\n4) `tests/test_services.py` (keyspace `streaming_test_services`) : moyenne des notes ; top10 trié et limité à 10\n   (insère 12 titres avec des vues différentes) ; rate avec utilisateur ou titre inconnu → LookupError.\n\nUtilise uuid.uuid4() pour des identifiants uniques.\n",
+    "acceptance": [
+      "services.py n'importe pas cassandra et n'écrit aucune requête CQL",
+      "top10 renvoie au plus 10 titres triés par vues décroissantes",
+      "rate lève LookupError pour un titre ou un utilisateur inconnu",
+      "tests/test_dao.py couvre les 5 classes DAO (au moins 7 tests)",
+      "tests/test_services.py couvre les 3 services (au moins 4 tests)",
+      "les keyspaces de test sont dédiés et supprimés à la fin ; « streaming » n'est jamais utilisé"
+    ]
+  },
+  "branch": "squad/T004-010326"
+}
