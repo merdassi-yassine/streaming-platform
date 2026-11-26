@@ -1,0 +1,132 @@
+"""Services métier de la plateforme de streaming.
+
+Les services utilisent uniquement les DAO fournis dans streaming.dao.
+Ils ne contiennent aucune requête CQL.
+"""
+
+from __future__ import annotations
+
+from datetime import date
+from typing import Dict, List, Optional, Tuple
+
+from streaming.dao import (
+    RatingDAO,
+    StatsDAO,
+    TitleDAO,
+    UserDAO,
+    ViewDAO,
+)
+from streaming.models import Title, User
+
+
+class CatalogService:
+    """Service de catalogue.
+
+    Fournit la fiche d'un titre avec ses statistiques.
+    """
+
+    def __init__(self, titles: TitleDAO, stats: StatsDAO):
+        self.titles = titles
+        self.stats = stats
+
+    def title_details(self, title_id) -> Dict:
+        """Retourne la fiche du titre + moyenne des notes + vues.
+
+        La clé ``average_rating`` vaut ``None`` si aucune note.
+        """
+        title = self.titles.get(title_id)
+        if title is None:
+            raise LookupError(f"Titre {title_id} introuvable")
+        views, rating_sum, rating_count = self.stats.get(title_id)
+        average = None
+        if rating_count:
+            average = rating_sum / rating_count
+        return {
+            "title_id": title.title_id,
+            "title": title.title,
+            "kind": title.kind,
+            "release_year": title.release_year,
+            "genres": title.genres,
+            "synopsis": title.synopsis,
+            "duration_minutes": title.duration_minutes,
+            "episodes_count": title.episodes_count,
+            "average_rating": average,
+            "views": views,
+        }
+
+    def titles_of_genre(self, genre: str, limit: int = 20) -> List[Dict]:
+        """Liste des titres d'un genre, triés par année décroissante."""
+        return self.titles.list_by_genre(genre, limit=limit)
+
+
+class TrendingService:
+    """Service de tendances.
+
+    Fournit les titres les plus vus d'un jour donné.
+    """
+
+    def __init__(self, views: ViewDAO, titles: TitleDAO):
+        self.views = views
+        self.titles = titles
+
+    def top10(self, day: date) -> List[Dict]:
+        """Retourne au plus 10 titres les plus vus du jour ``day``.
+
+        Trié par nombre de vues décroissant, puis par ``title_id`` croissant.
+        Chaque élément contient la fiche du titre.
+        """
+        counts = self.views.views_of_day(day)
+        # Trier par -count, title_id
+        sorted_items = sorted(
+            counts.items(), key=lambda kv: (-kv[1], kv[0])
+        )[:10]
+        result: List[Dict] = []
+        for title_id, _ in sorted_items:
+            title = self.titles.get(title_id)
+            if title is not None:
+                result.append(
+                    {
+                        "title_id": title.title_id,
+                        "title": title.title,
+                        "kind": title.kind,
+                        "release_year": title.release_year,
+                        "genres": title.genres,
+                        "synopsis": title.synopsis,
+                        "duration_minutes": title.duration_minutes,
+                        "episodes_count": title.episodes_count,
+                    }
+                )
+        return result
+
+
+class ReviewService:
+    """Service de notation.
+
+    Permet d'enregistrer un avis d'un utilisateur sur un titre.
+    """
+
+    def __init__(self, users: UserDAO, titles: TitleDAO, ratings: RatingDAO):
+        self.users = users
+        self.titles = titles
+        self.ratings = ratings
+
+    def rate(self, user_id, title_id, rating: int, comment: Optional[str] = None) -> None:
+        """Enregistre un avis.
+
+        Lève ``LookupError`` si l'utilisateur ou le titre n'existe pas.
+        """
+        user = self.users.get(user_id)
+        if user is None:
+            raise LookupError(f"Utilisateur {user_id} introuvable")
+        title = self.titles.get(title_id)
+        if title is None:
+            raise LookupError(f"Titre {title_id} introuvable")
+        self.ratings.add(
+            user_id,
+            title_id,
+            rating,
+            comment=comment,
+            username=user.username,
+            title=title.title,
+        )
+
