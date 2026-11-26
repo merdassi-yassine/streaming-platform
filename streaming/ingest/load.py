@@ -174,7 +174,8 @@ def main() -> None:
     wikidata_client = httpx.Client(timeout=30, follow_redirects=True)
 
     def enrich_many_wrapper(titles: list[str], kind: str):
-        return enrich_many(wikidata_client, titles, kind, pause=1.0)
+        # WIKIDATA_PAUSE : secondes entre deux lots (65 pendant une panne de Wikidata limitée à 1 requête/min).
+        return enrich_many(wikidata_client, titles, kind, pause=float(os.getenv("WIKIDATA_PAUSE", "1.0")))
 
     report = load(session, KEYSPACE, rows, enrich_many_wrapper)
     wikidata_client.close()
@@ -186,7 +187,7 @@ def main() -> None:
     report_path = reports_dir / f"ingest-{now_str}.md"
 
     missing = "\n".join(f"  - {t}" for t in report["wikidata_missing"]) or "  - Aucun"
-    errors = "\n".join(f"  - {t}: {err}" for t, err in report["wikidata_errors"].items()) or "  - Aucune"
+    errors = "\n".join(f"  - {t}: {str(err).splitlines()[0][:160]}" for t, err in report["wikidata_errors"].items()) or "  - Aucune"
 
     report_content = f"""# Rapport d'ingestion – {now_str}
 
