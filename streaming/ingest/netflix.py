@@ -1,20 +1,20 @@
-"""Module d'ingestion des classements Netflix Top 10."""
+"""Module d'ingestion des données Netflix Top 10 (source 1)."""
 
 from __future__ import annotations
 
 import csv
 import io
 import uuid
-from datetime import date
+from datetime import datetime
 from typing import Dict, List, Optional
 import httpx
 
 NETFLIX_URL = "https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv"
 
 
-def fetch(client: httpx.Client) -> str:
-    """Télécharge le fichier TSV Netflix Top 10 et retourne son contenu textuel."""
-    response = client.get(NETFLIX_URL)
+def fetch(http: httpx.Client) -> str:
+    """Télécharge le fichier TSV Netflix brut et renvoie son contenu texte."""
+    response = http.get(NETFLIX_URL)
     response.raise_for_status()
     return response.text
 
@@ -25,34 +25,26 @@ def parse(tsv_text: str, weeks: int = 4) -> List[Dict]:
     reader = csv.DictReader(f, delimiter="\t")
     rows = list(reader)
 
-    if not rows:
-        return []
-
-    # Extraire toutes les semaines uniques triées par ordre chronologique
-    all_weeks = sorted(list({r["week"] for r in rows if r.get("week")}))
-    if not all_weeks:
-        return []
-
-    recent_weeks = set(all_weeks[-weeks:])
+    # Récupérer toutes les semaines uniques triées de la plus ancienne à la plus récente
+    all_weeks = sorted({r["week"] for r in rows if r.get("week")})
+    recent_weeks_set = set(all_weeks[-weeks:]) if all_weeks else set()
 
     parsed_rows = []
     for r in rows:
-        week_str = r.get("week", "").strip()
-        if week_str not in recent_weeks:
+        wk_str = r.get("week", "").strip()
+        if not wk_str or wk_str not in recent_weeks_set:
             continue
 
+        week_date = datetime.strptime(wk_str, "%Y-%m-%d").date()
         category = r.get("category", "").strip()
-        kind = "film" if category.startswith("Films") else "serie"
+        kind = "film" if category.lower().startswith("films") else "serie"
 
         show_title = r.get("show_title", "").strip()
-        season_title = r.get("season_title", "").strip()
-        if not season_title or season_title.upper() == "N/A":
-            season = None
-        else:
-            season = season_title
+        season_title_raw = r.get("season_title", "").strip()
+        season = None if season_title_raw in ("", "N/A") else season_title_raw
 
         try:
-            rank = int(r.get("weekly_rank", 0) or 0)
+            rank = int(r.get("weekly_rank", 0))
         except ValueError:
             rank = 0
 
@@ -72,15 +64,9 @@ def parse(tsv_text: str, weeks: int = 4) -> List[Dict]:
         runtime_minutes = None
         if runtime_raw:
             try:
-                rt_val = float(runtime_raw)
-                runtime_minutes = round(rt_val * 60)
+                runtime_minutes = round(float(runtime_raw) * 60)
             except ValueError:
                 pass
-
-        try:
-            week_date = date.fromisoformat(week_str)
-        except ValueError:
-            continue
 
         parsed_rows.append({
             "week": week_date,

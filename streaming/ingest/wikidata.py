@@ -1,129 +1,114 @@
-"""Module d'enrichissement des métadonnées via Wikidata SPARQL."""
+"""Module d'enrichissement Wikidata (source 2)."""
 
 from __future__ import annotations
 
-import json
+import re
+import unicodedata
 from typing import Dict, List, Optional, Set
 import httpx
 
 SPARQL_URL = "https://query.wikidata.org/sparql"
-USER_AGENT = "streaming-platform-projet-etudiant/1.0"
 
 
 def normalize_genres(labels: List[str]) -> Set[str]:
     """Ramène les libellés Wikidata à notre vocabulaire par mots-clés."""
-    vocabulary = {
-        "science-fiction",
-        "action",
-        "drame",
-        "comedie",
-        "animation",
-        "thriller",
-        "horreur",
-        "fantastique",
-        "romance",
-        "documentaire",
-        "crime",
-        "aventure",
-        "famille",
-        "telerealite",
-    }
-    
-    mapping = {
+    keywords_map = {
         "science-fiction": "science-fiction",
-        "sf": "science-fiction",
         "science fiction": "science-fiction",
         "action": "action",
         "drame": "drame",
-        "dramatique": "drame",
         "comedie": "comedie",
         "comédie": "comedie",
         "animation": "animation",
-        "anime": "animation",
-        "dessin anime": "animation",
         "thriller": "thriller",
-        "suspense": "thriller",
         "horreur": "horreur",
-        "epouvante": "horreur",
         "fantastique": "fantastique",
-        "fantasy": "fantastique",
         "romance": "romance",
-        "sentimentaux": "romance",
+        "romanti": "romance",  # pour romantique / romantique
         "documentaire": "documentaire",
         "crime": "crime",
         "policier": "crime",
-        "gangster": "crime",
         "aventure": "aventure",
         "famille": "famille",
-        "familial": "famille",
         "telerealite": "telerealite",
         "téléréalité": "telerealite",
     }
 
-    found = set()
+    found: Set[str] = {}
     for lbl in labels:
-        lbl_lower = lbl.lower()
-        # Direct match or substring check
-        matched = False
-        for key, target in mapping.items():
-            if key in lbl_lower:
+        # Normalisation sans accents et minuscules
+        norm_lbl = unicodedata.normalize("NFKD", lbl).encode("ascii", "ignore").decode("utf-8").lower()
+        for kw, target in keywords_map.items():
+            norm_kw = unicodedata.normalize("NFKD", kw).encode("ascii", "ignore").decode("utf-8").lower()
+            if norm_kw in norm_lbl:
                 found.add(target)
-                matched = True
-        if not matched:
-            # Check direct vocabulary words
-            for v in vocabulary:
-                if v in lbl_lower:
-                    found.add(v)
-                    matched = True
 
-    if not found:
-        return {"autre"}
-    return found
+    return found if found else {"autre"}
 
 
-def enrich(client: httpx.Client, title: str, kind: str) -> Optional[Dict]:
-    """Interroge Wikidata SPARQL pour trouver QID, année, genres et description."""
-    # Q11424 = film, Q5398426 = television series
-    item_type_q = "wd:Q11424" if kind == "film" else "wd:Q5398426"
+def enrich(http: httpx.Client, title: str, kind: str) -> Optional[Dict]:
+    """Interroge Wikidata en SPARQL pour enrichir un titre (QID, année, genres, description)."""
+    # Échapper les guillemets et antislashs du titre pour la requête SPARQL
+    escaped_title = title.replace("\\", "\\\\").replace('"', '\\"')
+
+    # Instance (wdt:P31/wdt:P279*) : Q11424 (film) ou Q5398426 (série)
+    target_class = "wd:Q11424" if kind == "film" else "wd:Q5398426"
 
     query = f"""
-    SELECT ?item ?itemLabel ?pubDate ?desc ?genreLabel WHERE {{
-      ?item rtw:label-ignored-or-not ?item .
-      SERVICE wikibase:label {{ bd:serviceParam wikibase:language "fr,en". }}
-      ?item rdfs:label "{title}"@en.
-      ?item wdt:P31/wdt:P279* {item_type_q}.
-      OPTIONAL {{ ?item wdt:P577 ?pubDate. }}
-      OPTIONAL {{ ?item wdt:P136 ?genre. }}
+    SELECT ?item ?itemLabel ?pubDate ?seriesStart ?genreLabel ?desc WHERE {{
+      ?item rdt:notused 0 .
+      {{
+        SELECT ?item WHERE {{
+          ?item rdfs:label "{escaped_title}"@en .
+          ?item wdt:P31/wdt:P279* {target_class} .
+        }
+        LIMIT 10
+      }}
+      OPTIONAL {{ ?item wdt:P577 ?pubDate . }}
+      OPTIONAL {{ ?item wdt:P580 ?seriesStart . }}
       OPTIONAL {{
-        {{ ?item schema:description ?desc. FILTER(lang(?desc) = "fr") }}
-        UNION
-        {{ ?item schema:description ?desc. FILTER(lang(?desc) = "en") }}
+        ?item wdt:P136 ?genre .
+        ?genre rdfs:label ?genreLabel .
+        FILTER(LANG(?genreLabel) = "fr")
+      }}
+      OPTIONAL {{
+        ?item schema:description ?desc .
+        FILTER(LANG(?desc) = "fr")
+      }}
+      SERVICE wikibase:label {{ bd:serviceParam wikibase:language "fr,en". }}
+    }
+    """
+
+    # Requête SPARQL propre et optimisée sans variable fictive rdt:notused
+    query = f"""
+    SELECT ?item ?pubDate ?seriesStart ?genreLabel ?desc WHERE {{
+      {{
+        SELECT ?item WHERE {{
+          ?item rdfs:label "{escaped_title}"@en .
+          ?item wdt:P31/wdt:P279* {target_class} .
+        }
+        LIMIT 10
+      }}
+      OPTIONAL {{ ?item wdt:P577 ?pubDate . }}
+      OPTIONAL {{ ?item wdt:P580 ?seriesStart . }}
+      OPTIONAL {{
+        ?item wdt:P136 ?genre .
+        ?genre rdfs:label ?genreLabel .
+        FILTER(LANG(?genreLabel) = "fr")
+      }}
+      OPTIONAL {{
+        ?item schema:description ?desc .
+        FILTER(LANG(?desc) = "fr" || LANG(?desc) = "en")
       }}
     }}
-    LIMIT 10
-    """
-    # Simplified and robust SPARQL query
-    query = f"""
-    SELECT ?item ?pubDate ?desc ?genreLabel WHERE {{
-      ?item rdfs:label "{title}"@en.
-      ?item wdt:P31/wdt:P279* {item_type_q}.
-      OPTIONAL {{ ?item wdt:P577 ?pubDate. }}
-      OPTIONAL {{ ?item wdt:P136 ?genre. 
-                ?genre rdfs:label ?genreLabel. FILTER(lang(?genreLabel) = "fr") }}
-      OPTIONAL {{ ?item schema:description ?desc. FILTER(lang(?desc) = "fr") }}
-    }}
-    LIMIT 50
     """
 
-    headers = {
-        "User-Agent": USER_AGENT,
-        "Accept": "application/sparql-results+json",
-    }
+    headers = {"User-Agent": "streaming-platform-projet-etudiant/1.0"}
+    params = {"query": query, "format": "json"}
 
     try:
-        response = client.get(SPARQL_URL, params={"query": query, "format": "json"}, headers=headers)
-        if response.status_code != 200:
-            return None
+        response = http.get(SPARQL_URL, params=params, headers=headers)
+        response.raise_for_status()
         data = response.json()
     except Exception:
         return None
@@ -132,39 +117,65 @@ def enrich(client: httpx.Client, title: str, kind: str) -> Optional[Dict]:
     if not bindings:
         return None
 
-    qid = None
-    year = None
-    description = None
-    genre_labels = set()
-
+    # Regrouper par ?item (URI)
+    items_map: Dict[str, dict] = {}
     for b in bindings:
-        if not qid and "item" in b:
-            uri = b["item"]["value"]
-            qid = uri.split("/")[-1]
-        if not year and "pubDate" in b:
-            date_str = b["pubDate"]["value"]
-            try:
-                year = int(date_str[:4])
-            except ValueError:
-                pass
-        if not description and "desc" in b:
-            description = b["desc"]["value"]
-        if "genreLabel" in b:
-            genre_labels.add(b["genreLabel"]["value"])
+        item_uri = b.get("item", {}).get("value")
+        if not item_uri:
+            continue
+        if item_uri not in items_map:
+            items_map[item_uri] = {
+                "qid": item_uri.split("/")[-1],
+                "dates": [],
+                "genres": set(),
+                "desc_fr": None,
+                "desc_en": None,
+            }
 
-    if not qid:
+        # Date P577 ou P580
+        pub_date = b.get("pubDate", {}).get("value")
+        series_start = b.get("seriesStart", {}).get("value")
+        for d_str in [pub_date, series_start]:
+            if d_str:
+                try:
+                    year_val = int(d_str[:4])
+                    items_map[item_uri]["dates"].append(year_val)
+                except ValueError:
+                    pass
+
+        # Genre label
+        g_label = b.get("genreLabel", {}).get("value")
+        if g_label:
+            items_map[item_uri]["genres"].add(g_label)
+
+        # Description
+        desc_node = b.get("desc", {})
+        desc_val = desc_node.get("value")
+        desc_lang = desc_node.get("xml:lang")
+        if desc_val:
+            if desc_lang == "fr":
+                items_map[item_uri]["desc_fr"] = desc_val
+            elif desc_lang == "en" and not items_map[item_uri]["desc_en"]:
+                items_map[item_uri]["desc_en"] = desc_val
+
+    if not items_map:
         return None
 
-    # Fallback description en si pas de fr (handled by query or checking bindings)
-    if not description:
-        # try another pass if needed or accept None
-        pass
+    # Calculer l'année pour chaque item (min des dates, ou 0)
+    scored_items = []
+    for item_uri, info in items_map.items():
+        dates = info["dates"]
+        year = min(dates) if dates else 0
+        desc = info["desc_fr"] or info["desc_en"]
+        scored_items.append((year, item_uri, info, desc))
 
-    genres = normalize_genres(list(genre_labels))
+    # Garder l'élément le plus récent (année max)
+    scored_items.sort(key=lambda x: x[0], reverse=True)
+    best_year, _, best_info, best_desc = scored_items[0]
 
     return {
-        "qid": qid,
-        "year": year,
-        "genres": genres,
-        "description": description,
+        "qid": best_info["qid"],
+        "year": best_year if best_year > 0 else None,
+        "genres": list(best_info["genres"]),
+        "description": best_desc,
     }

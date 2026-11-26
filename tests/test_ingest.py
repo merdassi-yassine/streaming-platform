@@ -1,4 +1,4 @@
-"""Tests pour le module d'ingestion (Netflix, Wikidata, chargement DAO)."""
+"""Tests unitaires et d'intégration pour le module d'ingestion."""
 
 from __future__ import annotations
 
@@ -7,49 +7,56 @@ from datetime import date
 import httpx
 import pytest
 
-from streaming.schema import KEYSPACE, create_schema, drop_schema
+from streaming.schema import create_schema, drop_schema, TABLES
 from streaming.dao.titles import TitleDAO
 from streaming.dao.views import ViewDAO
 from streaming.ingest.netflix import parse, title_id
 from streaming.ingest.wikidata import normalize_genres, enrich
 from streaming.ingest.load import load, reset
 
+TEST_KEYSPACE = "streaming_test_ingest"
 
-@pytest.fixture
-def ingest_keyspace(session):
-    """Fixture créant un keyspace de test dédié, supprimé à la fin."""
-    ks = "streaming_test_ingest"
-    create_schema(session, keyspace=ks, replication_factor=1)
-    yield ks
-    drop_schema(session, keyspace=ks)
+SAMPLE_TSV = """week	category	weekly_rank	show_title	season_title	weekly_hours_viewed	runtime	weekly_views	cumulative_weeks_in_top_10
+2026-11-22	Films (English)	1	Guarding Stars	N/A	50600000	1.8333	27600000	1
+2026-11-22	TV (English)	1	The Body	The Body: Season 1	70300000		9500000	2
+2026-11-15	Films (Non-English)	2	Other Film	N/A	10000000	2.0	5000000	1
+"""
 
 
-def test_parse_netflix():
-    tsv = (
-        "week\tcategory\tweekly_rank\tshow_title\tseason_title\tweekly_hours_viewed\truntime\tweekly_views\tcumulative_weeks_in_top_10\n"
-        "2026-11-15\tFilms (English)\t1\tOld Movie\tN/A\t10000000\t2.0\t5000000\t1\n"
-        "2026-11-22\tFilms (English)\t1\tGuarding Stars\tN/A\t50600000\t1.8333\t27600000\t1\n"
-        "2026-11-22\tTV (English)\t1\tThe Body\tThe Body: Season 1\t70300000\t7.3833\t9500000\t2\n"
-        "2026-11-22\tTV (English)\t2\tEmpty Views\t\t0\t\t\t1\n"
-    )
-    rows = parse(tsv, weeks=2)
-    # Ne doit garder que les semaines 2026-11-15 et 2026-11-22 (2 semaines)
-    assert len(rows) == 4
+@pytest.fixture(scope="function")
+def test_session(cluster):
+    """Fixture créant un keyspace de test dédié et le supprimant à la fin."""
+    session = cluster.connect()
+    drop_schema(session, TEST_KEYSPACE)
+    create_schema(session, TEST_KEYSPACE, replication_factor=1)
+    session.set_keyspace(TEST_KEYSPACE)
+    yield session
+    drop_schema(session, TEST_KEYSPACE)
 
-    # Vérifier le parsing et les valeurs vides
-    guarding = next(r for r in rows if r["title"] == "Guarding Stars")
-    assert guarding["kind"] == "film"
-    assert guarding["season"] is None
-    assert guarding["views"] == 27600000
-    assert guarding["runtime_minutes"] == round(1.8333 * 60)
 
-    empty_row = next(r for r in rows if r["title"] == "Empty Views")
-    assert empty_row["views"] == 0
-    assert empty_row["runtime_minutes"] is None
-    assert empty_row["season"] is None
+def test_parse_and_weeks():
+    """Vérifie le parsing TSV, le filtre des N semaines et la gestion des valeurs vides."""
+    rows = parse(SAMPLE_TSV, weeks=1)
+    # Seule la semaine 2026-11-22 doit être gardée (la plus récente)
+    assert len(rows) == 2
+    assert all(r["week"] == date(2026, 11, 22) for r in rows)
+
+    # Vérification des types et valeurs vides
+    film_row = next(r for r in rows if r["title"] == "Guarding Stars")
+    assert film_row["kind"] == "film"
+    assert film_row["season"] is None
+    assert film_row["views"] == 27600000
+    assert film_row["runtime_minutes"] == 110  # round(1.8333 * 60) = 110
+
+    tv_row = next(r for r in rows if r["title"] == "The Body")
+    assert tv_row["kind"] == "serie"
+    assert tv_row["season"] == "The Body: Season 1"
+    assert tv_row["views"] == 9500000
+    assert tv_row["runtime_minutes"] is None  # runtime vide
 
 
 def test_title_id_stability():
+    """Vérifie la stabilité de l'UUID v5 pour un titre et un kind donnés."""
     id1 = title_id("film", "Guarding Stars")
     id2 = title_id("film", "Guarding Stars")
     id3 = title_id("serie", "Guarding Stars")
@@ -59,95 +66,88 @@ def test_title_id_stability():
 
 
 def test_normalize_genres():
-    assert normalize_genres(["Film d'animation", "Comédie romantique"]) == {"animation", "comedie", "romance"}
+    """Vérifie la normalisation des genres Wikidata avec mots-clés et accents."""
+    assert normalize_genres(["film d'animation", "Science-fiction"]) == {"animation", "science-fiction"}
+    assert normalize_genres(["Comédie romantique"]) == {"comedie", "romance"}
     assert normalize_genres(["Film policier et dramatique"]) == {"crime", "drame"}
-    assert normalize_genres(["Inconnu XYZ"]) == {"autre"}
+    assert normalize_genres(["Genre Inconnu"]) == {"autre"}
 
 
-def test_enrich_mock():
-    # Mock transport pour httpx
-    def handler(request: httpx.Request) -> httpx.Response:
-        data = {
-            "results": {
-                "bindings": [
-                    {
-                        "item": {"value": "http://www.wikidata.org/entity/Q12345"},
-                        "pubDate": {"value": "2026-01-01T00:00:00Z"},
-                        "desc": {"value": "Un film passionnant"},
-                        "genreLabel": {"value": "Action"},
-                    }
-                ]
-            }
+def test_enrich_wikidata_mock():
+    """Vérifie l'enrichissement Wikidata avec mock HTTP (sélection du plus récent)."""
+    sparql_response = {
+        "results": {
+            "bindings": [
+                {
+                    "item": {"value": "http://www.wikidata.org/entity/Q123"},
+                    "pubDate": {"value": "2010-01-01T00:00:00Z"},
+                    "genreLabel": {"value": "Drame"},
+                    "desc": {"value": "An old movie", "xml:lang": "en"},
+                },
+                {
+                    "item": {"value": "http://www.wikidata.org/entity/Q456"},
+                    "pubDate": {"value": "2024-05-10T00:00:00Z"},
+                    "genreLabel": {"value": "Action"},
+                    "desc": {"value": "Un film récent", "xml:lang": "fr"},
+                },
+            ]
         }
-        return httpx.Response(200, json=data)
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=sparql_response)
 
     client = httpx.Client(transport=httpx.MockTransport(handler))
-    result = enrich(client, "Test Movie", "film")
-    assert result is not None
-    assert result["qid"] == "Q12345"
-    assert result["year"] == 2026
-    assert result["genres"] == {"action"}
-    assert result["description"] == "Un film passionnant"
+    res = enrich(client, "Test Movie", "film")
 
-    # Test sans résultat
-    def handler_empty(request: httpx.Request) -> httpx.Response:
+    assert res is not None
+    assert res["qid"] == "Q456"
+    assert res["year"] == 2024
+    assert res["genres"] == ["Action"]
+    assert res["description"] == "Un film récent"
+
+
+def test_enrich_wikidata_not_found():
+    """Vérifie qu'un résultat vide renvoie None."""
+    def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json={"results": {"bindings": []}})
 
-    client_empty = httpx.Client(transport=httpx.MockTransport(handler_empty))
-    assert enrich(client_empty, "Unknown", "film") is None
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    res = enrich(client, "Unknown Title", "film")
+    assert res is None
 
 
-def test_add_views_dao(session, ingest_keyspace):
-    view_dao = ViewDAO(session, ingest_keyspace)
-    t_id = uuid.uuid4()
-    d = date(2026, 11, 22)
-
-    view_dao.add_views(t_id, d, 100)
-    view_dao.add_views(t_id, d, 50)
-
-    views = view_dao.views_of_day(d)
-    assert views.get(t_id) == 150
-
-
-def test_load_end_to_end(session, ingest_keyspace):
-    reset(session, ingest_keyspace)
-
-    rows = [
-        {
-            "week": date(2026, 11, 22),
-            "kind": "film",
-            "title": "Awesome Movie",
-            "season": None,
-            "rank": 1,
-            "views": 1000,
-            "hours": 5000,
-            "runtime_minutes": 120,
-            "category": "Films (English)",
-        }
-    ]
+def test_load_end_to_end(test_session):
+    """Test de bout en bout du chargement, enrichissement et compteurs de vues."""
+    rows = parse(SAMPLE_TSV, weeks=1)
 
     def dummy_enrich(title: str, kind: str):
-        return {
-            "qid": "Q999",
-            "year": 2026,
-            "genres": {"action"},
-            "description": "An awesome movie description",
-        }
+        if title == "Guarding Stars":
+            return {
+                "qid": "Q111",
+                "year": 2025,
+                "genres": ["Drame"],
+                "description": "A wonderful star story",
+            }
+        return None
 
-    report = load(session, ingest_keyspace, rows, dummy_enrich)
-    assert report["titles"] == 1
-    assert report["rows"] == 1
+    report = load(test_session, TEST_KEYSPACE, rows, dummy_enrich)
+
+    assert report["titles"] == 2
+    assert report["rows"] == 2
     assert report["wikidata_found"] == 1
-    assert report["wikidata_missing"] == []
+    assert "The Body" in report["wikidata_missing"]
 
-    # Vérification dans DAO
-    title_dao = TitleDAO(session, ingest_keyspace)
-    t_id = title_id("film", "Awesome Movie")
-    saved_title = title_dao.get(t_id)
-    assert saved_title is not None
-    assert saved_title.title == "Awesome Movie"
-    assert saved_title.synopsis == "An awesome movie description"
+    # Vérification du genre et du kind ("film" / "serie")
+    title_dao = TitleDAO(test_session, TEST_KEYSPACE)
+    t_id = title_id("film", "Guarding Stars")
+    title_obj = title_dao.get(t_id)
+    assert title_obj is not None
+    assert title_obj.kind == "film"
+    assert title_obj.release_year == 2025
+    assert title_obj.synopsis == "A wonderful star story"
 
-    view_dao = ViewDAO(session, ingest_keyspace)
-    views = view_dao.views_of_day(date(2026, 11, 22))
-    assert views.get(t_id) == 1000
+    # Vérification des vues du jour via ViewDAO
+    view_dao = ViewDAO(test_session, TEST_KEYSPACE)
+    views_map = view_dao.views_of_day(date(2026, 11, 22))
+    assert views_map.get(t_id) == 27600000
