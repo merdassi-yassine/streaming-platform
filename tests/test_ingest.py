@@ -160,10 +160,13 @@ def test_load_end_to_end_with_errors(session, pytest_keyspace):
     report = load(session, pytest_keyspace, rows, failing_enrich_many)
     assert len(report["wikidata_errors"]) > 0
     assert "HTTP 503" in list(report["wikidata_errors"].values())[0]
+    # Correction humaine (26/11/2026) : le type enregistré doit être « film » / « serie » comme partout ailleurs.
+    assert TitleDAO(session, pytest_keyspace).get(title_id("film", "Guarding Stars")).kind == "film"
 
     # Test add_views incrémentation
     view_dao = ViewDAO(session, pytest_keyspace)
     day = datetime.date(2026, 11, 22)
     view_dao.add_views(title_id("film", "Guarding Stars"), day, 1000)
     views_day = view_dao.views_of_day(day)
-    assert views_day[title_id("film", "Guarding Stars")] == 1000
+    # load a déjà enregistré les 27 600 000 vues de l'échantillon (titres gardés malgré l'erreur Wikidata)
+    assert views_day[title_id("film", "Guarding Stars")] == 27_600_000 + 1000

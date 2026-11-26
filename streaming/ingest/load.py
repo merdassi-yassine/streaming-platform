@@ -64,10 +64,12 @@ def load(session, keyspace: str, rows: list[dict], enrich_many_fn) -> dict:
         try:
             enriched_dict = enrich_many_fn(titles_list, kind)
         except Exception as e:
+            # Correction humaine (26/11/2026) : sans enrichissement, les titres et leurs vues Netflix
+            # sont quand même enregistrés (avant : « return » → titres perdus en silence).
             err_msg = str(e)
             for t in titles_list:
                 wikidata_errors[t] = err_msg
-            return
+            enriched_dict = {}
 
         for title_str, t_id in titles_dict.items():
             wiki_data = enriched_dict.get(title_str)
@@ -87,7 +89,7 @@ def load(session, keyspace: str, rows: list[dict], enrich_many_fn) -> dict:
                     release_year = wiki_data["year"]
                 if wiki_data.get("genres"):
                     genres = wiki_data["genres"]
-            else:
+            elif title_str not in wikidata_errors:
                 wikidata_missing.append(title_str)
 
             if release_year is None and info["weeks"]:
@@ -96,7 +98,7 @@ def load(session, keyspace: str, rows: list[dict], enrich_many_fn) -> dict:
             title_obj = Title(
                 title_id=t_id,
                 title=title_str,
-                kind="movie" if kind == "film" else "series",
+                kind=kind,  # correction humaine : « film » / « serie » comme dans tout le projet
                 release_year=release_year or 2026,
                 genres=genres,
                 synopsis=synopsis,
@@ -191,7 +193,7 @@ def main() -> None:
 
     report_content = f"""# Rapport d'ingestion – {now_str}
 
-- **Source Netflix** : {netflix_url} (Netflix Top 10 officiel, téléchargé le {downloaded_at})
+- **Source Netflix** : {netflix_url} (Netflix Top 10 officiel ; ingestion du {downloaded_at})
 - **Copie brute conservée** : `{raw_path.as_posix()}`
 - **Source Wikidata** : https://query.wikidata.org/sparql (licence CC0)
 - **Semaines traitées** : {report['weeks']}
