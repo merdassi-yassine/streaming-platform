@@ -67,6 +67,26 @@ services:
         condition: service_healthy
     command: ["pytest", "-v", "--junitxml=reports/tests/latest.xml"]
 
+  # API de la plateforme (code des agents, T005) — profil « app » : docker compose --profile app up -d api
+  # Remplir d'abord la base : docker compose --profile tests run --rm tests python -m demo.seed
+  api:
+    build:
+      context: .
+      dockerfile: docker/tests.Dockerfile
+    profiles: ["app"]
+    environment:
+      CASSANDRA_CONTACT_POINTS: cassandra1,cassandra2,cassandra3
+      KEYSPACE: streaming
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    ports:
+      - "8000:8000"
+    depends_on:
+      cassandra3:
+        condition: service_healthy
+    command: ["uvicorn", "--factory", "streaming.api:build_app", "--host", "0.0.0.0", "--port", "8000"]
+
 volumes:
   cassandra1-data:
   cassandra2-data:

@@ -1,0 +1,15 @@
+GET /health -> 200
+{"nodes_known":3,"nodes_up":3}
+GET /titles/998f9c10-4f14-41b0-91ca-7465e178bdaf -> 200
+{"title":{"title_id":"998f9c10-4f14-41b0-91ca-7465e178bdaf","title":"Le Dernier Signal","kind":"film","release_year":2024,"genres":["science-fiction"],"synopsis":"Synopsis fictif de Le Dernier Signal.","duration_minutes":100,"episodes_count":null},"views":5,"average_rating":4.5,"rating_count":2}
+GET /genres/science-fiction/titles -> 200
+[{"title_id":"ba65bc87-c9ae-4468-b30a-d021e5cd2999","title":"Orbite Basse","kind":"serie","release_year":2025},{"title_id":"998f9c10-4f14-41b0-91ca-7465e178bdaf","title":"Le Dernier Signal","kind":"film","release_year":2024}]
+GET /trending/2026-11-26 -> 200
+[{"title":{"title_id":"998f9c10-4f14-41b0-91ca-7465e178bdaf","title":"Le Dernier Signal","kind":"film","release_year":2024,"genres":["science-fiction"],"synopsis":"Synopsis fictif de Le Dernier Signal.","duration_minutes":100,"episodes_count":null},"views":5},{"title":{"title_id":"481329ef-7ba8-4af0-abc4-6c2a774551e9","title":"Médina Secrète","kind":"serie","release_year":2023,"genres":["drame",
+GET /users/7d3dac07-4121-49fe-8b4b-0ffef7ef07bc/history -> 200
+[{"watched_at":"2026-11-26T02:05:45.732000","title_id":"1c55fa88-2e58-4cd4-8d3d-735927bf82f0","title":"","duration_watched_seconds":0,"completed":false},{"watched_at":"2026-11-26T02:05:45.732000","title_id":"481329ef-7ba8-4af0-abc4-6c2a774551e9","title":"","duration_watched_seconds":0,"completed":false},{"watched_at":"2026-11-26T02:05:45.732000","title_id":"998f9c10-4f14-41b0-91ca-7465e178bdaf","t
+GET /titles/00000000-0000-0000-0000-000000000000 -> 404
+{"detail":"Titre inconnu"}
+POST /ratings note=9 -> 422
+POST /ratings note=4 -> 201
+{"status":"created"}
