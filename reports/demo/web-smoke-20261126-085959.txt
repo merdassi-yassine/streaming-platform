@@ -1,0 +1,10 @@
+### Frontend Django — Thu Nov 26 08:59:59     2026
+200  GET /
+200  GET /genres/science-fiction/
+200  GET /titles/b248137e-1527-417c-8692-2fe74190043b/
+404  GET /titles/00000000-0000-4000-8000-000000000099/
+200  GET /users/8df12d4c-074b-49b0-9fbc-ed67ad0308cd/history/
+moyenne :  4,0 / 5 (3 avis)
+403  POST sans jeton CSRF
+503  GET / avec l'API arr�t�e
+(avis valide 201 + note 9 refusée : vérifiés avant la fusion, voir décision T006 it. 3)

@@ -15,7 +15,7 @@ Deux dépôts :
 ## 1. L'application
 
 **Infrastructure** : 3 nœuds `cassandra:5.0` (datacenter `dc1`, `NetworkTopologyStrategy`, RF = 3) dans
-`docker-compose.yml` ; un conteneur `tests` (pytest dans le réseau Docker) ; un service `api` (uvicorn).
+`docker-compose.yml` ; un conteneur `tests` (pytest dans le réseau Docker) ; un service `api` (uvicorn) et un service `web` (frontend Django, port 8001).
 
 **Architecture en couches** (exigée par l'enseignant), toutes écrites par les agents :
 
@@ -25,7 +25,8 @@ Deux dépôts :
 | DAO | `streaming/models.py`, `streaming/dao/{titles,users,ratings,views,stats}.py` | T002 |
 | Tests DAO + métier | `tests/test_dao.py`, `tests/test_services.py` | T004 (fusion T003) |
 | Métier | `streaming/services.py` (fiche + note moyenne, Top 10 du jour, avis) | T004 |
-| Présentation | `streaming/api.py` (FastAPI : `create_app` / `build_app`) + `tests/test_api.py` | T005 |
+| Présentation (API) | `streaming/api.py` (FastAPI : `create_app` / `build_app`) + `tests/test_api.py` | T005 |
+| Présentation (interface web) | `frontend/` (Django 5.2, sans base de données : appelle l'API en HTTP) + `tests/test_frontend.py` | T006 |
 
 **Modèle de données (orienté requêtes)** :
 
@@ -45,8 +46,8 @@ partition, requêtes préparées une fois, compteurs jamais dans le même batch 
 
 ## 2. Résultats réels
 
-- **Tests : 24/24 OK** sur le cluster 3 nœuds (`docker compose --profile tests run --rm tests`) — schéma, DAO,
-  services, API, cluster. Journal : `ai-trace/runs/T005-20261126-013959/tests_iter3.log`.
+- **Tests : 33/33 OK** sur le cluster 3 nœuds (`docker compose --profile tests run --rm tests`) — schéma, DAO,
+  services, API, frontend, cluster. Journal : `ai-trace/runs/T006-20261126-084834/tests_iter3.log`.
 - **Démo de la distribution** (`bash demo/demo_distribution.sh`, sortie `reports/demo/demo-20261126-030349.txt`) :
 
   | État | ONE | QUORUM | ALL |
@@ -60,6 +61,9 @@ partition, requêtes préparées une fois, compteurs jamais dans le même batch 
 - **API en conditions réelles** (`reports/demo/api-smoke-*.txt`) : `/health` 3/3 nœuds, fiche avec moyenne 4,5,
   genre, Top 10 du jour, historique, 404 titre inconnu, 422 note hors 1..5, 201 avis valide.
   Documentation interactive : http://localhost:8000/docs.
+- **Interface web Django** (http://localhost:8001/, sortie `reports/demo/web-smoke-*.txt`) : accueil (état du
+  cluster + Top 10 du jour), genre, fiche, historique → 200 ; titre inconnu → 404 ; avis enregistré (moyenne
+  recalculée 4,5 → 4,0) ; note 9 refusée ; POST sans jeton CSRF → 403 ; API arrêtée → 503 avec message clair.
 
 ## 3. L'équipe d'agents (streaming-ai-squad)
 
@@ -72,7 +76,7 @@ prepare → developer → run_tests → reviewer → human_review ─┬─ appr
                                                            └─ reject  → discard
 ```
 
-- **developer** : agent LLM (prompt `backend_developer v2`, 5 sections Context/Persona/Task/Constraints/Examples),
+- **developer** : agent LLM (prompt `backend_developer v2`, `frontend_developer v1` pour T006 ; 5 sections Context/Persona/Task/Constraints/Examples),
   outils `list_files` / `read_file` / `write_file` limités aux dossiers de la tâche ; ni shell, ni Git, ni `.env`.
 - **run_tests** : exécuté par l'**orchestrateur**, jamais par le LLM (compileall + import + pytest sur le vrai cluster).
 - **reviewer** : 2e agent en lecture seule (prompt `reviewer v1`), avis classé BLOQUANT / À AMÉLIORER / MINEUR.
@@ -81,8 +85,8 @@ prepare → developer → run_tests → reviewer → human_review ─┬─ appr
   `ai-trace/runs/<run>/` ; chaque commit d'agent est signé « Squad Agent (rôle) ». Rapport détaillé :
   `docs/rapport-tracabilite.md` (généré par `python -m squad report`).
 
-**Chiffres réels (7 runs)** : 307 appels au LLM — `gpt-oss-120b` ×116, `gemini-3.5-flash-lite` ×69,
-`qwen3.8-27b` ×67, `gpt-oss-20b` ×51, `gemini-3.5-flash` ×4 ; ~1,29 M jetons en entrée, ~77 k en sortie ;
+**Chiffres réels (8 runs)** : 339 appels au LLM — `gpt-oss-120b` ×116, `gemini-3.5-flash-lite` ×101,
+`qwen3.8-27b` ×67, `gpt-oss-20b` ×51, `gemini-3.5-flash` ×4 ; ~1,50 M jetons en entrée, ~90 k en sortie ;
 erreurs d'API relancées : 429 ×629, 503 ×15, 413 ×12, 400 ×10, appels d'outils invalides ×6, timeout ×2.
 
 ## 4. Décisions humaines (qui a décidé quoi)
@@ -96,6 +100,7 @@ erreurs d'API relancées : 429 ×629, 503 ×15, 413 ×12, 400 ×10, appels d'out
 | T004 1er run | 1 | reject (aucun fichier écrit) | Claude, par délégation |
 | T004 métier + tests | 4 | changes ×3, approve | Claude, par délégation |
 | T005 API | 3 | changes ×2, approve | Claude, par délégation |
+| T006 frontend Django | 3 | changes ×2, approve | Claude, par délégation (frontend Django demandé par le PO) |
 
 Le 26/11/2026, le Project Owner, en révision pour un examen, a **délégué** les décisions à Claude (l'assistant qui
 pilotait l'orchestrateur). Ces décisions sont enregistrées **au nom du délégué** (`squad decide … --by`), dans la
@@ -110,9 +115,13 @@ puis relus et lancés par le Project Owner.
    production** (T005 it. 2) et un `f` manquant dans une requête (bug de T002 trouvé par les tests de T004) ;
    il a bloqué T002 sur une limite de 90 lignes non exigée, et signalé à tort un import `cassandra` dans
    `services.py`. La validation humaine reste indispensable.
+   T006 it. 2 : **33 tests verts + relecteur « APPROUVER »**, mais le vrai serveur Django ne démarrait pas
+   (`WSGI_APPLICATION` vers un `frontend/wsgi.py` inexistant) : vu seulement en lançant l'application → ajout
+   d'un test de chargement WSGI.
 3. **Un test qui passe ne prouve rien si rien n'est testé** : T002 v1 (fichier tronqué) passait les anciens
    tests → ajout d'un contrôle `compileall` + import avant pytest.
-4. **Offres gratuites** : Gemini en 503 pendant des heures (24/11) ; Groq limité à ~8 000 jetons/min
+4. **Fournisseurs de LLM** : DeepSeek branché (`REVIEWER_PROVIDER=deepseek` pour un relecteur d'un autre
+   modèle) mais non utilisé : compte sans crédit (HTTP 402), pas d'offre gratuite. **Offres gratuites** : Gemini en 503 pendant des heures (24/11) ; Groq limité à ~8 000 jetons/min
    (entrée + sortie demandée) → réponses tronquées, boucles de relecture. Le moteur a dû évoluer : repli entre
    modèles et fournisseurs, pauses croissantes, reprise d'un run interrompu (`squad resume`), compactage de
    l'historique, limite de 2 lectures par fichier, longueur de sortie ajustée au quota.
@@ -128,7 +137,7 @@ docker compose up -d --wait                                   # cluster 3 nœuds
 docker compose --profile tests run --rm tests                 # 24 tests
 bash demo/demo_distribution.sh                                # démo panne d'un nœud
 docker compose --profile tests run --rm tests python -m demo.seed   # données fictives
-docker compose --profile app up -d api                        # API sur http://localhost:8000/docs
+docker compose --profile app up -d api web                    # API :8000/docs + site Django :8001
 
 cd ../streaming-ai-squad                                      # équipe d'agents
 .venv\Scripts\python -m squad run tasks/T001-modele-donnees.yaml --target ../streaming-platform

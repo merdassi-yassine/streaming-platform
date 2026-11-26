@@ -1,6 +1,6 @@
 # Rapport de traçabilité de l'équipe d'agents IA
 
-Dépôt analysé : `../streaming-platform` — 7 run(s), 307 appels au LLM.
+Dépôt analysé : `../streaming-platform` — 8 run(s), 339 appels au LLM.
 Généré automatiquement à partir des traces JSON (`ai-trace/runs/`) par `python -m squad report`.
 Les résultats de tests proviennent de l'exécution réelle par l'orchestrateur, jamais du LLM.
 
@@ -15,6 +15,7 @@ Les résultats de tests proviennent de l'exécution réelle par l'orchestrateur,
 | `T004-20261126-005252` | T004 Couche métier + tests DAO et métier (fusion T003/T004) | 1 | ✓ 6 passed in 40.88s | DEMANDER DES CORRECTIONS | **rejected** |
 | `T004-20261126-010326` | T004 Couche métier + tests DAO et métier (fusion T003/T004) | 4 | ✓ 16 passed, 3 warnings in 81.69s (0:01:21) | APPROUVER | **merged** |
 | `T005-20261126-013959` | T005 Couche présentation (API FastAPI) | 3 | ✓ 24 passed, 5 warnings in 94.52s (0:01:34) | APPROUVER | **merged** |
+| `T006-20261126-084834` | T006 Interface web (frontend Django) | 3 | ✓ 33 passed, 5 warnings in 107.22s (0:01:47) | APPROUVER | **merged** |
 
 ## T001 — Modèle de données Cassandra (schéma CQL orienté requêtes) (`T001-20261124-150052`)
 
@@ -123,3 +124,19 @@ Les résultats de tests proviennent de l'exécution réelle par l'orchestrateur,
 | 1 | ✗ (code 2) 1 warning, 1 error in 0.83s | DEMANDER DES CORRECTIONS | **changes** — « Les tests échouent à l'import : streaming/api.py crée 'app' et se connecte au keyspace 'streaming' au moment de l'import (CASSANDRA_CONTACT_ » (Claude (délégation du Project Owner, 26/11/2026)) |
 | 2 | ✓ 24 passed, 5 warnings in 109.35s (0:01:49) | APPROUVER | **changes** — « BLOQUANT (non vu par le relecteur) : dans tests/test_api.py, la fixture setup_default_keyspace crée puis SUPPRIME le keyspace de production  » (Claude (délégation du Project Owner, 26/11/2026)) |
 | 3 | ✓ 24 passed, 5 warnings in 94.52s (0:01:34) | APPROUVER | **approve** — « Approuvé : 24 tests réels OK. Problème bloquant de l'itération 2 (suppression du keyspace de production 'streaming' dans les tests), non rel » (Claude (délégation du Project Owner, 26/11/2026)) |
+
+## T006 — Interface web (frontend Django) (`T006-20261126-084834`)
+
+- **Rôle / prompts :** frontend_developer — frontend_developer v1, reviewer v1
+- **Dossiers autorisés en écriture :** frontend/, tests/
+- **Appels au LLM :** 32 — modèles réellement utilisés : `gemini-3.5-flash-lite` ×32
+- **Erreurs d'API rencontrées (relancées) :** aucune
+- **Jetons :** 207 886 en entrée / 13 297 en sortie
+- **Fichiers écrits par l'agent :** `frontend/__init__.py`, `frontend/api_client.py`, `frontend/settings.py`, `frontend/templates/frontend/base.html`, `frontend/templates/frontend/error.html`, `frontend/templates/frontend/genre.html`, `frontend/templates/frontend/history.html`, `frontend/templates/frontend/home.html`, `frontend/templates/frontend/title.html`, `frontend/urls.py`, `frontend/views.py`, `frontend/wsgi.py`, `tests/test_frontend.py`
+- **Actions refusées par les garde-fous :** 0
+
+| Itération | Tests réels | Avis du relecteur | Décision humaine |
+|---|---|---|---|
+| 1 | ✗ (code 1) 3 failed, 29 passed, 6 warnings in 95.11s (0:01:35) | DEMANDER DES CORRECTIONS | **changes** — « Ne corrige QUE tests/test_frontend.py (le code frontend est bon). 1) test_title_detail_view : LANGUAGE_CODE fr-fr affiche la note 4.5 sous l » (Claude (délégation du Project Owner, 26/11/2026)) |
+| 2 | ✓ 32 passed, 5 warnings in 106.91s (0:01:46) | APPROUVER | **changes** — « BLOQUANT, vu en lançant le vrai serveur (python -m django runserver) : ImproperlyConfigured « WSGI application 'frontend.wsgi.application' c » (Claude (délégation du Project Owner, 26/11/2026)) |
+| 3 | ✓ 33 passed, 5 warnings in 107.22s (0:01:47) | APPROUVER | **approve** — « Vérifié en réel (serveur Django + API + cluster) : 6 pages OK, 404 titre inconnu, avis 201 (moyenne recalculée 4,5 → 4,0), note 9 refusée, P » (Claude (délégation du Project Owner, 26/11/2026)) |
