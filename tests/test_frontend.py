@@ -14,7 +14,7 @@ from frontend import api_client
 
 @pytest.fixture
 def client():
-    """Client de test Django avec désactivation de la vérification CSRF pour simplifier les tests POST."""
+    """Client de test Django."""
     return Client()
 
 
@@ -66,7 +66,7 @@ def test_genre_view(monkeypatch, client):
 
 
 def test_title_detail_view(monkeypatch, client):
-    """Teste la fiche détaillée d'un titre existant."""
+    """Teste la fiche détaillée d'un titre existant (vérifie le formatage localisé fr-fr ex: 4,5)."""
     monkeypatch.setattr(
         api_client,
         "get_title",
@@ -87,7 +87,8 @@ def test_title_detail_view(monkeypatch, client):
     response = client.get("/titles/123e4567-e89b-12d3-a456-426614174000/")
     assert response.status_code == 200
     assert b"Super Film" in response.content
-    assert b"4.5" in response.content
+    # En fr-fr, 4.5 est formaté par défaut en '4,5' par le moteur de gabarit Django
+    assert b"4,5" in response.content
 
 
 def test_title_detail_not_found(monkeypatch, client):
@@ -99,7 +100,7 @@ def test_title_detail_not_found(monkeypatch, client):
 
 
 def test_post_rating_success(monkeypatch, client):
-    """Teste l'envoi réussi d'une note valide (POST 201)."""
+    """Teste l'envoi réussi d'une note valide (POST 201) et la présence du message de succès."""
     monkeypatch.setattr(
         api_client,
         "get_title",
@@ -125,7 +126,7 @@ def test_post_rating_success(monkeypatch, client):
         },
     )
     assert response.status_code == 200
-    assert b"Avis enregistr\eacute" in response.content
+    assert "Avis enregistré" in response.content.decode("utf-8")
 
 
 def test_post_rating_unprocessable(monkeypatch, client):
