@@ -1,0 +1,36 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Historique - StreamingPlatform{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Historique de visionnage</h2>
+    <p>Utilisateur : <code>{{ user_id }}</code></p>
+    <p><a href="{% url 'home' %}">&larr; Retour à l'accueil</a></p>
+
+    {% if history %}
+    <table>
+        <thead>
+            <tr>
+                <th>Date / Heure</th>
+                <th>Titre</th>
+                <th>Durée (sec)</th>
+                <th>Terminé</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in history %}
+            <tr>
+                <td>{{ h.watched_at|default:"-" }}</td>
+                <td><a href="{% url 'title_detail' h.title_id %}">{{ h.title|default:h.title_id }}</a></td>
+                <td>{{ h.duration_watched_seconds|default:"-" }}</td>
+                <td>{% if h.completed %}Oui{% else %}Non{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucun historique trouvé pour cet utilisateur.</p>
+    {% endif %}
+</div>
+{% endblock %}

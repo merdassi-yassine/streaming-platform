@@ -1,0 +1,50 @@
+{% extends 'frontend/base.html' %}
+
+{% block title %}Accueil - StreamingPlatform{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>État du Cluster Cassandra</h2>
+    <p>Nœuds actifs : <strong>{{ cluster.nodes_up }}</strong> / Nœuds connus : <strong>{{ cluster.nodes_known }}</strong></p>
+</div>
+
+<div class="card">
+    <h2>Top 10 du jour</h2>
+    <form method="get" style="margin-bottom: 1rem;">
+        <label for="day">Date :</label>
+        <input type="date" id="day" name="day" value="{{ current_day }}">
+        <button type="submit">Afficher</button>
+    </form>
+
+    {% if trending %}
+    <table>
+        <thead>
+            <tr>
+                <th>Titre</th>
+                <th>Genre(s)</th>
+                <th>Année</th>
+                <th>Vues</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in trending %}
+            <tr>
+                <td><a href="{% url 'title_detail' item.title.title_id %}">{{ item.title.title }}</a></td>
+                <td>
+                    {% if item.title.genres %}
+                        {% for g in item.title.genres %}<span class="badge">{{ g }}</span> {% endfor %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>{{ item.title.release_year|default:"-" }}</td>
+                <td>{{ item.views }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>Aucun titre tendance pour cette date.</p>
+    {% endif %}
+</div>
+{% endblock %}
