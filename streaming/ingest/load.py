@@ -141,6 +141,7 @@ def main() -> None:
     reports_dir.mkdir(parents=True, exist_ok=True)
     report_path = reports_dir / f"ingest-{now_str}.md"
 
+    missing = "\n".join(f"  - {t}" for t in report["wikidata_missing"]) or "  - Aucun"
     report_content = f"""# Rapport d'ingestion – {now_str}
 
 - **Source Netflix** : {fetch.__globals__.get('NETFLIX_URL')}
@@ -149,7 +150,7 @@ def main() -> None:
 - **Lignes de visionnage traitées** : {report['rows']}
 - **Correspondances Wikidata trouvées** : {report['wikidata_found']}
 - **Titres sans correspondance Wikidata** :
-{chr(join_lines := [f"  - {t}" for t in report['wikidata_missing']]) if report['wikidata_missing'] else "  - Aucun"}
+{missing}
 """
     report_path.write_text(report_content, encoding="utf-8")
     print(f"Rapport d'ingestion généré : {report_path}")

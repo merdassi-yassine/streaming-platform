@@ -19,7 +19,7 @@ TEST_KEYSPACE = "streaming_test_ingest"
 
 
 @pytest.fixture(scope="function")
-pytest_keyspace(session):
+def pytest_keyspace(session):
     """Fixture créant et supprimant un keyspace de test dédié."""
     create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=1)
     yield TEST_KEYSPACE
