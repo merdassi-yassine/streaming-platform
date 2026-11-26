@@ -1,0 +1,748 @@
+diff --git a/frontend/__init__.py b/frontend/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/frontend/api_client.py b/frontend/api_client.py
+new file mode 100644
+index 0000000..f6c61ec
+--- /dev/null
++++ b/frontend/api_client.py
+@@ -0,0 +1,73 @@
++"""Client HTTP (httpx) pour communiquer avec l'API FastAPI."""
++
++from __future__ import annotations
++
++import datetime
++from typing import Any, Dict, List, Optional
++
++import httpx
++from django.conf import settings
++
++
++def _get_client() -> httpx.Client:
++    """Retourne un client httpx configuré avec l'URL de base et un timeout."""
++    return httpx.Client(base_url=settings.API_BASE_URL, timeout=10.0)
++
++
++def health() -> Dict[str, Any]:
++    """Récupère l'état de santé et les nœuds du cluster."""
++    with _get_client() as client:
++        response = client.get("/health")
++        response.raise_for_status()
++        return response.json()
++
++
++def trending(day: Optional[str] = None) -> List[Dict[str, Any]]:
++    """Récupère le top 10 des titres pour une date donnée (YYYY-MM-DD) ou la date du jour."""
++    if not day:
++        day = datetime.date.today().isoformat()
++    with _get_client() as client:
++        response = client.get(f"/trending/{day}")
++        response.raise_for_status()
++        return response.json()
++
++
++def genre_titles(genre: str) -> List[Dict[str, Any]]:
++    """Récupère la liste des titres pour un genre donné."""
++    with _get_client() as client:
++        response = client.get(f"/genres/{genre}/titles")
++        response.raise_for_status()
++        return response.json()
++
++
++def get_title(title_id: str) -> Optional[Dict[str, Any]]:
++    """Récupère la fiche détaillée d'un titre, ou None si 404."""
++    with _get_client() as client:
++        response = client.get(f"/titles/{title_id}")
++        if response.status_code == 404:
++            return None
++        response.raise_for_status()
++        return response.json()
++
++
++def history(user_id: str) -> List[Dict[str, Any]]:
++    """Récupère l'historique de visionnage d'un utilisateur."""
++    with _get_client() as client:
++        response = client.get(f"/users/{user_id}/history")
++        response.raise_for_status()
++        return response.json()
++
++
++def post_rating(user_id: str, title_id: str, rating: int, comment: Optional[str] = None) -> int:
++    """Envoie un avis / note sur un titre et retourne le code HTTP."""
++    payload: Dict[str, Any] = {
++        "user_id": user_id,
++        "title_id": title_id,
++        "rating": rating,
++    }
++    if comment:
++        payload["comment"] = comment
++
++    with _get_client() as client:
++        response = client.post("/ratings", json=payload)
++        return response.status_code
+diff --git a/frontend/settings.py b/frontend/settings.py
+new file mode 100644
+index 0000000..159dc27
+--- /dev/null
++++ b/frontend/settings.py
+@@ -0,0 +1,54 @@
++"""Configuration Django pour l'interface web de la plateforme de streaming."""
++
++import os
++
++BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
++
++SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "dev-only-not-secret")
++DEBUG = os.environ.get("DJANGO_DEBUG", "True").lower() in ("true", "1", "t", "yes")
++
++ALLOWED_HOSTS = ["*"]
++
++INSTALLED_APPS = [
++    "django.contrib.staticfiles",
++    "frontend",
++]
++
++MIDDLEWARE = [
++    "django.middleware.security.SecurityMiddleware",
++    "django.contrib.sessions.middleware.SessionMiddleware",
++    "django.middleware.common.CommonMiddleware",
++    "django.middleware.csrf.CsrfViewMiddleware",
++    "django.contrib.messages.middleware.MessageMiddleware",
++    "django.middleware.clickjacking.XFrameOptionsMiddleware",
++]
++
++ROOT_URLCONF = "frontend.urls"
++
++TEMPLATES = [
++    {
++        "BACKEND": "django.template.backends.django.DjangoTemplates",
++        "DIRS": [],
++        "APP_DIRS": True,
++        "OPTIONS": {
++            "context_processors": [
++                "django.template.context_processors.debug",
++                "django.template.context_processors.request",
++                "django.contrib.messages.context_processors.messages",
++            ],
++        },
++    },
++]
++
++WSGI_APPLICATION = "frontend.wsgi.application"
++
++DATABASES = {}
++
++LANGUAGE_CODE = "fr-fr"
++TIME_ZONE = "UTC"
++USE_I18N = True
++USE_TZ = True
++
++STATIC_URL = "static/"
++
++API_BASE_URL = os.environ.get("API_BASE_URL", "http://localhost:8000")
+diff --git a/frontend/templates/frontend/base.html b/frontend/templates/frontend/base.html
+new file mode 100644
+index 0000000..839b195
+--- /dev/null
++++ b/frontend/templates/frontend/base.html
+@@ -0,0 +1,45 @@
++<!DOCTYPE html>
++<html lang="fr">
++<head>
++    <meta charset="UTF-8">
++    <title>{% block title %}Streaming Platform{% endblock %}</title>
++    <style>
++        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #141414; color: #f5f5f5; }
++        header { background: #000; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
++        header h1 { margin: 0; font-size: 1.5rem; }
++        header h1 a { color: #e50914; text-decoration: none; }
++        nav form { display: inline-flex; gap: 0.5rem; margin-left: 1rem; }
++        nav input, nav select, button { padding: 0.4rem 0.6rem; border: 1px solid #333; background: #222; color: #fff; border-radius: 4px; }
++        button { background: #e50914; border: none; cursor: pointer; font-weight: bold; }
++        button:hover { background: #f40612; }
++        main { padding: 2rem; max-width: 1000px; margin: auto; }
++        a { color: #e50914; text-decoration: none; }
++        a:hover { text-decoration: underline; }
++        .card { background: #1f1f1f; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #333; }
++        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
++        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #333; }
++        th { background: #222; }
++        .alert-success { background: #1c3b2b; color: #4ade80; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem; }
++        .alert-error { background: #3f1d1d; color: #f87171; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem; }
++        .badge { background: #333; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
++    </style>
++</head>
++<body>
++    <header>
++        <h1><a href="{% url 'home' %}">StreamingPlatform</a></h1>
++        <nav>
++            <form action="" method="get" onsubmit="event.preventDefault(); const g = document.getElementById('genre-input').value; if(g) window.location.href='/genres/' + encodeURIComponent(g) + '/';">
++                <input type="text" id="genre-input" placeholder="Genre (ex: Action)" required>
++                <button type="submit">Genre</button>
++            </form>
++            <form action="" method="get" onsubmit="event.preventDefault(); const u = document.getElementById('user-input').value; if(u) window.location.href='/users/' + encodeURIComponent(u) + '/history/';">
++                <input type="text" id="user-input" placeholder="ID Utilisateur (UUID)" required>
++                <button type="submit">Historique</button>
++            </form>
++        </nav>
++    </header>
++    <main>
++        {% block content %}{% endblock %}
++    </main>
++</body>
++</html>
+diff --git a/frontend/templates/frontend/error.html b/frontend/templates/frontend/error.html
+new file mode 100644
+index 0000000..8d90c1d
+--- /dev/null
++++ b/frontend/templates/frontend/error.html
+@@ -0,0 +1,11 @@
++{% extends 'frontend/base.html' %}
++
++{% block title %}Service indisponible - StreamingPlatform{% endblock %}
++
++{% block content %}
++<div class="card" style="text-align: center; padding: 3rem;">
++    <h2 style="color: #e50914; font-size: 2rem;">503 - Service Indisponible</h2>
++    <p style="font-size: 1.1rem; margin: 1.5rem 0;">{{ message }}</p>
++    <p><a href="{% url 'home' %}">&larr; Retour à l'accueil</a></p>
++</div>
++{% endblock %}
+diff --git a/frontend/templates/frontend/genre.html b/frontend/templates/frontend/genre.html
+new file mode 100644
+index 0000000..232be2a
+--- /dev/null
++++ b/frontend/templates/frontend/genre.html
+@@ -0,0 +1,33 @@
++{% extends 'frontend/base.html' %}
++
++{% block title %}Genre : {{ genre }} - StreamingPlatform{% endblock %}
++
++{% block content %}
++<div class="card">
++    <h2>Titres du genre : {{ genre }}</h2>
++    <p><a href="{% url 'home' %}">&larr; Retour à l'accueil</a></p>
++
++    {% if titles %}
++    <table>
++        <thead>
++            <tr>
++                <th>Titre</th>
++                <th>Type</th>
++                <th>Année</th>
++            </tr>
++        </thead>
++        <tbody>
++            {% for t in titles %}
++            <tr>
++                <td><a href="{% url 'title_detail' t.title_id %}">{{ t.title }}</a></td>
++                <td><span class="badge">{{ t.kind|default:"film" }}</span></td>
++                <td>{{ t.release_year|default:"-" }}</td>
++            </tr>
++            {% endfor %}
++        </tbody>
++    </table>
++    {% else %}
++    <p>Aucun titre trouvé pour ce genre.</p>
++    {% endif %}
++</div>
++{% endblock %}
+diff --git a/frontend/templates/frontend/history.html b/frontend/templates/frontend/history.html
+new file mode 100644
+index 0000000..3c4a6d9
+--- /dev/null
++++ b/frontend/templates/frontend/history.html
+@@ -0,0 +1,36 @@
++{% extends 'frontend/base.html' %}
++
++{% block title %}Historique - StreamingPlatform{% endblock %}
++
++{% block content %}
++<div class="card">
++    <h2>Historique de visionnage</h2>
++    <p>Utilisateur : <code>{{ user_id }}</code></p>
++    <p><a href="{% url 'home' %}">&larr; Retour à l'accueil</a></p>
++
++    {% if history %}
++    <table>
++        <thead>
++            <tr>
++                <th>Date / Heure</th>
++                <th>Titre</th>
++                <th>Durée (sec)</th>
++                <th>Terminé</th>
++            </tr>
++        </thead>
++        <tbody>
++            {% for h in history %}
++            <tr>
++                <td>{{ h.watched_at|default:"-" }}</td>
++                <td><a href="{% url 'title_detail' h.title_id %}">{{ h.title|default:h.title_id }}</a></td>
++                <td>{{ h.duration_watched_seconds|default:"-" }}</td>
++                <td>{% if h.completed %}Oui{% else %}Non{% endif %}</td>
++            </tr>
++            {% endfor %}
++        </tbody>
++    </table>
++    {% else %}
++    <p>Aucun historique trouvé pour cet utilisateur.</p>
++    {% endif %}
++</div>
++{% endblock %}
+diff --git a/frontend/templates/frontend/home.html b/frontend/templates/frontend/home.html
+new file mode 100644
+index 0000000..ab08b10
+--- /dev/null
++++ b/frontend/templates/frontend/home.html
+@@ -0,0 +1,50 @@
++{% extends 'frontend/base.html' %}
++
++{% block title %}Accueil - StreamingPlatform{% endblock %}
++
++{% block content %}
++<div class="card">
++    <h2>État du Cluster Cassandra</h2>
++    <p>Nœuds actifs : <strong>{{ cluster.nodes_up }}</strong> / Nœuds connus : <strong>{{ cluster.nodes_known }}</strong></p>
++</div>
++
++<div class="card">
++    <h2>Top 10 du jour</h2>
++    <form method="get" style="margin-bottom: 1rem;">
++        <label for="day">Date :</label>
++        <input type="date" id="day" name="day" value="{{ current_day }}">
++        <button type="submit">Afficher</button>
++    </form>
++
++    {% if trending %}
++    <table>
++        <thead>
++            <tr>
++                <th>Titre</th>
++                <th>Genre(s)</th>
++                <th>Année</th>
++                <th>Vues</th>
++            </tr>
++        </thead>
++        <tbody>
++            {% for item in trending %}
++            <tr>
++                <td><a href="{% url 'title_detail' item.title.title_id %}">{{ item.title.title }}</a></td>
++                <td>
++                    {% if item.title.genres %}
++                        {% for g in item.title.genres %}<span class="badge">{{ g }}</span> {% endfor %}
++                    {% else %}
++                        -
++                    {% endif %}
++                </td>
++                <td>{{ item.title.release_year|default:"-" }}</td>
++                <td>{{ item.views }}</td>
++            </tr>
++            {% endfor %}
++        </tbody>
++    </table>
++    {% else %}
++    <p>Aucun titre tendance pour cette date.</p>
++    {% endif %}
++</div>
++{% endblock %}
+diff --git a/frontend/templates/frontend/title.html b/frontend/templates/frontend/title.html
+new file mode 100644
+index 0000000..240089e
+--- /dev/null
++++ b/frontend/templates/frontend/title.html
+@@ -0,0 +1,67 @@
++{% extends 'frontend/base.html' %}
++
++{% block title %}{{ title_data.title.title }} - StreamingPlatform{% endblock %}
++
++{% block content %}
++<div class="card">
++    <p><a href="{% url 'home' %}">&larr; Retour à l'accueil</a></p>
++    
++    <h2>{{ title_data.title.title }}</h2>
++    <p>
++        <strong>Type :</strong> {{ title_data.title.kind|default:"film" }} |
++        <strong>Année :</strong> {{ title_data.title.release_year|default:"-" }}
++    </p>
++    <p>
++        <strong>Genres :</strong>
++        {% if title_data.title.genres %}
++            {% for g in title_data.title.genres %}<span class="badge"><a href="{% url 'genre_detail' g %}">{{ g }}</a></span> {% endfor %}
++        {% else %}
++            -
++        {% endif %}
++    </p>
++    <hr style="border-color: #333;">
++    <p>
++        <strong>Vues totales :</strong> {{ title_data.views|default:0 }} |
++        <strong>Note moyenne :</strong> {{ title_data.average_rating|default:"Aucune" }} / 5 ({{ title_data.rating_count|default:0 }} avis)
++    </p>
++</div>
++
++<div class="card">
++    <h3>Donner un avis</h3>
++
++    {% if success_msg %}
++    <div class="alert-success">{{ success_msg }}</div>
++    {% endif %}
++
++    {% if error_msg %}
++    <div class="alert-error">{{ error_msg }}</div>
++    {% endif %}
++
++    <form method="post">
++        {% csrf_token %}
++        <div style="margin-bottom: 1rem;">
++            <label for="user_id" style="display: block; margin-bottom: 0.3rem;">Identifiant utilisateur (UUID) :</label>
++            <input type="text" id="user_id" name="user_id" value="{{ form_data.user_id|default:'' }}" required style="width: 100%; max-width: 400px;">
++        </div>
++
++        <div style="margin-bottom: 1rem;">
++            <label for="rating" style="display: block; margin-bottom: 0.3rem;">Note (1 à 5) :</label>
++            <select id="rating" name="rating" required style="width: 100%; max-width: 150px;">
++                <option value="">-- Choisir --</option>
++                <option value="5" {% if form_data.rating == "5" %}selected{% endif %}>5 - Excellent</option>
++                <option value="4" {% if form_data.rating == "4" %}selected{% endif %}>4 - Très bon</option>
++                <option value="3" {% if form_data.rating == "3" %}selected{% endif %}>3 - Moyen</option>
++                <option value="2" {% if form_data.rating == "2" %}selected{% endif %}>2 - Décevant</option>
++                <option value="1" {% if form_data.rating == "1" %}selected{% endif %}>1 - Mauvais</option>
++            </select>
++        </div>
++
++        <div style="margin-bottom: 1rem;">
++            <label for="comment" style="display: block; margin-bottom: 0.3rem;">Commentaire (optionnel) :</label>
++            <textarea id="comment" name="comment" rows="3" style="width: 100%; max-width: 500px; background: #222; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 0.5rem;">{{ form_data.comment|default:'' }}</textarea>
++        </div>
++
++        <button type="submit">Envoyer l'avis</button>
++    </form>
++</div>
++{% endblock %}
+diff --git a/frontend/urls.py b/frontend/urls.py
+new file mode 100644
+index 0000000..7a9328a
+--- /dev/null
++++ b/frontend/urls.py
+@@ -0,0 +1,13 @@
++"""Configuration des URL pour l'interface web frontend."""
++
++from __future__ import annotations
++
++from django.urls import path
++from frontend import views
++
++urlpatterns = [
++    path("", views.home, name="home"),
++    path("genres/<str:genre>/", views.genre_detail, name="genre_detail"),
++    path("titles/<str:title_id>/", views.title_detail, name="title_detail"),
++    path("users/<str:user_id>/history/", views.user_history, name="user_history"),
++]
+diff --git a/frontend/views.py b/frontend/views.py
+new file mode 100644
+index 0000000..b6a0b77
+--- /dev/null
++++ b/frontend/views.py
+@@ -0,0 +1,108 @@
++"""Vues de l'interface web Django pour la plateforme de streaming."""
++
++from __future__ import annotations
++
++import datetime
++import httpx
++from django.http import Http404, HttpResponse
++from django.shortcuts import render, redirect
++
++from frontend import api_client
++
++
++def _handle_api_error(func):
++    """Décorateur pour intercepter les erreurs réseau de l'API et afficher la page 503."""
++    def wrapper(request, *args, **kwargs):
++        try:
++            return func(request, *args, **kwargs)
++        except (httpx.HTTPError, ValueError):
++            return render(request, "frontend/error.html", {
++                "message": "Impossible de contacter l'API de streaming. Service temporairement indisponible."
++            }, status=503)
++    return wrapper
++
++
++@_handle_api_error
++def home(request):
++    """Page d'accueil : état du cluster et top 10 du jour."""
++    day = request.GET.get("day")
++    if not day:
++        day = datetime.date.today().isoformat()
++
++    cluster_health = api_client.health()
++    try:
++        trending_list = api_client.trending(day)
++    except httpx.HTTPStatusError:
++        trending_list = []
++
++    return render(request, "frontend/home.html", {
++        "cluster": cluster_health,
++        "trending": trending_list,
++        "current_day": day,
++    })
++
++
++@_handle_api_error
++def genre_detail(request, genre):
++    """Liste des titres d'un genre."""
++    titles = api_client.genre_titles(genre)
++    return render(request, "frontend/genre.html", {
++        "genre": genre,
++        "titles": titles,
++    })
++
++
++@_handle_api_error
++def title_detail(request, title_id):
++    """Fiche détaillée d'un titre et traitement du formulaire d'avis."""
++    data = api_client.get_title(title_id)
++    if data is None:
++        raise Http404("Titre inconnu")
++
++    success_msg = None
++    error_msg = None
++    form_data = {}
++
++    if request.method == "POST":
++        user_id = request.POST.get("user_id", "").strip()
++        rating_str = request.POST.get("rating", "").strip()
++        comment = request.POST.get("comment", "").strip()
++
++        form_data = {"user_id": user_id, "rating": rating_str, "comment": comment}
++
++        if not user_id or not rating_str:
++            error_msg = "Veuillez renseigner l'identifiant utilisateur et la note."
++        else:
++            try:
++                rating = int(rating_str)
++                status_code = api_client.post_rating(user_id, title_id, rating, comment if comment else None)
++                if status_code == 201:
++                    success_msg = "Avis enregistré avec succès."
++                    # Recharger les détails pour refléter la nouvelle note moyenne
++                    data = api_client.get_title(title_id)
++                    form_data = {}
++                elif status_code == 404:
++                    error_msg = "Utilisateur ou titre inconnu."
++                elif status_code == 422:
++                    error_msg = "Note invalide (doit être comprise entre 1 et 5)."
++                else:
++                    error_msg = f"Erreur inattendue lors de l'enregistrement (code {status_code})."
++            except ValueError:
++                error_msg = "La note doit être un nombre entier."
++
++    return render(request, "frontend/title.html", {
++        "title_data": data,
++        "success_msg": success_msg,
++        "error_msg": error_msg,
++        "form_data": form_data,
++    })
++
++
++@_handle_api_error
++def user_history(request, user_id):
++    """Historique de visionnage d'un utilisateur."""
++    hist = api_client.history(user_id)
++    return render(request, "frontend/history.html", {
++        "user_id": user_id,
++        "history": hist,
++    })
+diff --git a/tests/test_frontend.py b/tests/test_frontend.py
+new file mode 100644
+index 0000000..593c01d
+--- /dev/null
++++ b/tests/test_frontend.py
+@@ -0,0 +1,189 @@
++"""Tests unitaires et fonctionnels pour l'interface web frontend (Django)."""
++
++import os
++import pytest
++import httpx
++
++os.environ.setdefault("DJANGO_SETTINGS_MODULE", "frontend.settings")
++import django
++django.setup()
++
++from django.test import Client
++from frontend import api_client
++
++
++@pytest.fixture
++def client():
++    """Client de test Django avec désactivation de la vérification CSRF pour simplifier les tests POST."""
++    return Client()
++
++
++def test_home_view(monkeypatch, client):
++    """Teste la vue d'accueil avec affichage du cluster et du top 10."""
++    monkeypatch.setattr(api_client, "health", lambda: {"nodes_known": 3, "nodes_up": 3})
++    monkeypatch.setattr(
++        api_client,
++        "trending",
++        lambda day: [
++            {
++                "title": {
++                    "title_id": "123e4567-e89b-12d3-a456-426614174000",
++                    "title": "Film Test",
++                    "kind": "movie",
++                    "release_year": 2024,
++                    "genres": ["Action"],
++                },
++                "views": 42,
++            }
++        ],
++    )
++
++    response = client.get("/")
++    assert response.status_code == 200
++    assert b"Film Test" in response.content
++    assert b"3" in response.content
++
++
++def test_genre_view(monkeypatch, client):
++    """Teste la vue des titres d'un genre."""
++    monkeypatch.setattr(
++        api_client,
++        "genre_titles",
++        lambda genre: [
++            {
++                "title_id": "123e4567-e89b-12d3-a456-426614174000",
++                "title": "Action Movie",
++                "kind": "movie",
++                "release_year": 2023,
++            }
++        ],
++    )
++
++    response = client.get("/genres/Action/")
++    assert response.status_code == 200
++    assert b"Action Movie" in response.content
++    assert b"Action" in response.content
++
++
++def test_title_detail_view(monkeypatch, client):
++    """Teste la fiche détaillée d'un titre existant."""
++    monkeypatch.setattr(
++        api_client,
++        "get_title",
++        lambda title_id: {
++            "title": {
++                "title_id": title_id,
++                "title": "Super Film",
++                "kind": "movie",
++                "release_year": 2022,
++                "genres": ["Drama"],
++            },
++            "views": 150,
++            "average_rating": 4.5,
++            "rating_count": 10,
++        },
++    )
++
++    response = client.get("/titles/123e4567-e89b-12d3-a456-426614174000/")
++    assert response.status_code == 200
++    assert b"Super Film" in response.content
++    assert b"4.5" in response.content
++
++
++def test_title_detail_not_found(monkeypatch, client):
++    """Teste qu'un titre inconnu renvoie une erreur 404."""
++    monkeypatch.setattr(api_client, "get_title", lambda title_id: None)
++
++    response = client.get("/titles/00000000-0000-0000-0000-000000000000/")
++    assert response.status_code == 404
++
++
++def test_post_rating_success(monkeypatch, client):
++    """Teste l'envoi réussi d'une note valide (POST 201)."""
++    monkeypatch.setattr(
++        api_client,
++        "get_title",
++        lambda title_id: {
++            "title": {"title_id": title_id, "title": "Super Film", "genres": []},
++            "views": 10,
++            "average_rating": 5.0,
++            "rating_count": 1,
++        },
++    )
++    monkeypatch.setattr(
++        api_client,
++        "post_rating",
++        lambda user_id, title_id, rating, comment: 201,
++    )
++
++    response = client.post(
++        "/titles/123e4567-e89b-12d3-a456-426614174000/",
++        {
++            "user_id": "8b9e6a20-0000-0000-0000-000000000000",
++            "rating": "5",
++            "comment": "Génial",
++        },
++    )
++    assert response.status_code == 200
++    assert b"Avis enregistr\eacute" in response.content
++
++
++def test_post_rating_unprocessable(monkeypatch, client):
++    """Teste l'envoi d'une note refusée (422)."""
++    monkeypatch.setattr(
++        api_client,
++        "get_title",
++        lambda title_id: {
++            "title": {"title_id": title_id, "title": "Super Film", "genres": []},
++            "views": 10,
++        },
++    )
++    monkeypatch.setattr(
++        api_client,
++        "post_rating",
++        lambda user_id, title_id, rating, comment: 422,
++    )
++
++    response = client.post(
++        "/titles/123e4567-e89b-12d3-a456-426614174000/",
++        {
++            "user_id": "8b9e6a20-0000-0000-0000-000000000000",
++            "rating": "6",
++        },
++    )
++    assert response.status_code == 200
++    assert b"Note invalide" in response.content
++
++
++def test_api_unavailable(monkeypatch, client):
++    """Teste que l'indisponibilité de l'API renvoie un code 503."""
++    def mock_health():
++        raise httpx.ConnectError("Connexion refusée")
++
++    monkeypatch.setattr(api_client, "health", mock_health)
++
++    response = client.get("/")
++    assert response.status_code == 503
++    assert b"503" in response.content
++
++
++def test_user_history(monkeypatch, client):
++    """Teste l'affichage de l'historique utilisateur."""
++    monkeypatch.setattr(
++        api_client,
++        "history",
++        lambda user_id: [
++            {
++                "watched_at": "2026-03-30 12:00:00",
++                "title_id": "123e4567-e89b-12d3-a456-426614174000",
++                "title": "Film Vu",
++                "duration_watched_seconds": 3600,
++                "completed": True,
++            }
++        ],
++    )
++
++    response = client.get("/users/8b9e6a20-0000-0000-0000-000000000000/history/")
++    assert response.status_code == 200
++    assert b"Film Vu" in response.content
++    assert b"3600" in response.content

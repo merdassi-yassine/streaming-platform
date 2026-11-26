@@ -1,0 +1,16 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 26,
+  "agent": "frontend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-26T07:49:20+00:00",
+  "tool": "write_file",
+  "args": {
+    "content": "{% extends 'frontend/base.html' %}\n\n{% block title %}Historique - StreamingPlatform{% endblock %}\n\n{% block content %}\n<div class=\"card\">\n    <h2>Historique de visionnage</h2>\n    <p>Utilisateur : <code>{{ user_id }}</code></p>\n    <p><a href=\"{% url 'home' %}\">&larr; Retour à l'accueil</a></p>\n\n    {% if history %}\n    <table>\n        <thead>\n            <tr>\n                <th>Date / Heure</th>\n                <th>Titre</th>\n                <th>Durée (sec)</th>\n                <th>Terminé</th>\n            </tr>\n        </thead>\n        <tbody>\n            {% for h in history %}\n            <tr>\n                <td>{{ h.watched_at|default:\"-\" }}</td>\n                <td><a href=\"{% url 'title_detail' h.title_id %}\">{{ h.title|default:h.title_id }}</a></td>\n                <td>{{ h.duration_watched_seconds|default:\"-\" }}</td>\n                <td>{% if h.completed %}Oui{% else %}Non{% endif %}</td>\n            </tr>\n            {% endfor %}\n        </tbody>\n    </table>\n    {% else %}\n    <p>Aucun historique trouvé pour cet utilisateur.</p>\n    {% endif %}\n</div>\n{% endblock %}\n",
+    "path": "frontend/templates/frontend/history.html"
+  },
+  "result": {
+    "ok": true,
+    "written": "frontend/templates/frontend/history.html"
+  }
+}

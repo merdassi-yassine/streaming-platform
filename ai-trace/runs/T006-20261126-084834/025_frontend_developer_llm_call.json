@@ -1,0 +1,79 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 25,
+  "agent": "frontend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T07:49:20+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 5.09,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "frontend/templates/frontend/title.html"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_17652978416845872524",
+                "args": {
+                  "content": "{% extends 'frontend/base.html' %}\n\n{% block title %}Historique - StreamingPlatform{% endblock %}\n\n{% block content %}\n<div class=\"card\">\n    <h2>Historique de visionnage</h2>\n    <p>Utilisateur : <code>{{ user_id }}</code></p>\n    <p><a href=\"{% url 'home' %}\">&larr; Retour à l'accueil</a></p>\n\n    {% if history %}\n    <table>\n        <thead>\n            <tr>\n                <th>Date / Heure</th>\n                <th>Titre</th>\n                <th>Durée (sec)</th>\n                <th>Terminé</th>\n            </tr>\n        </thead>\n        <tbody>\n            {% for h in history %}\n            <tr>\n                <td>{{ h.watched_at|default:\"-\" }}</td>\n                <td><a href=\"{% url 'title_detail' h.title_id %}\">{{ h.title|default:h.title_id }}</a></td>\n                <td>{{ h.duration_watched_seconds|default:\"-\" }}</td>\n                <td>{% if h.completed %}Oui{% else %}Non{% endif %}</td>\n            </tr>\n            {% endfor %}\n        </tbody>\n    </table>\n    {% else %}\n    <p>Aucun historique trouvé pour cet utilisateur.</p>\n    {% endif %}\n</div>\n{% endblock %}\n",
+                  "path": "frontend/templates/frontend/history.html"
+                },
+                "name": "write_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfRPb0E-qd54G8b3b46jjBzywqfoAZ9qZHI0kGhucdc3WsH24Zo4sMvZtfLWB6BozG9PVP4AFGqQNHnC6H6P6fhD11TT6zPkCctX8YT-cnQDyKJjEn48Mu936TY6WKS_oqW245ajVm4ZhG58Ez39lapxCZ7BHddT0wEnxXpTn5Wtym5ngRx9fb8vYvJjSrxwS"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "fOQHa8uRCbmJxN8PnefpgQE",
+    "usage_metadata": {
+      "cache_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 6033
+        }
+      ],
+      "cached_content_token_count": 6033,
+      "candidates_token_count": 318,
+      "prompt_token_count": 8620,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 8620
+        }
+      ],
+      "total_token_count": 8938
+    }
+  },
+  "usage": {
+    "input_tokens": 8620,
+    "output_tokens": 318,
+    "thinking_tokens": null
+  }
+}

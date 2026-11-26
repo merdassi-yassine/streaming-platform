@@ -1,0 +1,16 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 66,
+  "agent": "frontend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-26T07:56:38+00:00",
+  "tool": "write_file",
+  "args": {
+    "content": "\"\"\"Configuration WSGI pour le projet frontend.\"\"\"\n\nimport os\nfrom django.core.wsgi import get_wsgi_application\n\nos.environ.setdefault(\"DJANGO_SETTINGS_MODULE\", \"frontend.settings\")\n\napplication = get_wsgi_application()\n",
+    "path": "frontend/wsgi.py"
+  },
+  "result": {
+    "ok": true,
+    "written": "frontend/wsgi.py"
+  }
+}

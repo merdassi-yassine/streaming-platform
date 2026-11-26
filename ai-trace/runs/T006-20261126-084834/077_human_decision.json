@@ -1,0 +1,11 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 77,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T07:59:27+00:00",
+  "iteration": 3,
+  "decision": "approve",
+  "feedback": "Vérifié en réel (serveur Django + API + cluster) : 6 pages OK, 404 titre inconnu, avis 201 (moyenne recalculée 4,5 → 4,0), note 9 refusée, POST sans CSRF 403, API arrêtée → 503.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

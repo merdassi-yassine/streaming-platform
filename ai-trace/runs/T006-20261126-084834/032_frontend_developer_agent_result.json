@@ -1,0 +1,25 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 32,
+  "agent": "frontend_developer",
+  "kind": "agent_result",
+  "timestamp": "2026-11-26T07:49:33+00:00",
+  "iteration": 1,
+  "summary": "Fichiers créés :\n- `frontend/__init__.py`\n- `frontend/settings.py`\n- `frontend/api_client.py`\n- `frontend/views.py`\n- `frontend/urls.py`\n- `frontend/templates/frontend/base.html`\n- `frontend/templates/frontend/home.html`\n- `frontend/templates/frontend/genre.html`\n- `frontend/templates/frontend/title.html`\n- `frontend/templates/frontend/history.html`\n- `frontend/templates/frontend/error.html`\n- `tests/test_frontend.py`\n\nChoix :\n- Projet Django minimal structuré dans `frontend/` sans base de données relationnelle (`DATABASES = {}`).\n- Isolation totale via `api_client.py` avec `httpx` (timeout 10s) parlant uniquement à l'API FastAPI.\n- Gestion robuste des erreurs réseau interceptées par un décorateur global renvoyant une page 503 personnalisée.\n- Formulaire d'avis protégé par le jeton CSRF de Django et gérant proprement les codes de retour 201, 404 et 422.\n- 8 tests unitaires/fonctionnels avec `pytest` et `django.test.Client` utilisant `monkeypatch` (aucun appel réseau réel).\n\nPoints à vérifier :\n- Tests non exécutés par l'agent (à lancer par l'orchestrateur).\n- Validation de l'intégration avec l'API FastAPI en environnement réel.",
+  "steps": 15,
+  "stop_reason": "done",
+  "files_written": [
+    "frontend/__init__.py",
+    "frontend/settings.py",
+    "frontend/api_client.py",
+    "frontend/views.py",
+    "frontend/urls.py",
+    "frontend/templates/frontend/base.html",
+    "frontend/templates/frontend/home.html",
+    "frontend/templates/frontend/genre.html",
+    "frontend/templates/frontend/title.html",
+    "frontend/templates/frontend/history.html",
+    "frontend/templates/frontend/error.html",
+    "tests/test_frontend.py"
+  ]
+}

@@ -1,0 +1,66 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /usr/local/bin/python3.13
+rootdir: /workspace
+configfile: pytest.ini
+plugins: anyio-4.16.0
+collecting ... collected 33 items
+
+tests/test_api.py::test_health_check PASSED                              [  3%]
+tests/test_api.py::test_get_title_not_found PASSED                       [  6%]
+tests/test_api.py::test_get_title_success PASSED                         [  9%]
+tests/test_api.py::test_get_genres_titles PASSED                         [ 12%]
+tests/test_api.py::test_post_rating_validation_error PASSED              [ 15%]
+tests/test_api.py::test_post_rating_not_found PASSED                     [ 18%]
+tests/test_api.py::test_post_rating_success_and_history PASSED           [ 21%]
+tests/test_api.py::test_trending_endpoint PASSED                         [ 24%]
+tests/test_cluster.py::test_version_cassandra_5 PASSED                   [ 27%]
+tests/test_cluster.py::test_trois_noeuds_visibles_et_up PASSED           [ 30%]
+tests/test_cluster.py::test_replication_rf3 PASSED                       [ 33%]
+tests/test_dao.py::test_title_dao_roundtrip PASSED                       [ 36%]
+tests/test_dao.py::test_user_dao_roundtrip PASSED                        [ 39%]
+tests/test_dao.py::test_list_by_genre PASSED                             [ 42%]
+tests/test_dao.py::test_rating_dao_and_stats PASSED                      [ 45%]
+tests/test_dao.py::test_view_dao_history_and_day PASSED                  [ 48%]
+tests/test_dao.py::test_extra_dao_coverage_users PASSED                  [ 51%]
+tests/test_dao.py::test_extra_dao_coverage_titles PASSED                 [ 54%]
+tests/test_frontend.py::test_wsgi_application PASSED                     [ 57%]
+tests/test_frontend.py::test_home_view PASSED                            [ 60%]
+tests/test_frontend.py::test_genre_view PASSED                           [ 63%]
+tests/test_frontend.py::test_title_detail_view PASSED                    [ 66%]
+tests/test_frontend.py::test_title_detail_not_found PASSED               [ 69%]
+tests/test_frontend.py::test_post_rating_success PASSED                  [ 72%]
+tests/test_frontend.py::test_post_rating_unprocessable PASSED            [ 75%]
+tests/test_frontend.py::test_api_unavailable PASSED                      [ 78%]
+tests/test_frontend.py::test_user_history PASSED                         [ 81%]
+tests/test_schema.py::test_create_schema_and_idempotence PASSED          [ 84%]
+tests/test_schema.py::test_primary_keys_and_clustering PASSED            [ 87%]
+tests/test_schema.py::test_drop_schema PASSED                            [ 90%]
+tests/test_services.py::test_services_catalog_and_review PASSED          [ 93%]
+tests/test_services.py::test_trending_service_top10 PASSED               [ 96%]
+tests/test_services.py::test_catalog_service_genre PASSED                [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_api.py::test_post_rating_success_and_history
+tests/test_dao.py::test_rating_dao_and_stats
+tests/test_dao.py::test_rating_dao_and_stats
+tests/test_services.py::test_services_catalog_and_review
+  /workspace/streaming/dao/ratings.py:69: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at = datetime.utcnow()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 33 passed, 5 warnings in 107.22s (0:01:47) ==================
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-2586a8d01939 Creating 
+ Container streaming-platform-tests-run-2586a8d01939 Created 

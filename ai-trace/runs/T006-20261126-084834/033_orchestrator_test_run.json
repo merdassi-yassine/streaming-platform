@@ -1,0 +1,24 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 33,
+  "agent": "orchestrator",
+  "kind": "test_run",
+  "timestamp": "2026-11-26T07:51:11+00:00",
+  "iteration": 1,
+  "command": [
+    "docker",
+    "compose",
+    "--profile",
+    "tests",
+    "run",
+    "--rm",
+    "tests",
+    "sh",
+    "-c",
+    "python -m compileall -q streaming frontend tests && python -c 'import frontend.views' && pytest -v -p no:cacheprovider tests/"
+  ],
+  "exit_code": 1,
+  "passed": false,
+  "log": "tests_iter1.log",
+  "tail": "tests/test_dao.py::test_rating_dao_and_stats\ntests/test_dao.py::test_rating_dao_and_stats\ntests/test_services.py::test_services_catalog_and_review\n  /workspace/streaming/dao/ratings.py:69: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).\n    created_at = datetime.utcnow()\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_api.py::test_get_title_success - assert 404 == 200\nFAILED tests/test_frontend.py::test_title_detail_view - assert b'4.5' in b'<!...\nFAILED tests/test_frontend.py::test_post_rating_success - assert b'Avis enreg...\n============= 3 failed, 29 passed, 6 warnings in 95.11s (0:01:35) ==============\n Container streaming-platform-cassandra1-1 Running \n Container streaming-platform-cassandra2-1 Running \n Container streaming-platform-cassandra3-1 Running \n Container streaming-platform-cassandra1-1 Waiting \n Container streaming-platform-cassandra1-1 Healthy \n Container streaming-platform-cassandra2-1 Waiting \n Container streaming-platform-cassandra2-1 Healthy \n Container streaming-platform-cassandra3-1 Waiting \n Container streaming-platform-cassandra3-1 Healthy \n Container streaming-platform-tests-run-063deb179e84 Creating \n Container streaming-platform-tests-run-063deb179e84 Created \ntests/test_frontend.py:128: SyntaxWarning: invalid escape sequence '\\e'\n  assert b\"Avis enregistr\\eacute\" in response.content"
+}

@@ -1,0 +1,72 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 45,
+  "agent": "frontend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T07:52:38+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 6.33,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "{% extends 'frontend/base.html' %}\n\n{% block title %}{{ title_data.title.title }} - StreamingPlatform{% endblock %}\n\n{% block content %}\n<div class=\"card\">\n    <p><a href=\"{% url 'home' %}\">&larr; Retour à l'accueil</a></p>\n    \n    <h2>{{ title_data.title.title }}</h2>\n    <p>\n        <strong>Type :</strong> {{ title_data.title.kind|default:\"film\" }} |\n        <strong>Année :</strong> {{ title_data.title.release_year|default:\"-\" }}\n    </p>\n    <p>\n        <strong>Genres :</strong>\n        {% if title_data.title.genres %}\n            {% for g in title_data.title.genres %}<span class=\"badge\"><a href=\"{% url 'genre_detail' g %}\">{{ g }}</a></span> {% endfor %}\n        {% else %}\n            -\n        {% endif %}\n    </p>\n    <hr style=\"border-color: #333;\">\n    <p>\n        <strong>Vues totales :</strong> {{ title_data.views|default:0 }} |\n        <strong>Note moyenne :</strong> {{ title_data.average_rating|default:\"Aucune\" }} / 5 ({{ title_data.rating_count|default:0 }} avis)\n    </p>\n</div>\n\n<div class=\"card\">\n    <h3>Donner un avis</h3>\n\n    {% if success_msg %}\n    <div class=\"alert-success\">{{ success_msg }}</div>\n    {% endif %}\n\n    {% if error_msg %}\n    <div class=\"alert-error\">{{ error_msg }}</div>\n    {% endif %}\n\n    <form method=\"post\">\n        {% csrf_token %}\n        <div style=\"margin-bottom: 1rem;\">\n            <label for=\"user_id\" style=\"display: block; margin-bottom: 0.3rem;\">Identifiant utilisateur (UUID) :</label>\n            <input type=\"text\" id=\"user_id\" name=\"user_id\" value=\"{{ form_data.user_id|default:'' }}\" required style=\"width: 100%; max-width: 400px;\">\n        </div>\n\n        <div style=\"margin-bottom: 1rem;\">\n            <label for=\"rating\" style=\"display: block; margin-bottom: 0.3rem;\">Note (1 à 5) :</label>\n            <select id=\"rating\" name=\"rating\" required style=\"width: 100%; max-width: 150px;\">\n                <option value=\"\">-- Choisir --</option>\n                <option value=\"5\" {% if form_data.rating == \"5\" %}selected{% endif %}>5 - Excellent</option>\n                <option value=\"4\" {% if form_data.rating == \"4\" %}selected{% endif %}>4 - Très bon</option>\n                <option value=\"3\" {% if form_data.rating == \"3\" %}selected{% endif %}>3 - Moyen</option>\n                <option value=\"2\" {% if form_data.rating == \"2\" %}selected{% endif %}>2 - Décevant</option>\n                <option value=\"1\" {% if form_data.rating == \"1\" %}selected{% endif %}>1 - Mauvais</option>\n            </select>\n        </div>\n\n        <div style=\"margin-bottom: 1rem;\">\n            <label for=\"comment\" style=\"display: block; margin-bottom: 0.3rem;\">Commentaire (optionnel) :</label>\n            <textarea id=\"comment\" name=\"comment\" rows=\"3\" style=\"width: 100%; max-width: 500px; background: #222; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 0.5rem;\">{{ form_data.comment|default:'' }}</textarea>\n        </div>\n\n        <button type=\"submit\">Envoyer l'avis</button>\n    </form>\n</div>\n{% endblock %}\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_6062911596871810353",
+                "args": {
+                  "content": "\"\"\"Tests unitaires et fonctionnels pour l'interface web frontend (Django).\"\"\"\n\nimport os\nimport pytest\nimport httpx\n\nos.environ.setdefault(\"DJANGO_SETTINGS_MODULE\", \"frontend.settings\")\nimport django\ndjango.setup()\n\nfrom django.test import Client\nfrom frontend import api_client\n\n\n@pytest.fixture\ndef client():\n    \"\"\"Client de test Django.\"\"\"\n    return Client()\n\n\ndef test_home_view(monkeypatch, client):\n    \"\"\"Teste la vue d'accueil avec affichage du cluster et du top 10.\"\"\"\n    monkeypatch.setattr(api_client, \"health\", lambda: {\"nodes_known\": 3, \"nodes_up\": 3})\n    monkeypatch.setattr(\n        api_client,\n        \"trending\",\n        lambda day: [\n            {\n                \"title\": {\n                    \"title_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n                    \"title\": \"Film Test\",\n                    \"kind\": \"movie\",\n                    \"release_year\": 2024,\n                    \"genres\": [\"Action\"],\n                },\n                \"views\": 42,\n            }\n        ],\n    )\n\n    response = client.get(\"/\")\n    assert response.status_code == 200\n    assert b\"Film Test\" in response.content\n    assert b\"3\" in response.content\n\n\ndef test_genre_view(monkeypatch, client):\n    \"\"\"Teste la vue des titres d'un genre.\"\"\"\n    monkeypatch.setattr(\n        api_client,\n        \"genre_titles\",\n        lambda genre: [\n            {\n                \"title_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n                \"title\": \"Action Movie\",\n                \"kind\": \"movie\",\n                \"release_year\": 2023,\n            }\n        ],\n    )\n\n    response = client.get(\"/genres/Action/\")\n    assert response.status_code == 200\n    assert b\"Action Movie\" in response.content\n    assert b\"Action\" in response.content\n\n\ndef test_title_detail_view(monkeypatch, client):\n    \"\"\"Teste la fiche détaillée d'un titre existant (vérifie le formatage localisé fr-fr ex: 4,5).\"\"\"\n    monkeypatch.setattr(\n        api_client,\n        \"get_title\",\n        lambda title_id: {\n            \"title\": {\n                \"title_id\": title_id,\n                \"title\": \"Super Film\",\n                \"kind\": \"movie\",\n                \"release_year\": 2022,\n                \"genres\": [\"Drama\"],\n            },\n            \"views\": 150,\n            \"average_rating\": 4.5,\n            \"rating_count\": 10,\n        },\n    )\n\n    response = client.get(\"/titles/123e4567-e89b-12d3-a456-426614174000/\")\n    assert response.status_code == 200\n    assert b\"Super Film\" in response.content\n    # En fr-fr, 4.5 est formaté par défaut en '4,5' par le moteur de gabarit Django\n    assert b\"4,5\" in response.content\n\n\ndef test_title_detail_not_found(monkeypatch, client):\n    \"\"\"Teste qu'un titre inconnu renvoie une erreur 404.\"\"\"\n    monkeypatch.setattr(api_client, \"get_title\", lambda title_id: None)\n\n    response = client.get(\"/titles/00000000-0000-0000-0000-000000000000/\")\n    assert response.status_code == 404\n\n\ndef test_post_rating_success(monkeypatch, client):\n    \"\"\"Teste l'envoi réussi d'une note valide (POST 201) et la présence du message de succès.\"\"\"\n    monkeypatch.setattr(\n        api_client,\n        \"get_title\",\n        lambda title_id: {\n            \"title\": {\"title_id\": title_id, \"title\": \"Super Film\", \"genres\": []},\n            \"views\": 10,\n            \"average_rating\": 5.0,\n            \"rating_count\": 1,\n        },\n    )\n    monkeypatch.setattr(\n        api_client,\n        \"post_rating\",\n        lambda user_id, title_id, rating, comment: 201,\n    )\n\n    response = client.post(\n        \"/titles/123e4567-e89b-12d3-a456-426614174000/\",\n        {\n            \"user_id\": \"8b9e6a20-0000-0000-0000-000000000000\",\n            \"rating\": \"5\",\n            \"comment\": \"Génial\",\n        },\n    )\n    assert response.status_code == 200\n    assert \"Avis enregistré\" in response.content.decode(\"utf-8\")\n\n\ndef test_post_rating_unprocessable(monkeypatch, client):\n    \"\"\"Teste l'envoi d'une note refusée (422).\"\"\"\n    monkeypatch.setattr(\n        api_client,\n        \"get_title\",\n        lambda title_id: {\n            \"title\": {\"title_id\": title_id, \"title\": \"Super Film\", \"genres\": []},\n            \"views\": 10,\n        },\n    )\n    monkeypatch.setattr(\n        api_client,\n        \"post_rating\",\n        lambda user_id, title_id, rating, comment: 422,\n    )\n\n    response = client.post(\n        \"/titles/123e4567-e89b-12d3-a456-426614174000/\",\n        {\n            \"user_id\": \"8b9e6a20-0000-0000-0000-000000000000\",\n            \"rating\": \"6\",\n        },\n    )\n    assert response.status_code == 200\n    assert b\"Note invalide\" in response.content\n\n\ndef test_api_unavailable(monkeypatch, client):\n    \"\"\"Teste que l'indisponibilité de l'API renvoie un code 503.\"\"\"\n    def mock_health():\n        raise httpx.ConnectError(\"Connexion refusée\")\n\n    monkeypatch.setattr(api_client, \"health\", mock_health)\n\n    response = client.get(\"/\")\n    assert response.status_code == 503\n    assert b\"503\" in response.content\n\n\ndef test_user_history(monkeypatch, client):\n    \"\"\"Teste l'affichage de l'historique utilisateur.\"\"\"\n    monkeypatch.setattr(\n        api_client,\n        \"history\",\n        lambda user_id: [\n            {\n                \"watched_at\": \"2026-03-30 12:00:00\",\n                \"title_id\": \"123e4567-e89b-12d3-a456-426614174000\",\n                \"title\": \"Film Vu\",\n                \"duration_watched_seconds\": 3600,\n                \"completed\": True,\n            }\n        ],\n    )\n\n    response = client.get(\"/users/8b9e6a20-0000-0000-0000-000000000000/history/\")\n    assert response.status_code == 200\n    assert b\"Film Vu\" in response.content\n    assert b\"3600\" in response.content\n",
+                  "path": "tests/test_frontend.py"
+                },
+                "name": "write_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfRNpyYSGr4hoFxO0qSfEN3qDufzQeCJrpfFnoxfBFJJjSnxrPhptCKJoif0QqsFLmp-RlRuS6TXhJSQPP1vCDM0JTYQG5yOsGhvBV2OJxRiO3DWVYeWKf6ai4e7Pn2yQOvDizhUJiIk-icdVHVLRzW9ju5ItiYaS2e6DzBLDovmwVYt4H6ZvBvF2qw0b_iqB"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "QeUHa-V6pbOR1Q-ExtDwDA",
+    "usage_metadata": {
+      "candidates_token_count": 1952,
+      "prompt_token_count": 6809,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 6809
+        }
+      ],
+      "total_token_count": 8761
+    }
+  },
+  "usage": {
+    "input_tokens": 6809,
+    "output_tokens": 1952,
+    "thinking_tokens": null
+  }
+}

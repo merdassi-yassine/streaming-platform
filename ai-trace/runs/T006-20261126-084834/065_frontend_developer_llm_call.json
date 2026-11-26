@@ -1,0 +1,79 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 65,
+  "agent": "frontend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T07:56:38+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 1.0,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "frontend/settings.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_6424699395710048222",
+                "args": {
+                  "content": "\"\"\"Configuration WSGI pour le projet frontend.\"\"\"\n\nimport os\nfrom django.core.wsgi import get_wsgi_application\n\nos.environ.setdefault(\"DJANGO_SETTINGS_MODULE\", \"frontend.settings\")\n\napplication = get_wsgi_application()\n",
+                  "path": "frontend/wsgi.py"
+                },
+                "name": "write_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfRPFvwo00mQbtvz75RhzSmLny-xxx9ibefCDP4A4HQlRnmPWUDlwj_zSfA21UZNWjR44M7NDG2jWM7TiaYeftRVHMmjIndqH67zsVJxCpW47Stffvhaa6WcaPzuVvxesZrPQcvwljG_gNDakpHlRuuSRC5BuZUYH3VD0isXUACY6Z2W0Af4udfbjFPaZXlA1"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "NuYHa-nJKtzt28oP8vzniAs",
+    "usage_metadata": {
+      "cache_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 4037
+        }
+      ],
+      "cached_content_token_count": 4037,
+      "candidates_token_count": 78,
+      "prompt_token_count": 6815,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 6815
+        }
+      ],
+      "total_token_count": 6893
+    }
+  },
+  "usage": {
+    "input_tokens": 6815,
+    "output_tokens": 78,
+    "thinking_tokens": null
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 37,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T07:52:22+00:00",
+  "iteration": 1,
+  "decision": "changes",
+  "feedback": "Ne corrige QUE tests/test_frontend.py (le code frontend est bon). 1) test_title_detail_view : LANGUAGE_CODE fr-fr affiche la note 4.5 sous la forme '4,5' (localisation Django, c'est voulu) : vérifie '4,5'. 2) test_post_rating_success : b'Avis enregistr\\eacute' n'est pas valide ; compare des textes : assert 'Avis enregistré' in response.content.decode(). Lis tests/test_frontend.py et frontend/templates/frontend/title.html, puis réécris tests/test_frontend.py en entier.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

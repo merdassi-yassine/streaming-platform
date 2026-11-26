@@ -1,0 +1,16 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 28,
+  "agent": "frontend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-26T07:49:23+00:00",
+  "tool": "write_file",
+  "args": {
+    "content": "{% extends 'frontend/base.html' %}\n\n{% block title %}Service indisponible - StreamingPlatform{% endblock %}\n\n{% block content %}\n<div class=\"card\" style=\"text-align: center; padding: 3rem;\">\n    <h2 style=\"color: #e50914; font-size: 2rem;\">503 - Service Indisponible</h2>\n    <p style=\"font-size: 1.1rem; margin: 1.5rem 0;\">{{ message }}</p>\n    <p><a href=\"{% url 'home' %}\">&larr; Retour à l'accueil</a></p>\n</div>\n{% endblock %}\n",
+    "path": "frontend/templates/frontend/error.html"
+  },
+  "result": {
+    "ok": true,
+    "written": "frontend/templates/frontend/error.html"
+  }
+}

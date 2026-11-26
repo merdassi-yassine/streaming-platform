@@ -1,0 +1,11 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 53,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T07:56:26+00:00",
+  "iteration": 2,
+  "decision": "changes",
+  "feedback": "BLOQUANT, vu en lançant le vrai serveur (python -m django runserver) : ImproperlyConfigured « WSGI application 'frontend.wsgi.application' could not be loaded » car frontend/wsgi.py n'existe pas. 1) Crée frontend/wsgi.py (os.environ.setdefault DJANGO_SETTINGS_MODULE=frontend.settings ; application = get_wsgi_application()). 2) Sans base de données, retire de settings.py SessionMiddleware, MessageMiddleware et le context processor messages (ils supposent django.contrib.sessions/messages, non installés). 3) Ajoute dans tests/test_frontend.py un test qui appelle django.core.servers.basehttp.get_internal_wsgi_application() et vérifie qu'il renvoie un objet appelable. Lis frontend/settings.py et tests/test_frontend.py, puis réécris ces fichiers en entier.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

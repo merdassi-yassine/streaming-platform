@@ -1,0 +1,71 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 61,
+  "agent": "frontend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T07:56:36+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 0.75,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"Configuration Django pour l'interface web de la plateforme de streaming.\"\"\"\n\nimport os\n\nBASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))\n\nSECRET_KEY = os.environ.get(\"DJANGO_SECRET_KEY\", \"dev-only-not-secret\")\nDEBUG = os.environ.get(\"DJANGO_DEBUG\", \"True\").lower() in (\"true\", \"1\", \"t\", \"yes\")\n\nALLOWED_HOSTS = [\"*\"]\n\nINSTALLED_APPS = [\n    \"django.contrib.staticfiles\",\n    \"frontend\",\n]\n\nMIDDLEWARE = [\n    \"django.middleware.security.SecurityMiddleware\",\n    \"django.contrib.sessions.middleware.SessionMiddleware\",\n    \"django.middleware.common.CommonMiddleware\",\n    \"django.middleware.csrf.CsrfViewMiddleware\",\n    \"django.contrib.messages.middleware.MessageMiddleware\",\n    \"django.middleware.clickjacking.XFrameOptionsMiddleware\",\n]\n\nROOT_URLCONF = \"frontend.urls\"\n\nTEMPLATES = [\n    {\n        \"BACKEND\": \"django.template.backends.django.DjangoTemplates\",\n        \"DIRS\": [],\n        \"APP_DIRS\": True,\n        \"OPTIONS\": {\n            \"context_processors\": [\n                \"django.template.context_processors.debug\",\n                \"django.template.context_processors.request\",\n                \"django.contrib.messages.context_processors.messages\",\n            ],\n        },\n    },\n]\n\nWSGI_APPLICATION = \"frontend.wsgi.application\"\n\nDATABASES = {}\n\nLANGUAGE_CODE = \"fr-fr\"\nTIME_ZONE = \"UTC\"\nUSE_I18N = True\nUSE_TZ = True\n\nSTATIC_URL = \"static/\"\n\nAPI_BASE_URL = os.environ.get(\"API_BASE_URL\", \"http://localhost:8000\")\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_17654122131982937159",
+                "args": {
+                  "path": "tests/test_frontend.py"
+                },
+                "name": "read_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfROvKt76jnRb1LNAEmvdDuO_bxAlwSaE7tIbp4eKUUTyLCYYX2v-M8LQi4UucIH6nXjD_CSyLfInAl0T2dzajLDU9oAm-S78a7RubUR1lqwvK_D1vgzyUc9oR15qPAp_1BZwmLdkKK4SdDmBJGtdDq2qeSBarEJqpkJoNoeqw4k0WZbHuQ2K2HQOqnQ3D98x"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "NOYHa9PbCp22vdIP7LawgA4",
+    "usage_metadata": {
+      "candidates_token_count": 22,
+      "prompt_token_count": 4419,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 4419
+        }
+      ],
+      "total_token_count": 4441
+    }
+  },
+  "usage": {
+    "input_tokens": 4419,
+    "output_tokens": 22,
+    "thinking_tokens": null
+  }
+}

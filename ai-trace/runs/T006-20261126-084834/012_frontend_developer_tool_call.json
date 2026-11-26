@@ -1,0 +1,16 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 12,
+  "agent": "frontend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-26T07:48:51+00:00",
+  "tool": "write_file",
+  "args": {
+    "path": "frontend/api_client.py",
+    "content": "\"\"\"Client HTTP (httpx) pour communiquer avec l'API FastAPI.\"\"\"\n\nfrom __future__ import annotations\n\nimport datetime\nfrom typing import Any, Dict, List, Optional\n\nimport httpx\nfrom django.conf import settings\n\n\ndef _get_client() -> httpx.Client:\n    \"\"\"Retourne un client httpx configuré avec l'URL de base et un timeout.\"\"\"\n    return httpx.Client(base_url=settings.API_BASE_URL, timeout=10.0)\n\n\ndef health() -> Dict[str, Any]:\n    \"\"\"Récupère l'état de santé et les nœuds du cluster.\"\"\"\n    with _get_client() as client:\n        response = client.get(\"/health\")\n        response.raise_for_status()\n        return response.json()\n\n\ndef trending(day: Optional[str] = None) -> List[Dict[str, Any]]:\n    \"\"\"Récupère le top 10 des titres pour une date donnée (YYYY-MM-DD) ou la date du jour.\"\"\"\n    if not day:\n        day = datetime.date.today().isoformat()\n    with _get_client() as client:\n        response = client.get(f\"/trending/{day}\")\n        response.raise_for_status()\n        return response.json()\n\n\ndef genre_titles(genre: str) -> List[Dict[str, Any]]:\n    \"\"\"Récupère la liste des titres pour un genre donné.\"\"\"\n    with _get_client() as client:\n        response = client.get(f\"/genres/{genre}/titles\")\n        response.raise_for_status()\n        return response.json()\n\n\ndef get_title(title_id: str) -> Optional[Dict[str, Any]]:\n    \"\"\"Récupère la fiche détaillée d'un titre, ou None si 404.\"\"\"\n    with _get_client() as client:\n        response = client.get(f\"/titles/{title_id}\")\n        if response.status_code == 404:\n            return None\n        response.raise_for_status()\n        return response.json()\n\n\ndef history(user_id: str) -> List[Dict[str, Any]]:\n    \"\"\"Récupère l'historique de visionnage d'un utilisateur.\"\"\"\n    with _get_client() as client:\n        response = client.get(f\"/users/{user_id}/history\")\n        response.raise_for_status()\n        return response.json()\n\n\ndef post_rating(user_id: str, title_id: str, rating: int, comment: Optional[str] = None) -> int:\n    \"\"\"Envoie un avis / note sur un titre et retourne le code HTTP.\"\"\"\n    payload: Dict[str, Any] = {\n        \"user_id\": user_id,\n        \"title_id\": title_id,\n        \"rating\": rating,\n    }\n    if comment:\n        payload[\"comment\"] = comment\n\n    with _get_client() as client:\n        response = client.post(\"/ratings\", json=payload)\n        return response.status_code\n"
+  },
+  "result": {
+    "ok": true,
+    "written": "frontend/api_client.py"
+  }
+}

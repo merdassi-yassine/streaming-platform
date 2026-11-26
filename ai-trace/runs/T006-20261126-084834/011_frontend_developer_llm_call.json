@@ -1,0 +1,72 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 11,
+  "agent": "frontend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T07:48:51+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 4.54,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "frontend/settings.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_12850953279921793177",
+                "args": {
+                  "path": "frontend/api_client.py",
+                  "content": "\"\"\"Client HTTP (httpx) pour communiquer avec l'API FastAPI.\"\"\"\n\nfrom __future__ import annotations\n\nimport datetime\nfrom typing import Any, Dict, List, Optional\n\nimport httpx\nfrom django.conf import settings\n\n\ndef _get_client() -> httpx.Client:\n    \"\"\"Retourne un client httpx configuré avec l'URL de base et un timeout.\"\"\"\n    return httpx.Client(base_url=settings.API_BASE_URL, timeout=10.0)\n\n\ndef health() -> Dict[str, Any]:\n    \"\"\"Récupère l'état de santé et les nœuds du cluster.\"\"\"\n    with _get_client() as client:\n        response = client.get(\"/health\")\n        response.raise_for_status()\n        return response.json()\n\n\ndef trending(day: Optional[str] = None) -> List[Dict[str, Any]]:\n    \"\"\"Récupère le top 10 des titres pour une date donnée (YYYY-MM-DD) ou la date du jour.\"\"\"\n    if not day:\n        day = datetime.date.today().isoformat()\n    with _get_client() as client:\n        response = client.get(f\"/trending/{day}\")\n        response.raise_for_status()\n        return response.json()\n\n\ndef genre_titles(genre: str) -> List[Dict[str, Any]]:\n    \"\"\"Récupère la liste des titres pour un genre donné.\"\"\"\n    with _get_client() as client:\n        response = client.get(f\"/genres/{genre}/titles\")\n        response.raise_for_status()\n        return response.json()\n\n\ndef get_title(title_id: str) -> Optional[Dict[str, Any]]:\n    \"\"\"Récupère la fiche détaillée d'un titre, ou None si 404.\"\"\"\n    with _get_client() as client:\n        response = client.get(f\"/titles/{title_id}\")\n        if response.status_code == 404:\n            return None\n        response.raise_for_status()\n        return response.json()\n\n\ndef history(user_id: str) -> List[Dict[str, Any]]:\n    \"\"\"Récupère l'historique de visionnage d'un utilisateur.\"\"\"\n    with _get_client() as client:\n        response = client.get(f\"/users/{user_id}/history\")\n        response.raise_for_status()\n        return response.json()\n\n\ndef post_rating(user_id: str, title_id: str, rating: int, comment: Optional[str] = None) -> int:\n    \"\"\"Envoie un avis / note sur un titre et retourne le code HTTP.\"\"\"\n    payload: Dict[str, Any] = {\n        \"user_id\": user_id,\n        \"title_id\": title_id,\n        \"rating\": rating,\n    }\n    if comment:\n        payload[\"comment\"] = comment\n\n    with _get_client() as client:\n        response = client.post(\"/ratings\", json=payload)\n        return response.status_code\n"
+                },
+                "name": "write_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfRNr3Hlx6Hi4hCpDA73rzqjKyvYufqIPcbnh9M4bBS4uX1NopT81Xd3_1mNhaVHAKrsMD64PGA_ZecIiJ0tCpoTs1KpF_n5QV04YlkcwgxCBzcZcCIYNtFQKlJfqlgldyFb61Gex1D2CnOKgnjH3L8L54NMVYFfthYyNitsIY4NOdbYqgsv5Wrboqi7C4HJP"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "X-QHa5GZJNSM28oP5JiimQE",
+    "usage_metadata": {
+      "candidates_token_count": 724,
+      "prompt_token_count": 3960,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 3960
+        }
+      ],
+      "total_token_count": 4684
+    }
+  },
+  "usage": {
+    "input_tokens": 3960,
+    "output_tokens": 724,
+    "thinking_tokens": null
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 71,
+  "agent": "frontend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T07:56:46+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 1.66,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "tests/test_frontend.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "### Résumé\n\n- **Fichiers modifiés/créés** : \n  - `frontend/settings.py` (suppression des middlewares et context processors liés aux sessions et messages, absents car base de données Django vide).\n  - `frontend/wsgi.py` (création du fichier WSGI standard pour le chargement par `runserver` et uwsgi/gunicorn).\n  - `tests/test_frontend.py` (ajout du test vérifiant que `get_internal_wsgi_application()` renvoie un objet appelable, avec conservation des 9 tests unitaires/fonctionnels existants).\n- **Choix** :\n  - Respect strict des exigences pour éviter l'erreur d'initialisation `ImproperlyConfigured` liée aux sessions/messages et garantir le bon chargement WSGI.\n  - Utilisation de `django.core.servers.basehttp.get_internal_wsgi_application()` dans les tests pour valider l'appelabilité WSGI sans requérir de serveur externe.\n- **Points à vérifier** :\n  - Exécution des tests via `pytest` (non exécutés par l'agent).",
+              "thought_signature": "EpYBCpMBAWkUfRP8WIq6jdTqdraGAVngCIT3hE5xF7hBLZeEx2dV2ZA0iR5BUTb3UkFPL8xTHtfOVNB9tjJXNormPcUJlm2SmzbOVL6O5b5_C0mTYE5XQoGS0-iI1oscQq6Yja7VfUDD4vQbszmpsLKr_Q5lC2YJM6UdqaWNH3W0IfWuqtfKDli15WDdS2qvFOh_acWogyeg"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "PeYHa-zAC-mAxs0PidzXoAQ",
+    "usage_metadata": {
+      "cache_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 8097
+        }
+      ],
+      "cached_content_token_count": 8097,
+      "candidates_token_count": 250,
+      "prompt_token_count": 10921,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 10921
+        }
+      ],
+      "total_token_count": 11171
+    }
+  },
+  "usage": {
+    "input_tokens": 10921,
+    "output_tokens": 250,
+    "thinking_tokens": null
+  }
+}

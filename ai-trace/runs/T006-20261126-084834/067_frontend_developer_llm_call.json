@@ -1,0 +1,78 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 67,
+  "agent": "frontend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T07:56:39+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 0.84,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "frontend/wsgi.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_6039155926816520028",
+                "args": {
+                  "path": "tests/test_frontend.py"
+                },
+                "name": "read_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfROoYRYLyFfPP3rarANlmflibGNhI4jJSmO0EahwZcXE0Wwprjc4CNWiSFMWPFrnnzz5ikWBK3YNLREQaiPnU_RbrpzINJih41jY6uP6opvMNyCATF2300EatG-U5FPQii_x4QrBB1TPLjB0pW8oa69YFYZNOQCYwg63E0tuqpgh6k1kze8F1-PGW6bcF3XP"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "N-YHa72sK7aokdUPs93psQo",
+    "usage_metadata": {
+      "cache_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 4033
+        }
+      ],
+      "cached_content_token_count": 4033,
+      "candidates_token_count": 22,
+      "prompt_token_count": 6915,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 6915
+        }
+      ],
+      "total_token_count": 6937
+    }
+  },
+  "usage": {
+    "input_tokens": 6915,
+    "output_tokens": 22,
+    "thinking_tokens": null
+  }
+}

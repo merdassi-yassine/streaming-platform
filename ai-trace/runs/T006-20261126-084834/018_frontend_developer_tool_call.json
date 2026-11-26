@@ -1,0 +1,16 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 18,
+  "agent": "frontend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-26T07:49:04+00:00",
+  "tool": "write_file",
+  "args": {
+    "path": "frontend/templates/frontend/base.html",
+    "content": "<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>{% block title %}Streaming Platform{% endblock %}</title>\n    <style>\n        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #141414; color: #f5f5f5; }\n        header { background: #000; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }\n        header h1 { margin: 0; font-size: 1.5rem; }\n        header h1 a { color: #e50914; text-decoration: none; }\n        nav form { display: inline-flex; gap: 0.5rem; margin-left: 1rem; }\n        nav input, nav select, button { padding: 0.4rem 0.6rem; border: 1px solid #333; background: #222; color: #fff; border-radius: 4px; }\n        button { background: #e50914; border: none; cursor: pointer; font-weight: bold; }\n        button:hover { background: #f40612; }\n        main { padding: 2rem; max-width: 1000px; margin: auto; }\n        a { color: #e50914; text-decoration: none; }\n        a:hover { text-decoration: underline; }\n        .card { background: #1f1f1f; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #333; }\n        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }\n        th, td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #333; }\n        th { background: #222; }\n        .alert-success { background: #1c3b2b; color: #4ade80; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem; }\n        .alert-error { background: #3f1d1d; color: #f87171; padding: 0.75rem; border-radius: 4px; margin-bottom: 1rem; }\n        .badge { background: #333; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }\n    </style>\n</head>\n<body>\n    <header>\n        <h1><a href=\"{% url 'home' %}\">StreamingPlatform</a></h1>\n        <nav>\n            <form action=\"\" method=\"get\" onsubmit=\"event.preventDefault(); const g = document.getElementById('genre-input').value; if(g) window.location.href='/genres/' + encodeURIComponent(g) + '/';\">\n                <input type=\"text\" id=\"genre-input\" placeholder=\"Genre (ex: Action)\" required>\n                <button type=\"submit\">Genre</button>\n            </form>\n            <form action=\"\" method=\"get\" onsubmit=\"event.preventDefault(); const u = document.getElementById('user-input').value; if(u) window.location.href='/users/' + encodeURIComponent(u) + '/history/';\">\n                <input type=\"text\" id=\"user-input\" placeholder=\"ID Utilisateur (UUID)\" required>\n                <button type=\"submit\">Historique</button>\n            </form>\n        </nav>\n    </header>\n    <main>\n        {% block content %}{% endblock %}\n    </main>\n</body>\n</html>\n"
+  },
+  "result": {
+    "ok": true,
+    "written": "frontend/templates/frontend/base.html"
+  }
+}

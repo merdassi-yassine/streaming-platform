@@ -1,0 +1,171 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /usr/local/bin/python3.13
+rootdir: /workspace
+configfile: pytest.ini
+plugins: anyio-4.16.0
+collecting ... collected 32 items
+
+tests/test_api.py::test_health_check PASSED                              [  3%]
+tests/test_api.py::test_get_title_not_found PASSED                       [  6%]
+tests/test_api.py::test_get_title_success FAILED                         [  9%]
+tests/test_api.py::test_get_genres_titles PASSED                         [ 12%]
+tests/test_api.py::test_post_rating_validation_error PASSED              [ 15%]
+tests/test_api.py::test_post_rating_not_found PASSED                     [ 18%]
+tests/test_api.py::test_post_rating_success_and_history PASSED           [ 21%]
+tests/test_api.py::test_trending_endpoint PASSED                         [ 25%]
+tests/test_cluster.py::test_version_cassandra_5 PASSED                   [ 28%]
+tests/test_cluster.py::test_trois_noeuds_visibles_et_up PASSED           [ 31%]
+tests/test_cluster.py::test_replication_rf3 PASSED                       [ 34%]
+tests/test_dao.py::test_title_dao_roundtrip PASSED                       [ 37%]
+tests/test_dao.py::test_user_dao_roundtrip PASSED                        [ 40%]
+tests/test_dao.py::test_list_by_genre PASSED                             [ 43%]
+tests/test_dao.py::test_rating_dao_and_stats PASSED                      [ 46%]
+tests/test_dao.py::test_view_dao_history_and_day PASSED                  [ 50%]
+tests/test_dao.py::test_extra_dao_coverage_users PASSED                  [ 53%]
+tests/test_dao.py::test_extra_dao_coverage_titles PASSED                 [ 56%]
+tests/test_frontend.py::test_home_view PASSED                            [ 59%]
+tests/test_frontend.py::test_genre_view PASSED                           [ 62%]
+tests/test_frontend.py::test_title_detail_view FAILED                    [ 65%]
+tests/test_frontend.py::test_title_detail_not_found PASSED               [ 68%]
+tests/test_frontend.py::test_post_rating_success FAILED                  [ 71%]
+tests/test_frontend.py::test_post_rating_unprocessable PASSED            [ 75%]
+tests/test_frontend.py::test_api_unavailable PASSED                      [ 78%]
+tests/test_frontend.py::test_user_history PASSED                         [ 81%]
+tests/test_schema.py::test_create_schema_and_idempotence PASSED          [ 84%]
+tests/test_schema.py::test_primary_keys_and_clustering PASSED            [ 87%]
+tests/test_schema.py::test_drop_schema PASSED                            [ 90%]
+tests/test_services.py::test_services_catalog_and_review PASSED          [ 93%]
+tests/test_services.py::test_trending_service_top10 PASSED               [ 96%]
+tests/test_services.py::test_catalog_service_genre PASSED                [100%]
+
+=================================== FAILURES ===================================
+____________________________ test_get_title_success ____________________________
+
+session = <cassandra.cluster.Session object at 0x7e6f696ae3c0>
+api_client = <starlette.testclient.TestClient object at 0x7e6f6844c050>
+
+    def test_get_title_success(session, api_client):
+        tid = uuid.uuid4()
+        t_dao = TitleDAO(session, KS_API)
+        t_dao.save(Title(
+            title_id=tid,
+            title="Inception",
+            kind="movie",
+            release_year=2010,
+            genres={"Sci-Fi", "Action"},
+            synopsis="A thief who steals corporate secrets...",
+            duration_minutes=148,
+            episodes_count=None,
+        ))
+    
+        response = api_client.get(f"/titles/{tid}")
+>       assert response.status_code == 200
+E       assert 404 == 200
+E        +  where 404 = <Response [404 Not Found]>.status_code
+
+tests/test_api.py:54: AssertionError
+____________________________ test_title_detail_view ____________________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7e6f6844b1d0>
+client = <django.test.client.Client object at 0x7e6f696b2990>
+
+    def test_title_detail_view(monkeypatch, client):
+        """Teste la fiche détaillée d'un titre existant."""
+        monkeypatch.setattr(
+            api_client,
+            "get_title",
+            lambda title_id: {
+                "title": {
+                    "title_id": title_id,
+                    "title": "Super Film",
+                    "kind": "movie",
+                    "release_year": 2022,
+                    "genres": ["Drama"],
+                },
+                "views": 150,
+                "average_rating": 4.5,
+                "rating_count": 10,
+            },
+        )
+    
+        response = client.get("/titles/123e4567-e89b-12d3-a456-426614174000/")
+        assert response.status_code == 200
+        assert b"Super Film" in response.content
+>       assert b"4.5" in response.content
+E       assert b'4.5' in b'<!DOCTYPE html>\n<html lang="fr">\n<head>\n    <meta charset="UTF-8">\n    <title>Super Film - StreamingPlatform</title>\n    <style>\n        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #141414; color: #f5f5f5; }\n        header { background: #000; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }\n        header h1 { margin: 0; font-size: 1.5rem; }\n        header h1 a { color: #e50914; text-decoration: none; }\n        nav form { display: inline-flex; gap: 0.5rem; margin-left: 1rem; }\n        nav input, nav select, button { padding: 0.4rem 0.6rem; border: 1px solid #333; background: #222; color: #fff; border-radius: 4px; }\n        button { background: #e50914; border: none; cursor: pointer; font-weight: bold; }\n        button:hover { background: #f40612; }\n        main { padding: 2rem; max-width: 1000px; margin: auto; }\n        a { color: #e50914; text-decoration: none; }\n        a:hover { text-decoration: underline; }\n        .card { background: #1f1f1f; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #333; }\n        table { width: 100%; b...style="width: 100%; max-width: 400px;">\n        </div>\n\n        <div style="margin-bottom: 1rem;">\n            <label for="rating" style="display: block; margin-bottom: 0.3rem;">Note (1 \xc3\xa0 5) :</label>\n            <select id="rating" name="rating" required style="width: 100%; max-width: 150px;">\n                <option value="">-- Choisir --</option>\n                <option value="5" >5 - Excellent</option>\n                <option value="4" >4 - Tr\xc3\xa8s bon</option>\n                <option value="3" >3 - Moyen</option>\n                <option value="2" >2 - D\xc3\xa9cevant</option>\n                <option value="1" >1 - Mauvais</option>\n            </select>\n        </div>\n\n        <div style="margin-bottom: 1rem;">\n            <label for="comment" style="display: block; margin-bottom: 0.3rem;">Commentaire (optionnel) :</label>\n            <textarea id="comment" name="comment" rows="3" style="width: 100%; max-width: 500px; background: #222; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 0.5rem;"></textarea>\n        </div>\n\n        <button type="submit">Envoyer l\'avis</button>\n    </form>\n</div>\n\n    </main>\n</body>\n</html>\n'
+E        +  where b'<!DOCTYPE html>\n<html lang="fr">\n<head>\n    <meta charset="UTF-8">\n    <title>Super Film - StreamingPlatform</title>\n    <style>\n        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #141414; color: #f5f5f5; }\n        header { background: #000; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }\n        header h1 { margin: 0; font-size: 1.5rem; }\n        header h1 a { color: #e50914; text-decoration: none; }\n        nav form { display: inline-flex; gap: 0.5rem; margin-left: 1rem; }\n        nav input, nav select, button { padding: 0.4rem 0.6rem; border: 1px solid #333; background: #222; color: #fff; border-radius: 4px; }\n        button { background: #e50914; border: none; cursor: pointer; font-weight: bold; }\n        button:hover { background: #f40612; }\n        main { padding: 2rem; max-width: 1000px; margin: auto; }\n        a { color: #e50914; text-decoration: none; }\n        a:hover { text-decoration: underline; }\n        .card { background: #1f1f1f; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #333; }\n        table { width: 100%; b...style="width: 100%; max-width: 400px;">\n        </div>\n\n        <div style="margin-bottom: 1rem;">\n            <label for="rating" style="display: block; margin-bottom: 0.3rem;">Note (1 \xc3\xa0 5) :</label>\n            <select id="rating" name="rating" required style="width: 100%; max-width: 150px;">\n                <option value="">-- Choisir --</option>\n                <option value="5" >5 - Excellent</option>\n                <option value="4" >4 - Tr\xc3\xa8s bon</option>\n                <option value="3" >3 - Moyen</option>\n                <option value="2" >2 - D\xc3\xa9cevant</option>\n                <option value="1" >1 - Mauvais</option>\n            </select>\n        </div>\n\n        <div style="margin-bottom: 1rem;">\n            <label for="comment" style="display: block; margin-bottom: 0.3rem;">Commentaire (optionnel) :</label>\n            <textarea id="comment" name="comment" rows="3" style="width: 100%; max-width: 500px; background: #222; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 0.5rem;"></textarea>\n        </div>\n\n        <button type="submit">Envoyer l\'avis</button>\n    </form>\n</div>\n\n    </main>\n</body>\n</html>\n' = <HttpResponse status_code=200, "text/html; charset=utf-8">.content
+
+tests/test_frontend.py:90: AssertionError
+___________________________ test_post_rating_success ___________________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7e6f6846ecf0>
+client = <django.test.client.Client object at 0x7e6f69671cd0>
+
+    def test_post_rating_success(monkeypatch, client):
+        """Teste l'envoi réussi d'une note valide (POST 201)."""
+        monkeypatch.setattr(
+            api_client,
+            "get_title",
+            lambda title_id: {
+                "title": {"title_id": title_id, "title": "Super Film", "genres": []},
+                "views": 10,
+                "average_rating": 5.0,
+                "rating_count": 1,
+            },
+        )
+        monkeypatch.setattr(
+            api_client,
+            "post_rating",
+            lambda user_id, title_id, rating, comment: 201,
+        )
+    
+        response = client.post(
+            "/titles/123e4567-e89b-12d3-a456-426614174000/",
+            {
+                "user_id": "8b9e6a20-0000-0000-0000-000000000000",
+                "rating": "5",
+                "comment": "Génial",
+            },
+        )
+        assert response.status_code == 200
+>       assert b"Avis enregistr\eacute" in response.content
+E       assert b'Avis enregistr\\eacute' in b'<!DOCTYPE html>\n<html lang="fr">\n<head>\n    <meta charset="UTF-8">\n    <title>Super Film - StreamingPlatform</title>\n    <style>\n        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #141414; color: #f5f5f5; }\n        header { background: #000; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }\n        header h1 { margin: 0; font-size: 1.5rem; }\n        header h1 a { color: #e50914; text-decoration: none; }\n        nav form { display: inline-flex; gap: 0.5rem; margin-left: 1rem; }\n        nav input, nav select, button { padding: 0.4rem 0.6rem; border: 1px solid #333; background: #222; color: #fff; border-radius: 4px; }\n        button { background: #e50914; border: none; cursor: pointer; font-weight: bold; }\n        button:hover { background: #f40612; }\n        main { padding: 2rem; max-width: 1000px; margin: auto; }\n        a { color: #e50914; text-decoration: none; }\n        a:hover { text-decoration: underline; }\n        .card { background: #1f1f1f; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #333; }\n        table { width: 100%; b...style="width: 100%; max-width: 400px;">\n        </div>\n\n        <div style="margin-bottom: 1rem;">\n            <label for="rating" style="display: block; margin-bottom: 0.3rem;">Note (1 \xc3\xa0 5) :</label>\n            <select id="rating" name="rating" required style="width: 100%; max-width: 150px;">\n                <option value="">-- Choisir --</option>\n                <option value="5" >5 - Excellent</option>\n                <option value="4" >4 - Tr\xc3\xa8s bon</option>\n                <option value="3" >3 - Moyen</option>\n                <option value="2" >2 - D\xc3\xa9cevant</option>\n                <option value="1" >1 - Mauvais</option>\n            </select>\n        </div>\n\n        <div style="margin-bottom: 1rem;">\n            <label for="comment" style="display: block; margin-bottom: 0.3rem;">Commentaire (optionnel) :</label>\n            <textarea id="comment" name="comment" rows="3" style="width: 100%; max-width: 500px; background: #222; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 0.5rem;"></textarea>\n        </div>\n\n        <button type="submit">Envoyer l\'avis</button>\n    </form>\n</div>\n\n    </main>\n</body>\n</html>\n'
+E        +  where b'<!DOCTYPE html>\n<html lang="fr">\n<head>\n    <meta charset="UTF-8">\n    <title>Super Film - StreamingPlatform</title>\n    <style>\n        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #141414; color: #f5f5f5; }\n        header { background: #000; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }\n        header h1 { margin: 0; font-size: 1.5rem; }\n        header h1 a { color: #e50914; text-decoration: none; }\n        nav form { display: inline-flex; gap: 0.5rem; margin-left: 1rem; }\n        nav input, nav select, button { padding: 0.4rem 0.6rem; border: 1px solid #333; background: #222; color: #fff; border-radius: 4px; }\n        button { background: #e50914; border: none; cursor: pointer; font-weight: bold; }\n        button:hover { background: #f40612; }\n        main { padding: 2rem; max-width: 1000px; margin: auto; }\n        a { color: #e50914; text-decoration: none; }\n        a:hover { text-decoration: underline; }\n        .card { background: #1f1f1f; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border: 1px solid #333; }\n        table { width: 100%; b...style="width: 100%; max-width: 400px;">\n        </div>\n\n        <div style="margin-bottom: 1rem;">\n            <label for="rating" style="display: block; margin-bottom: 0.3rem;">Note (1 \xc3\xa0 5) :</label>\n            <select id="rating" name="rating" required style="width: 100%; max-width: 150px;">\n                <option value="">-- Choisir --</option>\n                <option value="5" >5 - Excellent</option>\n                <option value="4" >4 - Tr\xc3\xa8s bon</option>\n                <option value="3" >3 - Moyen</option>\n                <option value="2" >2 - D\xc3\xa9cevant</option>\n                <option value="1" >1 - Mauvais</option>\n            </select>\n        </div>\n\n        <div style="margin-bottom: 1rem;">\n            <label for="comment" style="display: block; margin-bottom: 0.3rem;">Commentaire (optionnel) :</label>\n            <textarea id="comment" name="comment" rows="3" style="width: 100%; max-width: 500px; background: #222; color: #fff; border: 1px solid #333; border-radius: 4px; padding: 0.5rem;"></textarea>\n        </div>\n\n        <button type="submit">Envoyer l\'avis</button>\n    </form>\n</div>\n\n    </main>\n</body>\n</html>\n' = <HttpResponse status_code=200, "text/html; charset=utf-8">.content
+
+tests/test_frontend.py:128: AssertionError
+=============================== warnings summary ===============================
+../usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_frontend.py:128
+  /workspace/tests/test_frontend.py:128: SyntaxWarning: invalid escape sequence '\e'
+    assert b"Avis enregistr\eacute" in response.content
+
+tests/test_api.py::test_post_rating_success_and_history
+tests/test_dao.py::test_rating_dao_and_stats
+tests/test_dao.py::test_rating_dao_and_stats
+tests/test_services.py::test_services_catalog_and_review
+  /workspace/streaming/dao/ratings.py:69: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at = datetime.utcnow()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_api.py::test_get_title_success - assert 404 == 200
+FAILED tests/test_frontend.py::test_title_detail_view - assert b'4.5' in b'<!...
+FAILED tests/test_frontend.py::test_post_rating_success - assert b'Avis enreg...
+============= 3 failed, 29 passed, 6 warnings in 95.11s (0:01:35) ==============
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-063deb179e84 Creating 
+ Container streaming-platform-tests-run-063deb179e84 Created 
+tests/test_frontend.py:128: SyntaxWarning: invalid escape sequence '\e'
+  assert b"Avis enregistr\eacute" in response.content
+

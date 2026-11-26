@@ -1,0 +1,16 @@
+{
+  "run_id": "T006-20261126-084834",
+  "seq": 20,
+  "agent": "frontend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-26T07:49:08+00:00",
+  "tool": "write_file",
+  "args": {
+    "content": "{% extends 'frontend/base.html' %}\n\n{% block title %}Accueil - StreamingPlatform{% endblock %}\n\n{% block content %}\n<div class=\"card\">\n    <h2>État du Cluster Cassandra</h2>\n    <p>Nœuds actifs : <strong>{{ cluster.nodes_up }}</strong> / Nœuds connus : <strong>{{ cluster.nodes_known }}</strong></p>\n</div>\n\n<div class=\"card\">\n    <h2>Top 10 du jour</h2>\n    <form method=\"get\" style=\"margin-bottom: 1rem;\">\n        <label for=\"day\">Date :</label>\n        <input type=\"date\" id=\"day\" name=\"day\" value=\"{{ current_day }}\">\n        <button type=\"submit\">Afficher</button>\n    </form>\n\n    {% if trending %}\n    <table>\n        <thead>\n            <tr>\n                <th>Titre</th>\n                <th>Genre(s)</th>\n                <th>Année</th>\n                <th>Vues</th>\n            </tr>\n        </thead>\n        <tbody>\n            {% for item in trending %}\n            <tr>\n                <td><a href=\"{% url 'title_detail' item.title.title_id %}\">{{ item.title.title }}</a></td>\n                <td>\n                    {% if item.title.genres %}\n                        {% for g in item.title.genres %}<span class=\"badge\">{{ g }}</span> {% endfor %}\n                    {% else %}\n                        -\n                    {% endif %}\n                </td>\n                <td>{{ item.title.release_year|default:\"-\" }}</td>\n                <td>{{ item.views }}</td>\n            </tr>\n            {% endfor %}\n        </tbody>\n    </table>\n    {% else %}\n    <p>Aucun titre tendance pour cette date.</p>\n    {% endif %}\n</div>\n{% endblock %}\n",
+    "path": "frontend/templates/frontend/home.html"
+  },
+  "result": {
+    "ok": true,
+    "written": "frontend/templates/frontend/home.html"
+  }
+}
