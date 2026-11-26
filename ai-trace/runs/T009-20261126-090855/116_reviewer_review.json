@@ -1,0 +1,11 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 116,
+  "agent": "reviewer",
+  "kind": "review",
+  "timestamp": "2026-11-26T08:51:03+00:00",
+  "iteration": 4,
+  "review": "Critères :\n✓ ViewDAO.add_views incrémente les compteurs sans écrire d'historique\n✓ parse limite aux N semaines les plus récentes et gère les champs vides\n✓ title_id est stable (uuid5) et dédoublonne les titres\n✓ enrich interroge Wikidata SPARQL sans appel réseau dans les tests\n✓ load génère le rapport Markdown avec sources et titres manquants\n✓ tests exécutés sur le keyspace dédié streaming_test_ingest supprimé en fin de test\n✗ la suite de tests échoue sur test_normalize_genres\n\nRemarques :\n- BLOQUANT : `test_normalize_genres` échoue lors de l'exécution de pytest (`AssertionError`), ce qui fait échouer la suite de tests globale (code de retour 1).\n- À AMÉLIORER : Dans `wikidata.py`, la recherche par sous-chaîne (`\"sf\" in lbl_lower`) pour le genre `science-fiction` provoquera des faux positifs sur tout libellé contenant ces deux lettres consécutives.\n- MINEUR : Dans `load.py`, repli sur la valeur codée en dur `2026` si l'année n'est trouvée ni dans Wikidata ni dans la date de semaine.\n\nRecommandation : DEMANDER DES CORRECTIONS — la suite de tests automatisée est en échec sur `test_normalize_genres`.",
+  "steps": 4,
+  "stop_reason": "done"
+}

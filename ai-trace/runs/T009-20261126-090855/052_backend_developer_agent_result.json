@@ -1,0 +1,17 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 52,
+  "agent": "backend_developer",
+  "kind": "agent_result",
+  "timestamp": "2026-11-26T08:34:12+00:00",
+  "iteration": 2,
+  "summary": "### Résumé en français\n\n#### Fichiers créés ou modifiés\n- **Modifié** : `streaming/dao/views.py` — Ajout de la méthode `add_views(self, title_id, day: date, count: int) -> None` incrémentant `title_stats` et `daily_views_by_title` de `count` avec des requêtes préparées, sans historique.\n- **Créé / Réécrit** : `streaming/ingest/netflix.py` — Parsing du TSV Netflix Top 10, filtrage des N semaines les plus récentes, conversion des durées en minutes, génération d'UUID v5 stables (`title_id`), et fonction `fetch`.\n- **Créé / Réécrit** : `streaming/ingest/wikidata.py` — Enrichissement SPARQL Wikidata, normalisation robuste des genres (gestion des accents via `unicodedata`, mots-clés élargis comme `romanti` pour comédie romantique), regroupement des bindings par item et sélection du plus récent, échappement des guillemets et antislashs.\n- **Créé / Réécrit** : `streaming/ingest/load.py` — Orchestration du chargement (`load`), fonction `reset` (`TRUNCATE`), et point d'entrée `main()` avec génération d'un rapport Markdown horodaté détaillé dans `reports/ingest/`.\n- **Créé / Réécrit** : `tests/test_ingest.py` — Suite complète de tests unitaires et d'intégration sur un keyspace de test dédié (`streaming_test_ingest`), sans aucun appel réseau (mocks HTTPx et enrich_fn factice).\n\n#### Choix de modélisation\n- **UUID v5 stable (`title_id`)** : Basé sur `NAMESPACE_URL` avec la namespace string `netflix-top10:{kind}:{title}`, garantissant qu'un même titre présent sur plusieurs semaines de classement est rattaché à une seule et unique fiche `Title`.\n- **Enrichissement Wikidata** : Filtrage et tri par année pour éliminer les ambiguïtés d'homonymie (ex. film vs série du même nom) en ne conservant que l'élément le plus récent.\n- **Incréments atomiques (compteurs)** : Utilisation des tables `title_stats` et `daily_views_by_title` avec l'opérateur Cassandra d'incrémentation de compteur (`view_count = view_count + ?`) via `ViewDAO.add_views`.\n\n#### Points à vérifier\n- Les tests n'ont pas pu être exécutés localement par manque d'accès au shell (à exécuter via pytest sur le cluster de test).\n- Le comportement exact de l'endpoint SPARQL distant en production dépend de la disponibilité du service public Wikidata et de la pertinence des libellés retournés.",
+  "steps": 10,
+  "stop_reason": "done",
+  "files_written": [
+    "streaming/ingest/netflix.py",
+    "streaming/ingest/wikidata.py",
+    "streaming/ingest/load.py",
+    "tests/test_ingest.py"
+  ]
+}

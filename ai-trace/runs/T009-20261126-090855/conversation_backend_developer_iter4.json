@@ -1,0 +1,335 @@
+[
+  {
+    "parts": [
+      {
+        "text": "## Task\nLis d'abord streaming/dao/views.py, streaming/dao/titles.py, streaming/models.py et streaming/schema.py\n(constante TABLES). Ne lis pas les autres fichiers. Fichiers COURTS, un write_file par fichier, contenu complet.\n\nA. `streaming/dao/views.py` : ajoute `add_views(self, title_id, day: date, count: int) -> None` qui\n   incrémente de `count` (requêtes préparées, `view_count = view_count + ?`) title_stats ET\n   daily_views_by_title pour ce jour, sans écrire d'historique. Ne change rien d'autre dans ce fichier.\n\nB. Paquet `streaming/ingest/` (`__init__.py` vide) :\n1. `netflix.py` — source 1 : Netflix Top 10 officiel, URL\n   NETFLIX_URL = \"https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv\" (fichier TSV, 1 ligne par\n   titre classé et par semaine). En-tête réel (vérifié le 26/11/2026) et 2 lignes d'exemple :\n   `week\tcategory\tweekly_rank\tshow_title\tseason_title\tweekly_hours_viewed\truntime\tweekly_views\tcumulative_weeks_in_top_10`\n   `2026-11-22\tFilms (English)\t1\tGuarding Stars\tN/A\t50600000\t1.8333\t27600000\t1`\n   `2026-11-22\tTV (English)\t1\tThe Body\tThe Body: Season 1\t70300000\t7.3833\t9500000\t2` (catégories : « Films (English) »,\n   « Films (Non-English) », « TV (English) », « TV (Non-English) » ; `runtime` en heures ; valeurs vides possibles).\n   Fonctions : `parse(tsv_text: str, weeks: int = 4) -> list[dict]` (csv.DictReader délimiteur tabulation ;\n   garde les `weeks` semaines les plus récentes ; chaque dict : week (date), kind « film » si la catégorie\n   commence par « Films » sinon « serie », title = show_title, season = season_title ou None si « N/A »,\n   rank, views (int, 0 si vide), hours (int), runtime_minutes (round(runtime*60) ou None), category) ;\n   `title_id(kind, title) -> uuid.UUID` = uuid5(NAMESPACE_URL, f\"netflix-top10:{kind}:{title}\") (stable :\n   un même titre sur plusieurs semaines = un seul identifiant) ; `fetch(http) -> str` (http.get(NETFLIX_URL),\n   raise_for_status, renvoie le texte).\n2. `wikidata.py` — source 2 : Wikidata (licence CC0), SPARQL_URL = \"https://query.wikidata.org/sparql\".\n   `enrich(http, title: str, kind: str) -> dict | None` : requête SPARQL GET (params query=…, format=json,\n   en-tête User-Agent « streaming-platform-projet-etudiant/1.0 ») cherchant un élément dont le libellé\n   anglais est exactement `title`, instance (wdt:P31/wdt:P279*) de wd:Q11424 (film) si kind == \"film\" sinon\n   wd:Q5398426 (série télévisée) ; renvoie pour le résultat le plus récent {\"qid\", \"year\" (YEAR de wdt:P577\n   ou wdt:P580), \"genres\" (libellés fr de wdt:P136), \"description\" (schema:description en fr, sinon en)}\n   ou None si aucun résultat.\n   `normalize_genres(labels) -> set[str]` : ramène les libellés Wikidata à notre vocabulaire par mots-clés\n   (« science-fiction », « action », « drame », « comedie », « animation », « thriller », « horreur »,\n   « fantastique », « romance », « documentaire », « crime », « aventure », « famille », « telerealite ») ;\n   ex. « film d'animation » → animation, « comédie romantique » → {comedie, romance}, « film policier » → crime ;\n   aucun mot-clé reconnu → {\"autre\"}.\n3. `load.py` — `load(session, keyspace, rows, enrich_fn) -> dict` : pour chaque titre distinct (title_id),\n   appelle enrich_fn(title, kind) UNE seule fois, enregistre un Title (synopsis = description Wikidata ou\n   « Description indisponible sur Wikidata », release_year = année Wikidata ou année de la semaine,\n   genres normalisés ou {\"autre\"}, duration_minutes = runtime_minutes pour un film, episodes_count None),\n   puis pour chaque ligne ViewDAO.add_views(title_id, week, views). Renvoie un rapport\n   {\"titles\": n, \"rows\": n, \"weeks\": [dates iso], \"wikidata_found\": n, \"wikidata_missing\": [titres]}.\n   `reset(session, keyspace)` : TRUNCATE de chaque table de TABLES.\n   `main()` (python -m streaming.ingest.load) : connexion comme ailleurs (CASSANDRA_CONTACT_POINTS,\n   DCAwareRoundRobinPolicy local_dc dc1), reset, httpx.Client(timeout=30, follow_redirects=True), fetch +\n   parse + load avec enrich (pause time.sleep(0.3) entre deux requêtes Wikidata), puis écrit\n   `reports/ingest/ingest-<AAAAMMJJ-HHMMSS>.md` : sources (URL, date de la dernière semaine), nombres,\n   titres sans correspondance Wikidata. Le keyspace est KEYSPACE de schema.py.\nC. `tests/test_ingest.py` (keyspace dédié `streaming_test_ingest`, create_schema au début, drop_schema à la\n   fin ; AUCUN appel réseau : TSV d'exemple écrit dans le test, enrich_fn factice, httpx.MockTransport pour\n   tester enrich) : parse (semaines gardées, kind, season None, views int, ligne à valeur vide) ; title_id\n   stable ; normalize_genres (3 cas) ; enrich avec réponse SPARQL factice (et liste vide → None) ;\n   add_views (compteur du jour = somme) ; load de bout en bout (Top du jour via ViewDAO.views_of_day).\nBibliothèques autorisées en plus pour CETTE tâche : httpx.\n\nCritères d'acceptation :\n- ViewDAO.add_views incrémente title_stats et daily_views_by_title de count, sans historique\n- parse ne garde que les N semaines les plus récentes et gère les valeurs vides\n- title_id stable (uuid5) ; un titre présent plusieurs semaines = un seul Title\n- enrich interroge Wikidata en SPARQL et renvoie None sans résultat ; aucun appel réseau dans les tests\n- load écrit un rapport avec les sources et les titres sans correspondance\n- tests sur un keyspace dédié, supprimé à la fin\n\n## Retour du Project Owner (itération 4)\nBLOQUANT 1) tests/test_ingest.py ne compile pas : une fixture est écrite « pytest_keyspace(session): » sans le mot-clé def. 2) load.py, rapport : l'expression chr(join_lines := ...) est invalide ; construis d'abord missing = '\\n'.join(f'  - {t}' for t in report['wikidata_missing']) or '  - Aucun', puis insère {missing}. Lis tests/test_ingest.py et streaming/ingest/load.py, réécris-les en entier, sans rien changer d'autre. Relis ton code ligne par ligne avant d'écrire : il doit compiler.\nCorrige en conséquence.\n\n## Résultat réel des tests de l'itération précédente (ÉCHEC, code 1)\n```\n*** Error compiling 'tests/test_ingest.py'...\n  File \"tests/test_ingest.py\", line 22\n    pytest_keyspace(session):\n    ^^^^^^^^^^^^^^^\nSyntaxError: invalid syntax\n\n Container streaming-platform-cassandra1-1 Running \n Container streaming-platform-cassandra2-1 Running \n Container streaming-platform-cassandra3-1 Running \n Container streaming-platform-cassandra1-1 Waiting \n Container streaming-platform-cassandra1-1 Healthy \n Container streaming-platform-cassandra2-1 Waiting \n Container streaming-platform-cassandra2-1 Healthy \n Container streaming-platform-cassandra3-1 Waiting \n Container streaming-platform-cassandra3-1 Healthy \n Container streaming-platform-tests-run-8614e16542e9 Creating \n Container streaming-platform-tests-run-8614e16542e9 Created\n```\n\n## Avis du relecteur (itération précédente)\nCritères :\n- ViewDAO.add_views incrémente title_stats et daily_views_by_title de count, sans historique : ✓\n- parse ne garde que les N semaines les plus récentes et gère les valeurs vides : ✓\n- title_id stable (uuid5) ; un titre présent plusieurs semaines = un seul Title : ✓\n- enrich interroge Wikidata en SPARQL et renvoie None sans résultat ; aucun appel réseau dans les tests : ✓\n- load écrit un rapport avec les sources et les titres sans correspondance : ✓\n- tests sur un keyspace dédié, supprimé à la fin : ✗\n\nRemarques :\n- BLOQUANT : La syntaxe de la fixture pytest dans `tests/test_ingest.py` est incorrecte (`@pytest.fixture(scope=\"function\")` suivi de `pytest_keyspace(session):` sans le mot-clé `def`), ce qui provoque une erreur de compilation (`SyntaxError: invalid syntax`) et empêche l'exécution des tests.\n- À AMÉLIORER : Dans le rapport Markdown généré (`streaming/ingest/load.py`), l'expression avec l'opérateur walrus `chr(join_lines := ...)` est mal construite et ne convertira pas proprement la liste des titres manquants en chaînes de lignes.\n- MINEUR : `streaming/ingest/load.py` importe `datetime` mais utilise `datetime.now()` via un alias ou l'import direct sans que `datetime` ne soit qualifié ou importé depuis `datetime` (seul `datetime` est importé, mais `datetime.now()` fonctionne en Python si le module est importé ; attention toutefois à la clarté).\n\nRecommandation : DEMANDER DES CORRECTIONS — une erreur de syntaxe dans le fichier de test empêche la compilation et l'exécution de la suite de tests."
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_680762729360269978",
+          "args": {},
+          "name": "list_files"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRMeboKA4ir8R3i0wdJx7X3fRjKFG8rW83y0MKjEW6WAR24Y4sku0_7dLq-6_snnHv196u3W4hXUEzlXojRQkeYQSccRfG7ut7D50-ufxV2SOMccibqmMI0pIzWFg_j5Y2cUOWjHelgW2R_SYGePBtlBw47l7i3gtEA3OGoZkBbW73tKlPurHPrFISVnWYMu"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "list_files",
+          "response": {
+            "ok": true,
+            "files": [
+              ".gitignore",
+              "demo/__init__.py",
+              "demo/demo_distribution.py",
+              "demo/demo_distribution.sh",
+              "demo/seed.py",
+              "docker/tests.Dockerfile",
+              "docker-compose.yml",
+              "docs/graphe-squad.mmd",
+              "docs/journal/phase-1.md",
+              "docs/rapport-tracabilite.md",
+              "docs/SYNTHESE.md",
+              "frontend/__init__.py",
+              "frontend/api_client.py",
+              "frontend/settings.py",
+              "frontend/templates/frontend/base.html",
+              "frontend/templates/frontend/error.html",
+              "frontend/templates/frontend/genre.html",
+              "frontend/templates/frontend/history.html",
+              "frontend/templates/frontend/home.html",
+              "frontend/templates/frontend/title.html",
+              "frontend/urls.py",
+              "frontend/views.py",
+              "frontend/wsgi.py",
+              "pytest.ini",
+              "README.md",
+              "reports/demo/api-smoke-20261126-030559.txt",
+              "reports/demo/demo-20261126-030349.txt",
+              "reports/demo/demo-20261126-084111.txt",
+              "reports/demo/web-smoke-20261126-085959.txt",
+              "reports/tests/latest.xml",
+              "requirements-dev.txt",
+              "streaming/__init__.py",
+              "streaming/api.py",
+              "streaming/dao/__init__.py",
+              "streaming/dao/ratings.py",
+              "streaming/dao/stats.py",
+              "streaming/dao/titles.py",
+              "streaming/dao/users.py",
+              "streaming/dao/views.py",
+              "streaming/ingest/__init__.py",
+              "streaming/ingest/load.py",
+              "streaming/ingest/netflix.py",
+              "streaming/ingest/wikidata.py",
+              "streaming/models.py",
+              "streaming/schema.py",
+              "streaming/services.py",
+              "tests/conftest.py",
+              "tests/test_api.py",
+              "tests/test_cluster.py",
+              "tests/test_dao.py",
+              "tests/test_frontend.py",
+              "tests/test_ingest.py",
+              "tests/test_schema.py",
+              "tests/test_services.py"
+            ]
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_861295136008720476",
+          "args": {
+            "path": "streaming/dao/views.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRNKD5Lz1-HLsJxqVX0gwWoTBLC30T7CAGmb9G-LE7x8eR-VVoLGrTRUlQ7vQhYe0nXyiOmtCezr6Ey0TvvOKzHJzicXv7mNzIC6YXfSWCsVAGo6t7ZhUeMOtijWEGiw40aFJoa1ukwvz9ZxpWgwjyG6bURGLZunasibcDzOt7fKYPaklKNADnyEAyj2Ksn0"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"DAO des historiques de visionnage et des compteurs de vues (tables Q6, Q7, Q8).\"\"\"\n\nfrom __future__ import annotations\n\nimport uuid\nfrom datetime import datetime, date\nfrom typing import Dict, List\n\n\nclass ViewDAO:\n    \"\"\"Accès aux tables d'historique et de statistiques de vues.\"\"\"\n\n    def __init__(self, session, keyspace: str) -> None:\n        self._session = session\n        self._ks = keyspace\n        # INSERT Q6 : watch_history_by_user\n        self._stmt_insert_history = session.prepare(\n            f\"INSERT INTO {keyspace}.watch_history_by_user \"\n            \"(user_id, watched_at, title_id, title, duration_watched_seconds, completed) \"\n            \"VALUES (?, ?, ?, ?, ?, ?)\"\n        )\n        # UPDATE Q7 : title_stats.view_count\n        self._stmt_update_view_count = session.prepare(\n            f\"UPDATE {keyspace}.title_stats SET view_count = view_count + 1 WHERE title_id = ?\"\n        )\n        # UPDATE Q7 (with custom count) : title_stats.view_count\n        self._stmt_add_views_stats = session.prepare(\n            f\"UPDATE {keyspace}.title_stats SET view_count = view_count + ? WHERE title_id = ?\"\n        )\n        # UPDATE Q8 : daily_views_by_title.view_count\n        self._stmt_update_daily_view_count = session.prepare(\n            f\"UPDATE {keyspace}.daily_views_by_title SET view_count = view_count + 1 \"\n            \"WHERE view_date = ? AND title_id = ?\"\n        )\n        # UPDATE Q8 (with custom count) : daily_views_by_title.view_count\n        self._stmt_add_views_daily = session.prepare(\n            f\"UPDATE {keyspace}.daily_views_by_title SET view_count = view_count + ? \"\n            \"WHERE view_date = ? AND title_id = ?\"\n        )\n        # SELECT Q6 : history per user\n        self._stmt_history = session.prepare(\n            f\"SELECT watched_at, title_id, title, duration_watched_seconds, completed FROM {keyspace}.watch_history_by_user \"\n            \"WHERE user_id = ? LIMIT ?\"\n        )\n        # SELECT Q8 : views per day\n        self._stmt_views_of_day = session.prepare(\n            f\"SELECT title_id, view_count FROM {keyspace}.daily_views_by_title WHERE view_date = ?\"\n        )\n\n    def record_view(\n        self,\n        user_id: uuid.UUID,\n        title_id: uuid.UUID,\n        viewed_at: datetime,\n        title: str = \"\",\n        duration_watched_seconds: int = 0,\n        completed: bool = False,\n    ) -> None:\n        \"\"\"Enregistre un visionnage, les détails et incrémente les compteurs.\"\"\"\n        self._session.execute(\n            self._stmt_insert_history,\n            (user_id, viewed_at, title_id, title, duration_watched_seconds, completed)\n        )\n        # Counter updates (separate)\n        self._session.execute(self._stmt_update_view_count, (title_id,))\n        self._session.execute(self._stmt_update_daily_view_count, (viewed_at.date(), title_id))\n\n    def add_views(self, title_id: uuid.UUID, day: date, count: int) -> None:\n        \"\"\"Incrémente les compteurs de vues de `count` pour title_stats et daily_views_by_title sans écrire d'historique.\"\"\"\n        self._session.execute(self._stmt_add_views_stats, (count, title_id))\n        self._session.execute(self._stmt_add_views_daily, (count, day, title_id))\n\n    def history(self, user_id: uuid.UUID, limit: int = 20) -> List[Dict]:\n        \"\"\"Retourne l'historique de visionnage d'un utilisateur.\"\"\"\n        rows = self._session.execute(self._stmt_history, (user_id, limit))\n        return [\n            {\n                \"watched_at\": r.watched_at,\n                \"title_id\": r.title_id,\n                \"title\": r.title,\n                \"duration_watched_seconds\": r.duration_watched_seconds,\n                \"completed\": r.completed,\n            }\n            for r in rows\n        ]\n\n    def views_of_day(self, day: date) -> Dict[uuid.UUID, int]:\n        \"\"\"Retourne un dictionnaire title_id -> nombre de vues pour le jour donné.\"\"\"\n        rows = self._session.execute(self._stmt_views_of_day, (day,))\n        return {r.title_id: r.view_count for r in rows}\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_4948264407552454710",
+          "args": {
+            "path": "streaming/dao/titles.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "Ep8BCpwBAWkUfRNBmPphg4BeonYeUHZmdvDZhYUdLx56dJ3ogsqL-UKHWe0t03obf5KwVEaazpYc1L5oV6wxvBNYYMeAXlB--K1I6jDsv62MXaFIj-tUVFWwSwquTRmg51bl-dHqKZpYfzurzQ0XIBh4LxU_AvSBtNesID6ctrWNILX3kbU-Dkz2EjxPpzk9Ufd11dx0hY_NMKp3tqBKw62Q"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"DAO des titres (tables Q1 et Q2).\"\"\"\n\nfrom __future__ import annotations\n\nimport uuid\nfrom datetime import datetime\nfrom typing import List, Optional\n\nfrom cassandra.query import BatchStatement\n\nfrom ..models import Title\n\n\nclass TitleDAO:\n    \"\"\"Accès aux tables ``title_by_id`` (Q1) et ``titles_by_genre`` (Q2).\"\"\"\n\n    def __init__(self, session, keyspace: str) -> None:\n        self._session = session\n        self._ks = keyspace\n        # INSERT Q1\n        self._stmt_save_q1 = session.prepare(\n            f\"INSERT INTO {keyspace}.title_by_id \"\n            \"(title_id, title, kind, release_year, genres, synopsis, \"\n            \"duration_minutes, episodes_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)\"\n        )\n        # INSERT Q2 (une ligne par genre)\n        self._stmt_save_q2 = session.prepare(\n            f\"INSERT INTO {keyspace}.titles_by_genre \"\n            \"(genre, release_year, title_id, title, kind) VALUES (?, ?, ?, ?, ?)\"\n        )\n        # SELECT Q1\n        self._stmt_get_q1 = session.prepare(\n            f\"SELECT title_id, title, kind, release_year, genres, synopsis, \"\n            f\"duration_minutes, episodes_count FROM {keyspace}.title_by_id WHERE title_id = ?\"\n        )\n        # SELECT Q2 (liste par genre)\n        self._stmt_list_by_genre = session.prepare(\n            f\"SELECT title_id, title, kind, release_year FROM {keyspace}.titles_by_genre \"\n            \"WHERE genre = ? LIMIT ?\"\n        )\n\n    def save(self, title: Title) -> None:\n        \"\"\"Enregistre la fiche du titre et les entrées par genre.\n\n        Utilise un ``BatchStatement`` LOGGED pour garantir l'atomicité entre Q1 et Q2.\n        \"\"\"\n        batch = BatchStatement()\n        batch.add(self._stmt_save_q1, (\n            title.title_id,\n            title.title,\n            title.kind,\n            title.release_year,\n            set(title.genres),\n            title.synopsis,\n            title.duration_minutes,\n            title.episodes_count,\n        ))\n        for genre in title.genres:\n            batch.add(self._stmt_save_q2, (\n                genre,\n                title.release_year,\n                title.title_id,\n                title.title,\n                title.kind,\n            ))\n        self._session.execute(batch)\n\n    def get(self, title_id: uuid.UUID) -> Optional[Title]:\n        \"\"\"Retourne la fiche d'un titre ou ``None`` s'il n'existe pas.\"\"\"\n        row = self._session.execute(self._stmt_get_q1, (title_id,)).one()\n        if row is None:\n            return None\n        return Title(\n            title_id=row.title_id,\n            title=row.title,\n            kind=row.kind,\n            release_year=row.release_year,\n            genres=set(row.genres),\n            synopsis=row.synopsis,\n            duration_minutes=row.duration_minutes,\n            episodes_count=row.episodes_count,\n        )\n\n    def list_by_genre(self, genre: str, limit: int = 20) -> List[dict]:\n        \"\"\"Liste les titres d'un genre, du plus récent au plus ancien.\n\n        Retourne une liste de dictionnaires contenant ``title_id``, ``title``, ``kind`` et ``release_year``.\n        \"\"\"\n        rows = self._session.execute(self._stmt_list_by_genre, (genre, limit))\n        return [\n            {\n                \"title_id\": r.title_id,\n                \"title\": r.title,\n                \"kind\": r.kind,\n                \"release_year\": r.release_year,\n            }\n            for r in rows\n        ]\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_2595517415401207067",
+          "args": {
+            "path": "streaming/models.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRM8PLgJ1fSiNaOHPNpXdnJQO2_Yugkuinghn-BpbtqRMA1NEecvZ-8p8e-0BUnE7jZ3VAzHPTkp2sYKInPxa4whacijuDJ_p7yloAW0q5CQQ6JP69hXEd86Fu4cT8J9ZQkR37WG-J4GYaItOvNg6lOATfoIMSjhLgYcFGekCKFkyRxXlVa38XLAAsgToIvN"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"Modèles de données simples utilisés par les DAO.\n\nCes dataclasses ne contiennent que les champs nécessaires aux tables Cassandra.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport datetime\nimport uuid\nfrom dataclasses import dataclass\nfrom typing import Optional, Set\n\n\n@dataclass(frozen=True)\nclass Title:\n    \"\"\"Représente la fiche d'un titre (film ou série).\"\"\"\n\n    title_id: uuid.UUID\n    title: str\n    kind: str  # \"movie\" ou \"series\"\n    release_year: int\n    genres: Set[str]\n    synopsis: Optional[str] = None\n    duration_minutes: Optional[int] = None  # pour les films\n    episodes_count: Optional[int] = None  # pour les séries\n\n\n@dataclass(frozen=True)\nclass User:\n    \"\"\"Profil d'un utilisateur.\"\"\"\n\n    user_id: uuid.UUID\n    email: str\n    username: str\n    created_at: datetime.datetime\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_17606452033735671462",
+          "args": {
+            "path": "streaming/schema.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "Ep8BCpwBAWkUfRNZFcUuLblcpQN3HI7bnLfDH3sh9LNviPEdqyf6PCActYDwoHl8_p2oQyun17HsifvvkteQ9X8dOxl8wbj261F5I1mDJE9d9NEhjXBgXl76xD45ph8OL2mqRWcA5wqT3sLQAbMwXH25Lk_Lr7sabmEjQ2vcQUGjDTZ8fO4mbftqmW1s17IySEn7UiXQe9SCGfWfwJtAWGnD"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"Définition du schéma Cassandra pour la plateforme de streaming.\n\nModélisation orientée requêtes (une table par requête Q1..Q8).\n\"\"\"\n\n# Nom du keyspace principal de l'application (production).\nKEYSPACE = \"streaming\"\n\n# Liste ordonnée des tables créées – utilisée par les tests.\nTABLES = [\n    \"title_by_id\",\n    \"titles_by_genre\",\n    \"user_by_id\",\n    \"reviews_by_title\",\n    \"reviews_by_user\",\n    \"watch_history_by_user\",\n    \"title_stats\",\n    \"daily_views_by_title\",\n]\n\n\ndef create_schema(session, keyspace: str = KEYSPACE, replication_factor: int = 3) -> None:\n    \"\"\"Crée le keyspace et les tables (idempotent).\n\n    Tous les ``CREATE ... IF NOT EXISTS`` garantissent que l'appel est sûr à répéter.\n    Le keyspace utilise ``NetworkTopologyStrategy`` avec le datacenter ``dc1``.\n    \"\"\"\n    # ---------------------------------------------------------------------\n    # Keyspace\n    # ---------------------------------------------------------------------\n    create_keyspace_cql = f\"\"\"\n    CREATE KEYSPACE IF NOT EXISTS {keyspace}\n    WITH replication = {{\n        'class': 'NetworkTopologyStrategy',\n        'dc1': {replication_factor}\n    }}\n    \"\"\"\n    session.execute(create_keyspace_cql)\n\n    # ---------------------------------------------------------------------\n    # Tables – une par requête (Q1..Q8). Chaque table possède un COMMENT\n    # indiquant la requête qu'elle sert.\n    # ---------------------------------------------------------------------\n    # Q1 : fiche d'un titre (film ou série) par son identifiant.\n    create_q1 = f\"\"\"\n    CREATE TABLE IF NOT EXISTS {keyspace}.title_by_id (\n        title_id uuid,\n        title text,\n        kind text,\n        release_year int,\n        genres set<text>,\n        synopsis text,\n        duration_minutes int,\n        episodes_count int,\n        PRIMARY KEY (title_id)\n    ) WITH comment = 'Q1: fiche d''un titre (film ou série) par son identifiant.'\n    \"\"\"\n\n    # Q2 : titres d'un genre, du plus récent au plus ancien.\n    create_q2 = f\"\"\"\n    CREATE TABLE IF NOT EXISTS {keyspace}.titles_by_genre (\n        genre text,\n        release_year int,\n        title_id uuid,\n        title text,\n        kind text,\n        PRIMARY KEY (genre, release_year, title_id)\n    ) WITH CLUSTERING ORDER BY (release_year DESC, title_id ASC)\n      AND comment = 'Q2: titres d''un genre, du plus récent au plus ancien.'\n    \"\"\"\n\n    # Q3 : profil d'un utilisateur par son identifiant.\n    create_q3 = f\"\"\"\n    CREATE TABLE IF NOT EXISTS {keyspace}.user_by_id (\n        user_id uuid,\n        email text,\n        username text,\n        created_at timestamp,\n        PRIMARY KEY (user_id)\n    ) WITH comment = 'Q3: profil d''un utilisateur par son identifiant.'\n    \"\"\"\n\n    # Q4 : avis (note 1 à 5 + commentaire) d'un titre, du plus récent au plus ancien.\n    create_q4 = f\"\"\"\n    CREATE TABLE IF NOT EXISTS {keyspace}.reviews_by_title (\n        title_id uuid,\n        created_at timestamp,\n        user_id uuid,\n        rating int,\n        comment text,\n        username text,\n        PRIMARY KEY (title_id, created_at, user_id)\n    ) WITH CLUSTERING ORDER BY (created_at DESC, user_id ASC)\n      AND comment = 'Q4: avis (note 1 à 5 + commentaire) d''un titre, du plus récent au plus ancien.'\n    \"\"\"\n\n    # Q5 : avis donnés par un utilisateur, du plus récent au plus ancien.\n    create_q5 = f\"\"\"\n    CREATE TABLE IF NOT EXISTS {keyspace}.reviews_by_user (\n        user_id uuid,\n        created_at timestamp,\n        title_id uuid,\n        rating int,\n        comment text,\n        title text,\n        PRIMARY KEY (user_id, created_at, title_id)\n    ) WITH CLUSTERING ORDER BY (created_at DESC, title_id ASC)\n      AND comment = 'Q5: avis donnés par un utilisateur, du plus récent au plus ancien.'\n    \"\"\"\n\n    # Q6 : historique de visionnage d'un utilisateur, du plus récent au plus ancien.\n    create_q6 = f\"\"\"\n    CREATE TABLE IF NOT EXISTS {keyspace}.watch_history_by_user (\n        user_id uuid,\n        watched_at timestamp,\n        title_id uuid,\n        title text,\n        duration_watched_seconds int,\n        completed boolean,\n        PRIMARY KEY (user_id, watched_at, title_id)\n    ) WITH CLUSTERING ORDER BY (watched_at DESC, title_id ASC)\n      AND comment = 'Q6: historique de visionnage d''un utilisateur, du plus récent au plus ancien.'\n    \"\"\"\n\n    # Q7 : statistiques d'un titre (compteurs uniquement).\n    create_q7 = f\"\"\"\n    CREATE TABLE IF NOT EXISTS {keyspace}.title_stats (\n        title_id uuid,\n        view_count counter,\n        rating_sum counter,\n        rating_count counter,\n        PRIMARY KEY (title_id)\n    ) WITH comment = 'Q7: statistiques d''un titre (nombre de vues, somme et nombre des notes).'\n    \"\"\"\n\n    # Q8 : nombre de vues de chaque titre pour un jour donné (compteurs uniquement).\n    create_q8 = f\"\"\"\n    CREATE TABLE IF NOT EXISTS {keyspace}.daily_views_by_title (\n        view_date date,\n        title_id uuid,\n        view_count counter,\n        PRIMARY KEY (view_date, title_id)\n    ) WITH comment = 'Q8: nombre de vues de chaque titre pour un jour donné.'\n    \"\"\"\n\n    for query in [\n        create_q1,\n        create_q2,\n        create_q3,\n        create_q4,\n        create_q5,\n        create_q6,\n        create_q7,\n        create_q8,\n    ]:\n        session.execute(query)\n\n\ndef drop_schema(session, keyspace: str) -> None:\n    \"\"\"Supprime le keyspace (idempotent).\"\"\"\n    session.execute(f\"DROP KEYSPACE IF EXISTS {keyspace}\")\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_18395317483145347763",
+          "args": {
+            "path": "streaming/ingest/load.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "Ep8BCpwBAWkUfRMd2XF7x0CSVBlcsMbOntaqVgXoNW-jQY-U89msFSutglqrodpmlPtDsmkorVYrLfXriknEIPb3f0zW7x0903QbzFfNKzAorZsuoUqeXyBMZYxcMh28ZMJ58NodVfkyE8onqcE9UrXtiO7sdTyGybLthHIU1b9tgPqMAe1BApvSxsHmGSJAUql3l1QtrphK2UHHElXcEYmK"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"Module d'ingestion et de chargement des données Netflix Top 10 et Wikidata dans Cassandra.\"\"\"\n\nfrom __future__ import annotations\n\nimport os\nimport time\nfrom datetime import datetime\nfrom pathlib import Path\nimport httpx\n\nfrom ..schema import TABLES, KEYSPACE\nfrom ..dao.titles import TitleDAO\nfrom ..dao.views import ViewDAO\nfrom ..models import Title\nfrom .netflix import fetch, parse, title_id\nfrom .wikidata import enrich\n\n\ndef reset(session, keyspace: str = KEYSPACE) -> None:\n    \"\"\"Vide (TRUNCATE) toutes les tables du schéma.\"\"\"\n    for table in TABLES:\n        session.execute(f\"TRUNCATE {keyspace}.{table}\")\n\n\ndef load(session, keyspace: str, rows: list[dict], enrich_fn) -> dict:\n    \"\"\"Charge les lignes Netflix et enrichit via Wikidata, puis insère dans Cassandra.\"\"\"\n    title_dao = TitleDAO(session, keyspace)\n    view_dao = ViewDAO(session, keyspace)\n\n    # Regrouper par title_id pour traiter chaque titre unique une seule fois\n    titles_map = {}\n    for r in rows:\n        t_id = title_id(r[\"kind\"], r[\"title\"])\n        if t_id not in titles_map:\n            titles_map[t_id] = {\n                \"title\": r[\"title\"],\n                \"kind\": r[\"kind\"],\n                \"runtime_minutes\": r[\"runtime_minutes\"],\n                \"weeks\": [],\n            }\n        titles_map[t_id][\"weeks\"].append((r[\"week\"], r[\"views\"]))\n\n    wikidata_found = 0\n    wikidata_missing = []\n    weeks_set = set()\n\n    for t_id, info in titles_map.items():\n        weeks_set.update([w[0] for w in info[\"weeks\"]])\n        \n        # Appel enrich_fn UNE seule fois par titre distinct\n        wiki_data = enrich_fn(info[\"title\"], info[\"kind\"])\n        \n        synopsis = \"Description indisponible sur Wikidata\"\n        release_year = None\n        genres = {\"autre\"}\n        duration_minutes = info[\"runtime_minutes\"] if info[\"kind\"] == \"film\" else None\n\n        if wiki_data:\n            wikidata_found += 1\n            if wiki_data.get(\"description\"):\n                synopsis = wiki_data[\"description\"]\n            if wiki_data.get(\"year\"):\n                release_year = wiki_data[\"year\"]\n            if wiki_data.get(\"genres\"):\n                genres = wiki_data[\"genres\"]\n        else:\n            wikidata_missing.append(info[\"title\"])\n\n        # Si release_year toujours None, prendre l'année de la première semaine dispo\n        if release_year is None and info[\"weeks\"]:\n            release_year = info[\"weeks\"][0][0].year\n\n        title_obj = Title(\n            title_id=t_id,\n            title=info[\"title\"],\n            kind=\"movie\" if info[\"kind\"] == \"film\" else \"series\",\n            release_year=release_year or 2026,\n            genres=genres,\n            synopsis=synopsis,\n            duration_minutes=duration_minutes,\n            episodes_count=None,\n        )\n        title_dao.save(title_obj)\n\n        # Enregistrer les vues par semaine (ViewDAO.add_views)\n        for week_date, views_count in info[\"weeks\"]:\n            if views_count > 0:\n                view_dao.add_views(t_id, week_date, views_count)\n\n    weeks_iso = sorted([w.isoformat() for w in weeks_set])\n\n    return {\n        \"titles\": len(titles_map),\n        \"rows\": len(rows),\n        \"weeks\": weeks_iso,\n        \"wikidata_found\": wikidata_found,\n        \"wikidata_missing\": wikidata_missing,\n    }\n\n\ndef main() -> None:\n    \"\"\"Point d'entrée principal pour l'ingestion (exécuté en CLI).\"\"\"\n    from cassandra.cluster import Cluster\n    from cassandra.policies import DCAwareRoundRobinPolicy\n\n    contact_points = os.getenv(\"CASSANDRA_CONTACT_POINTS\", \"127.0.0.1\").split(\",\")\n    cluster = Cluster(\n        contact_points=contact_points,\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\"dc1\"),\n    )\n    session = cluster.connect()\n\n    print(f\"Connexion au cluster Cassandra établie sur {contact_points}...\")\n    print(f\"Réinitialisation du keyspace {KEYSPACE}...\")\n    reset(session, KEYSPACE)\n\n    print(f\"Téléchargement de Netflix Top 10 depuis {fetch.__globals__.get('NETFLIX_URL')}...\")\n    client = httpx.Client(timeout=30, follow_redirects=True)\n    try:\n        tsv_text = fetch(client)\n    finally:\n        client.close()\n\n    print(\"Parsing des 4 semaines les plus récentes...\")\n    rows = parse(tsv_text, weeks=4)\n\n    print(\"Chargement et enrichissement Wikidata en cours...\")\n    wikidata_client = httpx.Client(timeout=30, follow_redirects=True)\n\n    def rate_limited_enrich(title: str, kind: str):\n        res = enrich(wikidata_client, title, kind)\n        time.sleep(0.3)\n        return res\n\n    report = load(session, KEYSPACE, rows, rate_limited_enrich)\n    wikidata_client.close()\n\n    # Écriture du rapport dans reports/ingest/\n    now_str = datetime.now().strftime(\"%Y%m%d-%H%M%S\")\n    reports_dir = Path(\"reports/ingest\")\n    reports_dir.mkdir(parents=True, exist_ok=True)\n    report_path = reports_dir / f\"ingest-{now_str}.md\"\n\n    report_content = f\"\"\"# Rapport d'ingestion – {now_str}\n\n- **Source Netflix** : {fetch.__globals__.get('NETFLIX_URL')}\n- **Semaines traitées** : {report['weeks']}\n- **Titres distincts chargés** : {report['titles']}\n- **Lignes de visionnage traitées** : {report['rows']}\n- **Correspondances Wikidata trouvées** : {report['wikidata_found']}\n- **Titres sans correspondance Wikidata** :\n{chr(join_lines := [f\"  - {t}\" for t in report['wikidata_missing']]) if report['wikidata_missing'] else \"  - Aucun\"}\n\"\"\"\n    report_path.write_text(report_content, encoding=\"utf-8\")\n    print(f\"Rapport d'ingestion généré : {report_path}\")\n\n    cluster.shutdown()\n\n\nif __name__ == \"__main__\":\n    main()\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_10310020563635345432",
+          "args": {
+            "path": "tests/test_ingest.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "Ep8BCpwBAWkUfRMYyejkEh2JgEebkfisjnemwSFFVgUNV6l3vLt7-GP5MBjrrGQoczV9NwglAulI82ceYHneW9z0voJjaGZHW97VUtC73Y6NiPrY2tLuvfViShy8nCX5pdBUDTznvc-9uBXs0ugOtWfIx1vllRzflOSDHwEsDJNkAKyHdDi_VdJ2NA090c5SYtkjVHYaJMXPwYEGG-aOtHpI"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"Tests unitaires et d'intégration pour l'ingestion (Netflix, Wikidata, Load).\"\"\"\n\nfrom __future__ import annotations\n\nimport datetime\nimport uuid\nimport httpx\nimport pytest\n\nfrom streaming.schema import create_schema, drop_schema\nfrom streaming.ingest.netflix import parse, title_id\nfrom streaming.ingest.wikidata import normalize_genres, enrich\nfrom streaming.ingest.load import load\nfrom streaming.dao.views import ViewDAO\nfrom streaming.dao.titles import TitleDAO\n\n\nTEST_KEYSPACE = \"streaming_test_ingest\"\n\n\n@pytest.fixture(scope=\"function\")\npytest_keyspace(session):\n    \"\"\"Fixture créant et supprimant un keyspace de test dédié.\"\"\"\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=1)\n    yield TEST_KEYSPACE\n    drop_schema(session, TEST_KEYSPACE)\n\n\nSAMPLE_TSV = \"\"\"week\\tcategory\\tweekly_rank\\tshow_title\\tseason_title\\tweekly_hours_viewed\\truntime\\tweekly_views\\tcumulative_weeks_in_top_10\n2026-11-22\\tFilms (English)\\t1\\tGuarding Stars\\tN/A\\t50600000\\t1.8333\\t27600000\\t1\n2026-11-22\\tTV (English)\\t1\\tThe Body\\tThe Body: Season 1\\t70300000\\t7.3833\\t9500000\\t2\n2026-11-15\\tFilms (English)\\t2\\tGuarding Stars\\tN/A\\t40000000\\t1.8333\\t20000000\\t2\n2026-11-01\\tFilms (English)\\t5\\tOld Movie\\tN/A\\t10000000\\t2.0\\t5000000\\t1\n\"\"\"\n\n\ndef test_parse_netflix():\n    \"\"\"Vérifie que parse garde les N semaines les plus récentes et gère les valeurs vides/N/A.\"\"\"\n    rows = parse(SAMPLE_TSV, weeks=2)\n    # Les semaines dans le sample sont 2026-11-22, 2026-11-15, 2026-11-01.\n    # Les 2 plus récentes sont 2026-11-22 et 2026-11-15 (3 lignes au total).\n    assert len(rows) == 3\n    weeks_found = {r[\"week\"] for r in rows}\n    assert weeks_found == {datetime.date(2026, 11, 22), datetime.date(2026, 11, 15)}\n\n    # Vérification des types et champs\n    guarding = next(r for r in rows if r[\"title\"] == \"Guarding Stars\" and r[\"week\"] == datetime.date(2026, 11, 22))\n    assert guarding[\"kind\"] == \"film\"\n    assert guarding[\"season\"] is None\n    assert guarding[\"views\"] == 27600000\n    assert guarding[\"runtime_minutes\"] == round(1.8333 * 60)\n\n    body = next(r for r in rows if r[\"title\"] == \"The Body\")\n    assert body[\"kind\"] == \"serie\"\n    assert body[\"season\"] == \"The Body: Season 1\"\n\n\ndef test_title_id_stability():\n    \"\"\"Vérifie que title_id est stable (uuid5) et identique pour un même titre.\"\"\"\n    id1 = title_id(\"film\", \"Guarding Stars\")\n    id2 = title_id(\"film\", \"Guarding Stars\")\n    id3 = title_id(\"serie\", \"Guarding Stars\")\n    assert id1 == id2\n    assert id1 != id3\n    assert isinstance(id1, uuid.UUID)\n\n\ndef test_normalize_genres():\n    \"\"\"Vérifie la normalisation des genres Wikidata.\"\"\"\n    assert normalize_genres([\"film d'animation\", \"action\"]) == {\"animation\", \"action\"}\n    assert normalize_genres([\"comédie romantique\"]) == {\"comedie\", \"romance\"}\n    assert normalize_genres([\"genre inconnu xyz\"]) == {\"autre\"}\n\n\ndef test_enrich_wikidata_mock():\n    \"\"\"Teste enrich avec un MockTransport httpx simulant Wikidata SPARQL.\"\"\"\n    sparql_json_response = {\n        \"results\": {\n            \"bindings\": [\n                {\n                    \"item\": {\"value\": \"http://www.wikidata.org/entity/Q12345\"},\n                    \"pubDate\": {\"value\": \"2026-01-01T00:00:00Z\"},\n                    \"genreLabel\": {\"value\": \"science-fiction\"},\n                    \"descFr\": {\"value\": \"Un film de science fiction.\"},\n                }\n            ]\n        }\n    }\n\n    def handler(request: httpx.Request) -> httpx.Response:\n        return httpx.Response(200, json=sparql_json_response)\n\n    transport = httpx.MockTransport(handler)\n    client = httpx.Client(transport=transport)\n\n    result = enrich(client, \"Guarding Stars\", \"film\")\n    assert result is not None\n    assert result[\"qid\"] == \"Q12345\"\n    assert result[\"year\"] == 2026\n    assert result[\"genres\"] == {\"science-fiction\"}\n    assert result[\"description\"] == \"Un film de science fiction.\"\n\n    # Test sans résultat\n    empty_handler = lambda req: httpx.Response(200, json={\"results\": {\"bindings\": []}})\n    client_empty = httpx.Client(transport=httpx.MockTransport(empty_handler))\n    assert enrich(client_empty, \"Inconnu\", \"film\") is None\n\n\ndef test_load_end_to_end(session, pytest_keyspace):\n    \"\"\"Teste le chargement complet (load) avec un enrich_fn factice et vérifie les vues du jour.\"\"\"\n    rows = parse(SAMPLE_TSV, weeks=1)\n\n    def dummy_enrich(title: str, kind: str):\n        if title == \"Guarding Stars\":\n            return {\n                \"qid\": \"Q111\",\n                \"year\": 2026,\n                \"genres\": {\"action\"},\n                \"description\": \"Desc of Guarding Stars\",\n            }\n        return None\n\n    report = load(session, pytest_keyspace, rows, dummy_enrich)\n    assert report[\"titles\"] == 2\n    assert report[\"wikidata_found\"] == 1\n    assert \"The Body\" in report[\"wikidata_missing\"]\n\n    # Vérification des vues du jour via ViewDAO\n    view_dao = ViewDAO(session, pytest_keyspace)\n    day = datetime.date(2026, 11, 22)\n    views_day = view_dao.views_of_day(day)\n\n    guarding_id = title_id(\"film\", \"Guarding Stars\")\n    assert guarding_id in views_day\n    assert views_day[guarding_id] == 27600000\n\n    # Vérification TitleDAO\n    title_dao = TitleDAO(session, pytest_keyspace)\n    t = title_dao.get(guarding_id)\n    assert t is not None\n    assert t.title == \"Guarding Stars\"\n    assert t.synopsis == \"Desc of Guarding Stars\"\n    assert t.release_year == 2026\n    assert t.genres == {\"action\"}\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_15500676924619675505",
+          "args": {
+            "content": "\"\"\"Module d'ingestion et de chargement des données Netflix Top 10 et Wikidata dans Cassandra.\"\"\"\n\nfrom __future__ import annotations\n\nimport os\nimport time\nfrom datetime import datetime\nfrom pathlib import Path\nimport httpx\n\nfrom ..schema import TABLES, KEYSPACE\nfrom ..dao.titles import TitleDAO\nfrom ..dao.views import ViewDAO\nfrom ..models import Title\nfrom .netflix import fetch, parse, title_id\nfrom .wikidata import enrich\n\n\ndef reset(session, keyspace: str = KEYSPACE) -> None:\n    \"\"\"Vide (TRUNCATE) toutes les tables du schéma.\"\"\"\n    for table in TABLES:\n        session.execute(f\"TRUNCATE {keyspace}.{table}\")\n\n\ndef load(session, keyspace: str, rows: list[dict], enrich_fn) -> dict:\n    \"\"\"Charge les lignes Netflix et enrichit via Wikidata, puis insère dans Cassandra.\"\"\"\n    title_dao = TitleDAO(session, keyspace)\n    view_dao = ViewDAO(session, keyspace)\n\n    # Regrouper par title_id pour traiter chaque titre unique une seule fois\n    titles_map = {}\n    for r in rows:\n        t_id = title_id(r[\"kind\"], r[\"title\"])\n        if t_id not in titles_map:\n            titles_map[t_id] = {\n                \"title\": r[\"title\"],\n                \"kind\": r[\"kind\"],\n                \"runtime_minutes\": r[\"runtime_minutes\"],\n                \"weeks\": [],\n            }\n        titles_map[t_id][\"weeks\"].append((r[\"week\"], r[\"views\"]))\n\n    wikidata_found = 0\n    wikidata_missing = []\n    weeks_set = set()\n\n    for t_id, info in titles_map.items():\n        weeks_set.update([w[0] for w in info[\"weeks\"]])\n        \n        # Appel enrich_fn UNE seule fois par titre distinct\n        wiki_data = enrich_fn(info[\"title\"], info[\"kind\"])\n        \n        synopsis = \"Description indisponible sur Wikidata\"\n        release_year = None\n        genres = {\"autre\"}\n        duration_minutes = info[\"runtime_minutes\"] if info[\"kind\"] == \"film\" else None\n\n        if wiki_data:\n            wikidata_found += 1\n            if wiki_data.get(\"description\"):\n                synopsis = wiki_data[\"description\"]\n            if wiki_data.get(\"year\"):\n                release_year = wiki_data[\"year\"]\n            if wiki_data.get(\"genres\"):\n                genres = wiki_data[\"genres\"]\n        else:\n            wikidata_missing.append(info[\"title\"])\n\n        # Si release_year toujours None, prendre l'année de la première semaine dispo\n        if release_year is None and info[\"weeks\"]:\n            release_year = info[\"weeks\"][0][0].year\n\n        title_obj = Title(\n            title_id=t_id,\n            title=info[\"title\"],\n            kind=\"movie\" if info[\"kind\"] == \"film\" else \"series\",\n            release_year=release_year or 2026,\n            genres=genres,\n            synopsis=synopsis,\n            duration_minutes=duration_minutes,\n            episodes_count=None,\n        )\n        title_dao.save(title_obj)\n\n        # Enregistrer les vues par semaine (ViewDAO.add_views)\n        for week_date, views_count in info[\"weeks\"]:\n            if views_count > 0:\n                view_dao.add_views(t_id, week_date, views_count)\n\n    weeks_iso = sorted([w.isoformat() for w in weeks_set])\n\n    return {\n        \"titles\": len(titles_map),\n        \"rows\": len(rows),\n        \"weeks\": weeks_iso,\n        \"wikidata_found\": wikidata_found,\n        \"wikidata_missing\": wikidata_missing,\n    }\n\n\ndef main() -> None:\n    \"\"\"Point d'entrée principal pour l'ingestion (exécuté en CLI).\"\"\"\n    from cassandra.cluster import Cluster\n    from cassandra.policies import DCAwareRoundRobinPolicy\n\n    contact_points = os.getenv(\"CASSANDRA_CONTACT_POINTS\", \"127.0.0.1\").split(\",\")\n    cluster = Cluster(\n        contact_points=contact_points,\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\"dc1\"),\n    )\n    session = cluster.connect()\n\n    print(f\"Connexion au cluster Cassandra établie sur {contact_points}...\")\n    print(f\"Réinitialisation du keyspace {KEYSPACE}...\")\n    reset(session, KEYSPACE)\n\n    print(f\"Téléchargement de Netflix Top 10 depuis {fetch.__globals__.get('NETFLIX_URL')}...\")\n    client = httpx.Client(timeout=30, follow_redirects=True)\n    try:\n        tsv_text = fetch(client)\n    finally:\n        client.close()\n\n    print(\"Parsing des 4 semaines les plus récentes...\")\n    rows = parse(tsv_text, weeks=4)\n\n    print(\"Chargement et enrichissement Wikidata en cours...\")\n    wikidata_client = httpx.Client(timeout=30, follow_redirects=True)\n\n    def rate_limited_enrich(title: str, kind: str):\n        res = enrich(wikidata_client, title, kind)\n        time.sleep(0.3)\n        return res\n\n    report = load(session, KEYSPACE, rows, rate_limited_enrich)\n    wikidata_client.close()\n\n    # Écriture du rapport dans reports/ingest/\n    now_str = datetime.now().strftime(\"%Y%m%d-%H%M%S\")\n    reports_dir = Path(\"reports/ingest\")\n    reports_dir.mkdir(parents=True, exist_ok=True)\n    report_path = reports_dir / f\"ingest-{now_str}.md\"\n\n    missing = \"\\n\".join(f\"  - {t}\" for t in report[\"wikidata_missing\"]) or \"  - Aucun\"\n    report_content = f\"\"\"# Rapport d'ingestion – {now_str}\n\n- **Source Netflix** : {fetch.__globals__.get('NETFLIX_URL')}\n- **Semaines traitées** : {report['weeks']}\n- **Titres distincts chargés** : {report['titles']}\n- **Lignes de visionnage traitées** : {report['rows']}\n- **Correspondances Wikidata trouvées** : {report['wikidata_found']}\n- **Titres sans correspondance Wikidata** :\n{missing}\n\"\"\"\n    report_path.write_text(report_content, encoding=\"utf-8\")\n    print(f\"Rapport d'ingestion généré : {report_path}\")\n\n    cluster.shutdown()\n\n\nif __name__ == \"__main__\":\n    main()\n",
+            "path": "streaming/ingest/load.py"
+          },
+          "name": "write_file"
+        },
+        "thought_signature": "Ep8BCpwBAWkUfRPbL5Y0x0fzCcWh2lCO98CLNX101QicHH_zJKzwX6JGjhWVYfNkUH-aRfs_jmkwx4FjlFLdnAzsEJBpJ7ICvIWzxwtTYZLar9eFmeD9SwuUsABO4_v67bFI4sZ-Vg_mzXS7b5O3YytpNtftDw_6ghtNQj09tQoJriSBgKAyTiTtSsYRyQHtXTzJoLTBDC2v9i4Jy6ifxF6B"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "streaming/ingest/load.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_11698543352970721161",
+          "args": {
+            "content": "\"\"\"Tests unitaires et d'intégration pour l'ingestion (Netflix, Wikidata, Load).\"\"\"\n\nfrom __future__ import annotations\n\nimport datetime\nimport uuid\nimport httpx\nimport pytest\n\nfrom streaming.schema import create_schema, drop_schema\nfrom streaming.ingest.netflix import parse, title_id\nfrom streaming.ingest.wikidata import normalize_genres, enrich\nfrom streaming.ingest.load import load\nfrom streaming.dao.views import ViewDAO\nfrom streaming.dao.titles import TitleDAO\n\n\nTEST_KEYSPACE = \"streaming_test_ingest\"\n\n\n@pytest.fixture(scope=\"function\")\ndef pytest_keyspace(session):\n    \"\"\"Fixture créant et supprimant un keyspace de test dédié.\"\"\"\n    create_schema(session, keyspace=TEST_KEYSPACE, replication_factor=1)\n    yield TEST_KEYSPACE\n    drop_schema(session, TEST_KEYSPACE)\n\n\nSAMPLE_TSV = \"\"\"week\\tcategory\\tweekly_rank\\tshow_title\\tseason_title\\tweekly_hours_viewed\\truntime\\tweekly_views\\tcumulative_weeks_in_top_10\n2026-11-22\\tFilms (English)\\t1\\tGuarding Stars\\tN/A\\t50600000\\t1.8333\\t27600000\\t1\n2026-11-22\\tTV (English)\\t1\\tThe Body\\tThe Body: Season 1\\t70300000\\t7.3833\\t9500000\\t2\n2026-11-15\\tFilms (English)\\t2\\tGuarding Stars\\tN/A\\t40000000\\t1.8333\\t20000000\\t2\n2026-11-01\\tFilms (English)\\t5\\tOld Movie\\tN/A\\t10000000\\t2.0\\t5000000\\t1\n\"\"\"\n\n\ndef test_parse_netflix():\n    \"\"\"Vérifie que parse garde les N semaines les plus récentes et gère les valeurs vides/N/A.\"\"\"\n    rows = parse(SAMPLE_TSV, weeks=2)\n    # Les semaines dans le sample sont 2026-11-22, 2026-11-15, 2026-11-01.\n    # Les 2 plus récentes sont 2026-11-22 et 2026-11-15 (3 lignes au total).\n    assert len(rows) == 3\n    weeks_found = {r[\"week\"] for r in rows}\n    assert weeks_found == {datetime.date(2026, 11, 22), datetime.date(2026, 11, 15)}\n\n    # Vérification des types et champs\n    guarding = next(r for r in rows if r[\"title\"] == \"Guarding Stars\" and r[\"week\"] == datetime.date(2026, 11, 22))\n    assert guarding[\"kind\"] == \"film\"\n    assert guarding[\"season\"] is None\n    assert guarding[\"views\"] == 27600000\n    assert guarding[\"runtime_minutes\"] == round(1.8333 * 60)\n\n    body = next(r for r in rows if r[\"title\"] == \"The Body\")\n    assert body[\"kind\"] == \"serie\"\n    assert body[\"season\"] == \"The Body: Season 1\"\n\n\ndef test_title_id_stability():\n    \"\"\"Vérifie que title_id est stable (uuid5) et identique pour un même titre.\"\"\"\n    id1 = title_id(\"film\", \"Guarding Stars\")\n    id2 = title_id(\"film\", \"Guarding Stars\")\n    id3 = title_id(\"serie\", \"Guarding Stars\")\n    assert id1 == id2\n    assert id1 != id3\n    assert isinstance(id1, uuid.UUID)\n\n\ndef test_normalize_genres():\n    \"\"\"Vérifie la normalisation des genres Wikidata.\"\"\"\n    assert normalize_genres([\"film d'animation\", \"action\"]) == {\"animation\", \"action\"}\n    assert normalize_genres([\"comédie romantique\"]) == {\"comedie\", \"romance\"}\n    assert normalize_genres([\"genre inconnu xyz\"]) == {\"autre\"}\n\n\ndef test_enrich_wikidata_mock():\n    \"\"\"Teste enrich avec un MockTransport httpx simulant Wikidata SPARQL.\"\"\"\n    sparql_json_response = {\n        \"results\": {\n            \"bindings\": [\n                {\n                    \"item\": {\"value\": \"http://www.wikidata.org/entity/Q12345\"},\n                    \"pubDate\": {\"value\": \"2026-01-01T00:00:00Z\"},\n                    \"genreLabel\": {\"value\": \"science-fiction\"},\n                    \"descFr\": {\"value\": \"Un film de science fiction.\"},\n                }\n            ]\n        }\n    }\n\n    def handler(request: httpx.Request) -> httpx.Response:\n        return httpx.Response(200, json=sparql_json_response)\n\n    transport = httpx.MockTransport(handler)\n    client = httpx.Client(transport=transport)\n\n    result = enrich(client, \"Guarding Stars\", \"film\")\n    assert result is not None\n    assert result[\"qid\"] == \"Q12345\"\n    assert result[\"year\"] == 2026\n    assert result[\"genres\"] == {\"science-fiction\"}\n    assert result[\"description\"] == \"Un film de science fiction.\"\n\n    # Test sans résultat\n    empty_handler = lambda req: httpx.Response(200, json={\"results\": {\"bindings\": []}})\n    client_empty = httpx.Client(transport=httpx.MockTransport(empty_handler))\n    assert enrich(client_empty, \"Inconnu\", \"film\") is None\n\n\ndef test_load_end_to_end(session, pytest_keyspace):\n    \"\"\"Teste le chargement complet (load) avec un enrich_fn factice et vérifie les vues du jour.\"\"\"\n    rows = parse(SAMPLE_TSV, weeks=1)\n\n    def dummy_enrich(title: str, kind: str):\n        if title == \"Guarding Stars\":\n            return {\n                \"qid\": \"Q111\",\n                \"year\": 2026,\n                \"genres\": {\"action\"},\n                \"description\": \"Desc of Guarding Stars\",\n            }\n        return None\n\n    report = load(session, pytest_keyspace, rows, dummy_enrich)\n    assert report[\"titles\"] == 2\n    assert report[\"wikidata_found\"] == 1\n    assert \"The Body\" in report[\"wikidata_missing\"]\n\n    # Vérification des vues du jour via ViewDAO\n    view_dao = ViewDAO(session, pytest_keyspace)\n    day = datetime.date(2026, 11, 22)\n    views_day = view_dao.views_of_day(day)\n\n    guarding_id = title_id(\"film\", \"Guarding Stars\")\n    assert guarding_id in views_day\n    assert views_day[guarding_id] == 27600000\n\n    # Vérification TitleDAO\n    title_dao = TitleDAO(session, pytest_keyspace)\n    t = title_dao.get(guarding_id)\n    assert t is not None\n    assert t.title == \"Guarding Stars\"\n    assert t.synopsis == \"Desc of Guarding Stars\"\n    assert t.release_year == 2026\n    assert t.genres == {\"action\"}\n",
+            "path": "tests/test_ingest.py"
+          },
+          "name": "write_file"
+        },
+        "thought_signature": "Ep8BCpwBAWkUfRP0NmTzQJ_mFAcRRHdhWGyCd9sbzbeTtehsxFqZr5esowEbfZpsACJ9zgGDSW5nOHSLNQBt0Sz0jp9QV887Km58BLyd0lFrlcvbHoAwa1IFhE_IdtGhnJdFdVEsQqAucsyGVElghgFwT6yatSF3h2YumFCkbM4HoyjsNrFL3XXx0AgGAmv0vkX_aCQsFq0wUqi0R2XBLABt"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "tests/test_ingest.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "text": "Fichiers réécrits et corrections appliquées :\n\n1. **`tests/test_ingest.py`** :\n   - Correction du mot-clé manquant `def` devant la signature de la fixture pytest : `def pytest_keyspace(session):`.\n   - Syntaxe du test d'intégration et des fixtures valide et conforme à PEP 8.\n\n2. **`streaming/ingest/load.py`** :\n   - Remplacement de l'expression d'assignation dans l'élément F-string (`chr(join_lines := ...)`) par une construction explicite de variable `missing = \"\\n\".join(...) or \"  - Aucun\"` avant le formatage du contenu du rapport Markdown.\n\nModélisation et architecture :\n- `ViewDAO.add_views` incrémente les compteurs de vues dans `title_stats` et `daily_views_by_title` sans insérer d'historique de visionnage.\n- L'ingestion Netflix/Wikidata regroupe par `title_id` (UUIDv5 déterministe) et interroge Wikidata une unique fois par titre distinct.\n\nÀ vérifier :\n- Exécution de la suite de tests `pytest` sur le cluster Cassandra local via l'orchestrateur.",
+        "thought_signature": "Ep8BCpwBAWkUfRPy64Iab1ZI7uMiE_nNcfYL4zd_WTL249em6Kc2nzTbcE-G8XooV-lKSb2zzXjKHJwfPdt5OpedN9_0e4QDRf76saFJKAxprHuWvg7wosy3PvjfjADL1GvZkiDCM8GeH1-k-8IcO8JDKmSdAf8G9NHfvTzUGt-oM5jY5LGunBVJwvl4xkwaKuDrBYr43AryqGrVTIYtYgML"
+      }
+    ],
+    "role": "model"
+  }
+]

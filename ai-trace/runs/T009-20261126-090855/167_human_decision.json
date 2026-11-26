@@ -1,0 +1,11 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 167,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T09:17:45+00:00",
+  "iteration": 6,
+  "decision": "changes",
+  "feedback": "BLOQUANT : streaming/ingest/wikidata.py ne compile pas, ligne 78 (guillemets imbriqués dans une f-string). Lis ce fichier seulement et réécris-le en entier en changeant UNIQUEMENT ceci :\n- ajoute en haut du module la fonction :\ndef _sparql_literal(title: str) -> str:\n    \"\"\"Littéral SPARQL anglais, guillemets et antislashs échappés.\"\"\"\n    escaped = title.replace(\"\\\\\", \"\\\\\\\\\").replace('\"', '\\\\\"')\n    return '\"' + escaped + '\"@en'\n- remplace la ligne fautive par : values_str = \" \".join(_sparql_literal(t) for t in chunk)\nNe touche à rien d'autre (les tests et load.py restent tels quels).",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

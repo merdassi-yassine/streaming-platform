@@ -1,0 +1,79 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 49,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T08:34:07+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 7.2,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "streaming/ingest/load.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_15830399387022694645",
+                "args": {
+                  "content": "\"\"\"Tests unitaires et d'intégration pour le module d'ingestion.\"\"\"\n\nfrom __future__ import annotations\n\nimport uuid\nfrom datetime import date\nimport httpx\nimport pytest\n\nfrom streaming.schema import create_schema, drop_schema, TABLES\nfrom streaming.dao.titles import TitleDAO\nfrom streaming.dao.views import ViewDAO\nfrom streaming.ingest.netflix import parse, title_id\nfrom streaming.ingest.wikidata import normalize_genres, enrich\nfrom streaming.ingest.load import load, reset\n\nTEST_KEYSPACE = \"streaming_test_ingest\"\n\nSAMPLE_TSV = \"\"\"week\tcategory\tweekly_rank\tshow_title\tseason_title\tweekly_hours_viewed\truntime\tweekly_views\tcumulative_weeks_in_top_10\n2026-11-22\tFilms (English)\t1\tGuarding Stars\tN/A\t50600000\t1.8333\t27600000\t1\n2026-11-22\tTV (English)\t1\tThe Body\tThe Body: Season 1\t70300000\t\t9500000\t2\n2026-11-15\tFilms (Non-English)\t2\tOther Film\tN/A\t10000000\t2.0\t5000000\t1\n\"\"\"\n\n\n@pytest.fixture(scope=\"function\")\ndef test_session(cluster):\n    \"\"\"Fixture créant un keyspace de test dédié et le supprimant à la fin.\"\"\"\n    session = cluster.connect()\n    drop_schema(session, TEST_KEYSPACE)\n    create_schema(session, TEST_KEYSPACE, replication_factor=1)\n    session.set_keyspace(TEST_KEYSPACE)\n    yield session\n    drop_schema(session, TEST_KEYSPACE)\n\n\ndef test_parse_and_weeks():\n    \"\"\"Vérifie le parsing TSV, le filtre des N semaines et la gestion des valeurs vides.\"\"\"\n    rows = parse(SAMPLE_TSV, weeks=1)\n    # Seule la semaine 2026-11-22 doit être gardée (la plus récente)\n    assert len(rows) == 2\n    assert all(r[\"week\"] == date(2026, 11, 22) for r in rows)\n\n    # Vérification des types et valeurs vides\n    film_row = next(r for r in rows if r[\"title\"] == \"Guarding Stars\")\n    assert film_row[\"kind\"] == \"film\"\n    assert film_row[\"season\"] is None\n    assert film_row[\"views\"] == 27600000\n    assert film_row[\"runtime_minutes\"] == 110  # round(1.8333 * 60) = 110\n\n    tv_row = next(r for r in rows if r[\"title\"] == \"The Body\")\n    assert tv_row[\"kind\"] == \"serie\"\n    assert tv_row[\"season\"] == \"The Body: Season 1\"\n    assert tv_row[\"views\"] == 9500000\n    assert tv_row[\"runtime_minutes\"] is None  # runtime vide\n\n\ndef test_title_id_stability():\n    \"\"\"Vérifie la stabilité de l'UUID v5 pour un titre et un kind donnés.\"\"\"\n    id1 = title_id(\"film\", \"Guarding Stars\")\n    id2 = title_id(\"film\", \"Guarding Stars\")\n    id3 = title_id(\"serie\", \"Guarding Stars\")\n    assert id1 == id2\n    assert id1 != id3\n    assert isinstance(id1, uuid.UUID)\n\n\ndef test_normalize_genres():\n    \"\"\"Vérifie la normalisation des genres Wikidata avec mots-clés et accents.\"\"\"\n    assert normalize_genres([\"film d'animation\", \"Science-fiction\"]) == {\"animation\", \"science-fiction\"}\n    assert normalize_genres([\"Comédie romantique\"]) == {\"comedie\", \"romance\"}\n    assert normalize_genres([\"Film policier et dramatique\"]) == {\"crime\", \"drame\"}\n    assert normalize_genres([\"Genre Inconnu\"]) == {\"autre\"}\n\n\ndef test_enrich_wikidata_mock():\n    \"\"\"Vérifie l'enrichissement Wikidata avec mock HTTP (sélection du plus récent).\"\"\"\n    sparql_response = {\n        \"results\": {\n            \"bindings\": [\n                {\n                    \"item\": {\"value\": \"http://www.wikidata.org/entity/Q123\"},\n                    \"pubDate\": {\"value\": \"2010-01-01T00:00:00Z\"},\n                    \"genreLabel\": {\"value\": \"Drame\"},\n                    \"desc\": {\"value\": \"An old movie\", \"xml:lang\": \"en\"},\n                },\n                {\n                    \"item\": {\"value\": \"http://www.wikidata.org/entity/Q456\"},\n                    \"pubDate\": {\"value\": \"2024-05-10T00:00:00Z\"},\n                    \"genreLabel\": {\"value\": \"Action\"},\n                    \"desc\": {\"value\": \"Un film récent\", \"xml:lang\": \"fr\"},\n                },\n            ]\n        }\n    }\n\n    def handler(request: httpx.Request) -> httpx.Response:\n        return httpx.Response(200, json=sparql_response)\n\n    client = httpx.Client(transport=httpx.MockTransport(handler))\n    res = enrich(client, \"Test Movie\", \"film\")\n\n    assert res is not None\n    assert res[\"qid\"] == \"Q456\"\n    assert res[\"year\"] == 2024\n    assert res[\"genres\"] == [\"Action\"]\n    assert res[\"description\"] == \"Un film récent\"\n\n\ndef test_enrich_wikidata_not_found():\n    \"\"\"Vérifie qu'un résultat vide renvoie None.\"\"\"\n    def handler(request: httpx.Request) -> httpx.Response:\n        return httpx.Response(200, json={\"results\": {\"bindings\": []}})\n\n    client = httpx.Client(transport=httpx.MockTransport(handler))\n    res = enrich(client, \"Unknown Title\", \"film\")\n    assert res is None\n\n\ndef test_load_end_to_end(test_session):\n    \"\"\"Test de bout en bout du chargement, enrichissement et compteurs de vues.\"\"\"\n    rows = parse(SAMPLE_TSV, weeks=1)\n\n    def dummy_enrich(title: str, kind: str):\n        if title == \"Guarding Stars\":\n            return {\n                \"qid\": \"Q111\",\n                \"year\": 2025,\n                \"genres\": [\"Drame\"],\n                \"description\": \"A wonderful star story\",\n            }\n        return None\n\n    report = load(test_session, TEST_KEYSPACE, rows, dummy_enrich)\n\n    assert report[\"titles\"] == 2\n    assert report[\"rows\"] == 2\n    assert report[\"wikidata_found\"] == 1\n    assert \"The Body\" in report[\"wikidata_missing\"]\n\n    # Vérification du genre et du kind (\"film\" / \"serie\")\n    title_dao = TitleDAO(test_session, TEST_KEYSPACE)\n    t_id = title_id(\"film\", \"Guarding Stars\")\n    title_obj = title_dao.get(t_id)\n    assert title_obj is not None\n    assert title_obj.kind == \"film\"\n    assert title_obj.release_year == 2025\n    assert title_obj.synopsis == \"A wonderful star story\"\n\n    # Vérification des vues du jour via ViewDAO\n    view_dao = ViewDAO(test_session, TEST_KEYSPACE)\n    views_map = view_dao.views_of_day(date(2026, 11, 22))\n    assert views_map.get(t_id) == 27600000\n",
+                  "path": "tests/test_ingest.py"
+                },
+                "name": "write_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfRMqIN-F2dWZYNZSQYMnTZfJVch__c4UK_Alo8tNwM1GGWCSjMq0JUND1thUGWas81fZenUC1c2kgcBmZeWY4ilg4CflMJ5BIpKRSkvta_SpGVd7WFvTrFkOZcjmbObkSJasQuzpBfciE_ihe2yd30CKBYRj3CeTr1_rOqN6mYddZPNnXJt0RVJJFijLn47T"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "-O4Ha9faMOuykdUP38HckA4",
+    "usage_metadata": {
+      "cache_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 10141
+        }
+      ],
+      "cached_content_token_count": 10141,
+      "candidates_token_count": 1888,
+      "prompt_token_count": 13132,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 13132
+        }
+      ],
+      "total_token_count": 15020
+    }
+  },
+  "usage": {
+    "input_tokens": 13132,
+    "output_tokens": 1888,
+    "thinking_tokens": null
+  }
+}

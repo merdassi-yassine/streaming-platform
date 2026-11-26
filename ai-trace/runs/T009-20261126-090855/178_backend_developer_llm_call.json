@@ -1,0 +1,108 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 178,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T10:08:33+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7631, Requested 5881. Please try again in 41.34s. Need more tokens? Upgrade to Dev Tier today at h"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6892, Requested 5793. Please try again in 35.137499999s. Need more tokens? Upgrade to Dev Tier tod"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4701, Requested 6167. Please try again in 21.509999999s. Need more tokens? Upgrade to Dev Tier tod"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 1,
+      "code": "tool_use_failed",
+      "message": "HTTP tool_use_failed : {\"error\":{\"message\":\"Failed to parse tool call arguments as JSON\",\"type\":\"invalid_request_error\",\"code\":\"tool_use_failed\",\"failed_generation\":\"{\\\"name\\\": \\\"write_file\\\", \\\"arguments\\\": {\\\"path\\\":\\\"streaming/ingest/wikidata.py\\\",\\\"content\\\":\\\"\\\\\\\"\\\\\\\"\\\\\\\"Enrichissement des titr"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 3474, Requested 6603. Please try again in 15.5775s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 2052, Requested 6129. Please try again in 1.3575s. Need more tokens? Upgrade to Dev Tier today at h"
+    }
+  ],
+  "latency_s": 55.2,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_b0e389bc-cef6-48f0-9f9b-cb25af9c3111",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"Enrichissement des titres via Wikidata SPARQL (par lots).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport time\\nimport unicodedata\\nimport httpx\\n\\nSPARQL_URL = \\\"https://query.wikidata.org/sparql\\\"\\n\\nBATCH_QUERY = \\\"\\\"\\\"SELECT ?label ?item ?pubDate ?start ?genreLabel ?descFr ?descEn WHERE {\\n  VALUES ?label { __VALUES__ }\\n  ?item rdfs:label ?label ; wdt:P31/wdt:P279* __CLASS__ .\\n  OPTIONAL { ?item wdt:P577 ?pubDate . }\\n  OPTIONAL { ?item wdt:P580 ?start . }\\n  OPTIONAL { ?item wdt:P136 ?genre . ?genre rdfs:label ?genreLabel . FILTER(LANG(?genreLabel) = \\\"fr\\\") }\\n  OPTIONAL { ?item schema:description ?descFr . FILTER(LANG(?descFr) = \\\"fr\\\") }\\n  OPTIONAL { ?item schema:description ?descEn . FILTER(LANG(?descEn) = \\\"en\\\") }\\n} LIMIT 5000\\\"\\\"\\\"\\n\\n# Vocabulaire cible et mots-clés associés (sans accents)\\nKEYWORDS_MAP = {\\n    \\\"science-fiction\\\": [\\\"science-fiction\\\", \\\"science fiction\\\", \\\"sci-fi\\\"],\\n    \\\"action\\\": [\\\"action\\\"],\\n    \\\"drame\\\": [\\\"drame\\\", \\\"drama\\\", \\\"dramatique\\\"],\\n    \\\"comedie\\\": [\\\"comedie\\\", \\\"comedy\\\"],\\n    \\\"animation\\\": [\\\"animation\\\", \\\"anime\\\", \\\"dessin anime\\\"],\\n    \\\"thriller\\\": [\\\"thriller\\\", \\\"suspense\\\", \\\"espionnage\\\", \\\"enigme\\\", \\\"mystere\\\"],\\n    \\\"horreur\\\": [\\\"horreur\\\", \\\"horror\\\", \\\"epouvante\\\"],\\n    \\\"fantastique\\\": [\\\"fantastique\\\", \\\"fantasy\\\", \\\"surnaturel\\\"],\\n    \\\"romance\\\": [\\\"romance\\\", \\\"romanti\\\", \\\"sentimental\\\"],\\n    \\\"documentaire\\\": [\\\"documentaire\\\", \\\"documentary\\\"],\\n    \\\"crime\\\": [\\\"crime\\\", \\\"criminel\\\", \\\"policier\\\", \\\"detective\\\", \\\"gangster\\\"],\\n    \\\"aventure\\\": [\\\"aventure\\\", \\\"adventure\\\"],\\n    \\\"famille\\\": [\\\"famille\\\", \\\"familial\\\", \\\"family\\\", \\\"jeunesse\\\"],\\n    \\\"telerealite\\\": [\\\"telerealite\\\", \\\"tele-realite\\\", \\\"reality\\\", \\\"emission de realite\\\"],\\n}\\n\\n\\nclass WikidataError(Exception):\\n    \\\"\\\"\\\"Exception levée en cas d'erreur persistante (ex: 429, 503) auprès de Wikidata.\\\"\\\"\\\"\\n    pass\\n\\n\\ndef _plain(s: str) -> str:\\n    \\\"\\\"\\\"Met en minuscules et supprime les accents d'une chaîne.\\\"\\\"\\\"\\n    nfkd = unicodedata.normalize(\\\"NFKD\\\", s.lower())\\n    return \\\"\\\".join(c for c in nfkd if not unicodedata.combining(c))\\n\\n\\ndef normalize_genres(labels: list[str]) -> set[str]:\\n    \\\"\\\"\\\"Ramène les libellés Wikidata à notre vocabulaire par mots-clés sans accents.\\\"\\\"\\\"\\n    matched = set()\\n    for label in labels:\\n        lbl_plain = _plain(label)\\n        for target_genre, kws in KEYWORDS_MAP.items():\\n            if any(_plain(kw) in lbl_plain for kw in kws):\\n                matched.add(target_genre)\\n\\n    if not matched:\\n        return {\\\"autre\\\"}\\n    return matched\\n\\n\\ndef enrich_many(http: httpx.Client, titles: list[str], kind: str, pause: float = 1.0) -> dict[str, dict]:\\n    \\\"\\\"\\\"Interroge Wikidata en SPARQL par lots de 20 titres.\\\"\\\"\\\"\\n    if not titles:\\n        return {}\\n\\n    class_wd = \\\"wd:Q11424\\\" if kind == \\\"film\\\" else \\\"wd:Q5398426\\\"\\n    results_map = {}\\n\\n    # Découpage par lots de 20 titres max\\n    batch_size = 20\\n    for i in range(0, len(titles), batch_size):\\n        chunk = titles[i : i + batch_size]\\n        # Format des valeurs SPARQL : \\\"Titre\\\"@en séparés par des espaces\\n        values_str = \\\" \\\".join(f'\\\"{t.replace('\\\"', \\\\'\\\\\\\\\\\"\\\\')}\\\"@en' for t in chunk)\\n\\n        query = (\\n            BATCH_QUERY\\n            .replace(\\\"__VALUES__\\\", values_str)\\n            .replace(\\\"__CLASS__\\\", class_wd)\\n        )\\n\\n        headers = {\\n            \\\"User-Agent\\\": \\\"streaming-platform-projet-etudiant/1.0\\\",\\n            \\\"Accept\\\": \\\"application/sparql-results+json\\\",\\n        }\\n\\n        response = None\\n        for attempt in range(3):\\n            try:\\n                response = http.get(\\n                    SPARQL_URL,\\n                    params={\\\"query\\\": query, \\\"format\\\": \\\"json\\\"},\\n                    headers=headers,\\n                )\\n                if response.status_code in (429, 503):\\n                    retry_after_hdr = response.headers.get(\\\"Retry-After\\\")\\n                    try:\\n                        wait_sec = int(retry_after_hdr) if retry_after_hdr else 30\\n                    except ValueError:\\n                        wait_sec = 30\\n                    sleep_time = min(wait_sec, 120)\\n                    if attempt < 2:\\n                        time.sleep(sleep_time)\\n                        continue\\n                response.raise_for_status()\\n                break\\n            except Exception as e:\\n                if attempt == 2:\\n                    status = response.status_code if response else \\\"réseau/inconnue\\\"\\n                    raise WikidataError(f\\\"Erreur Wikidata persistante (HTTP {status}) pour le lot : {e}\\\") from e\\n                time.sleep(pause)\\n\\n        if response is None or response.status_code != 200:\\n            status = response.status_code if response else \\\"inconnu\\\"\\n            raise WikidataError(f\\\"Échec de la requête SPARQL (HTTP {status}) après 3 essais.\\\")\\n\\n        data = response.json()\\n        bindings = data.get(\\\"results\\\", {}).get(\\\"bindings\\\", [])\\n\\n        # Regroupement par label puis par item\\n        labels_bindings = {}\\n        for b in bindings:\\n            label_val = b.get(\\\"label\\\", {}).get(\\\"value\\\")\\n            item_uri = b.get(\\\"item\\\", {}).get(\\\"value\\\")\\n            if not label_val or not item_uri:\\n                continue\\n\\n            if label_val not in labels_bindings:\\n                labels_bindings[label_val] = {}\\n\\n            items_map = labels_bindings[label_val]\\n            if item_uri not in items_map:\\n                items_map[item_uri] = {\\n                    \\\"qid\\\": item_uri.split(\\\"/\\\")[-1],\\n                    \\\"pub_dates\\\": set(),\\n                    \\\"starts\\\": set(),\\n                    \\\"genres\\\": set(),\\n                    \\\"desc_fr\\\": None,\\n                    \\\"desc_en\\\": None,\\n                }\\n\\n            pd = b.get(\\\"pubDate\\\", {}).get(\\\"value\\\")\\n            if pd:\\n                items_map[item_uri][\\\"pub_dates\\\"].add(pd)\\n\\n            st = b.get(\\\"start\\\", {}).get(\\\"value\\\")\\n            if st:\\n                items_map[item_uri][\\\"starts\\\"].add(st)\\n\\n            gl = b.get(\\\"genreLabel\\\", {}).get(\\\"value\\\")\\n            if gl:\\n                items_map[item_uri][\\\"genres\\\"].add(gl)\\n\\n            df = b.get(\\\"descFr\\\", {}).get(\\\"value\\\")\\n            if df and not items_map[item_uri][\\\"desc_fr\\\"]:\\n                items_map[item_uri][\\\"desc_fr\\\"] = df\\n\\n            de = b.get(\\\"descEn\\\", {}).get(\\\"value\\\")\\n            if de and not items_map[item_uri][\\\"desc_en\\\"]:\\n                items_map[item_uri][\\\"desc_en\\\"] = de\\n\\n        # Pour chaque label trouvé, déterminer l'item le plus récent\\n        for label_val, items_map in labels_bindings.items():\\n            processed_items = []\\n            for item_uri, info in items_map.items():\\n                years = []\\n                for pd in info[\\\"pub_dates\\\"]:\\n                    if len(pd) >= 4:\\n                        try:\\n                            years.append(int(pd[:4]))\\n                        except ValueError:\\n                            pass\\n                for st in info[\\\"starts\\\"]:\\n                    if len(st) >= 4:\\n                        try:\\n                            years.append(int(st[:4]))\\n                        except ValueError:\\n                            pass\\n\\n                min_year = min(years) if years else None\\n                processed_items.append((min_year, info))\\n\\n            if not processed_items:\\n                continue\\n\\n            processed_items.sort(key=lambda x: (x[0] is not None, x[0] if x[0] is not None else 0), reverse=True)\\n            best_year, best_info = processed_items[0]\\n\\n            description = best_info[\\\"desc_fr\\\"] or best_info[\\\"desc_en\\\"]\\n            genres_normalized = normalize_genres(list(best_info[\\\"genres\\\"]))\\n\\n            results_map[label_val] = {\\n                \\\"qid\\\": best_info[\\\"qid\\\"],\\n                \\\"year\\\": best_year,\\n                \\\"genres\\\": genres_normalized,\\n                \\\"description\\\": description,\\n            }\\n\\n        if i + batch_size < len(titles):\\n            time.sleep(pause)\\n\\n    return results_map\\n\\n\\ndef enrich(http: httpx.Client, title: str, kind: str) -> dict | None:\\n    \\\"\\\"\\\"Interroge Wikidata SPARQL pour un titre unique.\\\"\\\"\\\"\\n    res = enrich_many(http, [title], kind, pause=0.0)\\n    return res.get(title)\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-74ee07a0-d6ce-42ad-bdab-9a0780127657",
+    "object": "chat.completion",
+    "created": 1795687713,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "nmwn50n9q",
+              "type": "function",
+              "function": {
+                "name": "write_file",
+                "arguments": "{\"content\":\"\\\"\\\"\\\"Enrichissement des titres via Wikidata SPARQL (par lots).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport time\\nimport unicodedata\\nimport httpx\\n\\nSPARQL_URL = \\\"https://query.wikidata.org/sparql\\\"\\n\\nBATCH_QUERY = \\\"\\\"\\\"SELECT ?label ?item ?pubDate ?start ?genreLabel ?descFr ?descEn WHERE {\\n  VALUES ?label { __VALUES__ }\\n  ?item rdfs:label ?label ; wdt:P31/wdt:P279* __CLASS__ .\\n  OPTIONAL { ?item wdt:P577 ?pubDate . }\\n  OPTIONAL { ?item wdt:P580 ?start . }\\n  OPTIONAL { ?item wdt:P136 ?genre . ?genre rdfs:label ?\",\"path\":\"streaming/ingest/wikidata.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.451744911,
+      "prompt_tokens": 6105,
+      "prompt_time": 0.451359388,
+      "completion_tokens": 217,
+      "completion_time": 0.923333642,
+      "total_tokens": 6322,
+      "total_time": 1.37469303
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_8999620a6e",
+    "x_groq": {
+      "id": "req_01m8bn80pxeg3tj89a93bmkqdt",
+      "seed": 1883482218
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 6105,
+    "output_tokens": 217
+  }
+}

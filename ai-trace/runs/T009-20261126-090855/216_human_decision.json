@@ -1,0 +1,11 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 216,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T11:18:48+00:00",
+  "iteration": 7,
+  "decision": "approve",
+  "feedback": "Approuvé après 7 itérations + 4 corrections humaines tracées (commits 95f4c51, 927d9db, fcf88ee, be641c4) : wikidata.py d'it. 6 restauré (it. 7 l'avait supprimé) + ligne f-string ; téléchargement avant reset ; pause Wikidata réglable ; kind film/serie et titres gardés si Wikidata échoue. Vérifié en réel : Netflix Top 10 officiel 87 titres / 160 lignes (4 semaines au 22/11/2026), Wikidata 60/87, 0 erreur ; tests 40/40 (tests_correction_humaine3.log).",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

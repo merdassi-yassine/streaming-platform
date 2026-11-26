@@ -1,0 +1,18 @@
+*** Error compiling 'tests/test_ingest.py'...
+  File "tests/test_ingest.py", line 22
+    pytest_keyspace(session):
+    ^^^^^^^^^^^^^^^
+SyntaxError: invalid syntax
+
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-8614e16542e9 Creating 
+ Container streaming-platform-tests-run-8614e16542e9 Created 
+

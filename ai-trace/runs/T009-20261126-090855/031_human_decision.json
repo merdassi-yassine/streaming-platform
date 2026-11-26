@@ -1,0 +1,11 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 31,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T08:33:08+00:00",
+  "iteration": 1,
+  "decision": "changes",
+  "feedback": "Lis streaming/ingest/wikidata.py, streaming/ingest/load.py et tests/test_ingest.py, puis réécris-les en entier. (Les timeouts Cassandra de test_api/test_cluster viennent du cluster, pas de ton code : ne les touche pas.) BLOQUANTS : 1) normalize_genres : « Comédie romantique » doit donner romance → ajoute le mot-clé « romanti » ; compare sans accents (unicodedata) pour « comédie », « téléréalité », « épouvante ». 2) enrich mélange plusieurs éléments Wikidata (ex. « Heartland » film 2026 ET série 2016) : regroupe les bindings PAR ?item, calcule pour chacun l'année (min de P577, sinon P580 pour les séries), puis garde l'élément le plus récent et SEULEMENT ses genres/description. Test : réponse factice avec 2 items d'années différentes → qid, année et genres du plus récent. 3) load.py enregistre kind « movie »/« series » : il faut « film »/« serie » comme partout ailleurs ; ajoute l'assertion dans le test de bout en bout. 4) Échappe les guillemets et antislashs du titre dans la requête SPARQL (test avec un titre contenant \"). À AMÉLIORER : supprime la 1re requête SPARQL morte ; description fr, sinon en ; dans main(), create_schema(session, KEYSPACE, replication_factor=3) et TRUNCATE avec timeout=120 ; ajoute dans le rapport la source Wikidata (URL SPARQL, licence CC0) et la date de téléchargement.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

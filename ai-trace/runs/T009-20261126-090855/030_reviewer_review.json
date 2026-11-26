@@ -1,0 +1,11 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 30,
+  "agent": "reviewer",
+  "kind": "review",
+  "timestamp": "2026-11-26T08:32:14+00:00",
+  "iteration": 1,
+  "review": "Critères :\n✓ ViewDAO.add_views incrémente title_stats et daily_views_by_title de count, sans historique\n✓ parse ne garde que les N semaines les plus récentes et gère les valeurs vides\n✓ title_id stable (uuid5) ; un titre présent plusieurs semaines = un seul Title\n✓ enrich interroge Wikidata en SPARQL et renvoie None sans résultat ; aucun appel réseau dans les tests\n✓ load écrit un rapport avec les sources et les titres sans correspondance\n✓ tests sur un keyspace dédié, supprimé à la fin\n\nRemarques :\n- BLOQUANT : L'échec du test `test_normalize_genres` (visible dans les résultats Pytest) indique un bug dans `normalize_genres` pour l'assertion sur les films policiers (« Film policier et dramatique » ne renvoie pas `{\"crime\", \"drame\"}` comme attendu par le test du développeur ou les règles).\n- À AMÉLIORER : Les échecs de timeout Cassandra sur les tests d'API et de cluster sont probablement dus à la charge du conteneur pendant la suite de tests complète, mais méritent d'être surveillés.\n\nRecommandation : DEMANDER DES CORRECTIONS — Le test `test_normalize_genres` échoue dans la suite de tests et doit être corrigé.",
+  "steps": 1,
+  "stop_reason": "done"
+}

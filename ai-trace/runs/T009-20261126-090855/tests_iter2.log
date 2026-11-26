@@ -1,0 +1,18 @@
+*** Error compiling 'streaming/ingest/wikidata.py'...
+  File "streaming/ingest/wikidata.py", line 64
+    }
+    ^
+SyntaxError: f-string: single '}' is not allowed
+
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-bd907e6327a2 Creating 
+ Container streaming-platform-tests-run-bd907e6327a2 Created 
+

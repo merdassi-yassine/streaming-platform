@@ -1,0 +1,24 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 81,
+  "agent": "orchestrator",
+  "kind": "test_run",
+  "timestamp": "2026-11-26T08:35:50+00:00",
+  "iteration": 3,
+  "command": [
+    "docker",
+    "compose",
+    "--profile",
+    "tests",
+    "run",
+    "--rm",
+    "tests",
+    "sh",
+    "-c",
+    "python -m compileall -q streaming frontend tests && python -c 'import streaming.ingest.load' && pytest -v -p no:cacheprovider tests/"
+  ],
+  "exit_code": 1,
+  "passed": false,
+  "log": "tests_iter3.log",
+  "tail": "*** Error compiling 'tests/test_ingest.py'...\n  File \"tests/test_ingest.py\", line 22\n    pytest_keyspace(session):\n    ^^^^^^^^^^^^^^^\nSyntaxError: invalid syntax\n\n Container streaming-platform-cassandra1-1 Running \n Container streaming-platform-cassandra2-1 Running \n Container streaming-platform-cassandra3-1 Running \n Container streaming-platform-cassandra1-1 Waiting \n Container streaming-platform-cassandra1-1 Healthy \n Container streaming-platform-cassandra2-1 Waiting \n Container streaming-platform-cassandra2-1 Healthy \n Container streaming-platform-cassandra3-1 Waiting \n Container streaming-platform-cassandra3-1 Healthy \n Container streaming-platform-tests-run-8614e16542e9 Creating \n Container streaming-platform-tests-run-8614e16542e9 Created"
+}

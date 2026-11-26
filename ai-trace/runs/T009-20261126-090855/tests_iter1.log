@@ -1,0 +1,285 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /usr/local/bin/python3.13
+rootdir: /workspace
+configfile: pytest.ini
+plugins: anyio-4.16.0
+collecting ... collected 39 items
+
+tests/test_api.py::test_health_check ERROR                               [  2%]
+tests/test_api.py::test_get_title_not_found ERROR                        [  5%]
+tests/test_api.py::test_get_title_success ERROR                          [  7%]
+tests/test_api.py::test_get_genres_titles ERROR                          [ 10%]
+tests/test_api.py::test_post_rating_validation_error ERROR               [ 12%]
+tests/test_api.py::test_post_rating_not_found ERROR                      [ 15%]
+tests/test_api.py::test_post_rating_success_and_history ERROR            [ 17%]
+tests/test_api.py::test_trending_endpoint ERROR                          [ 20%]
+tests/test_cluster.py::test_version_cassandra_5 PASSED                   [ 23%]
+tests/test_cluster.py::test_trois_noeuds_visibles_et_up PASSED           [ 25%]
+tests/test_cluster.py::test_replication_rf3 FAILED                       [ 28%]
+tests/test_dao.py::test_title_dao_roundtrip PASSED                       [ 30%]
+tests/test_dao.py::test_user_dao_roundtrip PASSED                        [ 33%]
+tests/test_dao.py::test_list_by_genre PASSED                             [ 35%]
+tests/test_dao.py::test_rating_dao_and_stats PASSED                      [ 38%]
+tests/test_dao.py::test_view_dao_history_and_day PASSED                  [ 41%]
+tests/test_dao.py::test_extra_dao_coverage_users PASSED                  [ 43%]
+tests/test_dao.py::test_extra_dao_coverage_titles PASSED                 [ 46%]
+tests/test_frontend.py::test_wsgi_application PASSED                     [ 48%]
+tests/test_frontend.py::test_home_view PASSED                            [ 51%]
+tests/test_frontend.py::test_genre_view PASSED                           [ 53%]
+tests/test_frontend.py::test_title_detail_view PASSED                    [ 56%]
+tests/test_frontend.py::test_title_detail_not_found PASSED               [ 58%]
+tests/test_frontend.py::test_post_rating_success PASSED                  [ 61%]
+tests/test_frontend.py::test_post_rating_unprocessable PASSED            [ 64%]
+tests/test_frontend.py::test_api_unavailable PASSED                      [ 66%]
+tests/test_frontend.py::test_user_history PASSED                         [ 69%]
+tests/test_ingest.py::test_parse_netflix PASSED                          [ 71%]
+tests/test_ingest.py::test_title_id_stability PASSED                     [ 74%]
+tests/test_ingest.py::test_normalize_genres FAILED                       [ 76%]
+tests/test_ingest.py::test_enrich_mock PASSED                            [ 79%]
+tests/test_ingest.py::test_add_views_dao PASSED                          [ 82%]
+tests/test_ingest.py::test_load_end_to_end PASSED                        [ 84%]
+tests/test_schema.py::test_create_schema_and_idempotence PASSED          [ 87%]
+tests/test_schema.py::test_primary_keys_and_clustering PASSED            [ 89%]
+tests/test_schema.py::test_drop_schema PASSED                            [ 92%]
+tests/test_services.py::test_services_catalog_and_review PASSED          [ 94%]
+tests/test_services.py::test_trending_service_top10 PASSED               [ 97%]
+tests/test_services.py::test_catalog_service_genre PASSED                [100%]
+
+==================================== ERRORS ====================================
+_____________________ ERROR at setup of test_health_check ______________________
+
+session = <cassandra.cluster.Session object at 0x785ddb612270>
+
+    @pytest.fixture(scope="module")
+    def api_client(session):
+>       create_schema(session, KS_API, replication_factor=3)
+
+tests/test_api.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/schema.py:156: in create_schema
+    session.execute(query)
+cassandra/cluster.py:2642: in cassandra.cluster.Session.execute
+    return self.execute_async(query, parameters, trace, custom_payload, timeout, execution_profile, paging_state, host, execute_as).result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.OperationTimedOut: errors={'Connection defunct by heartbeat': 'Client request timeout. See Session.execute[_async](timeout)'}, last_host=172.20.0.4:9042
+
+cassandra/cluster.py:5013: OperationTimedOut
+__________________ ERROR at setup of test_get_title_not_found __________________
+
+session = <cassandra.cluster.Session object at 0x785ddb612270>
+
+    @pytest.fixture(scope="module")
+    def api_client(session):
+>       create_schema(session, KS_API, replication_factor=3)
+
+tests/test_api.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/schema.py:156: in create_schema
+    session.execute(query)
+cassandra/cluster.py:2642: in cassandra.cluster.Session.execute
+    return self.execute_async(query, parameters, trace, custom_payload, timeout, execution_profile, paging_state, host, execute_as).result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.OperationTimedOut: errors={'Connection defunct by heartbeat': 'Client request timeout. See Session.execute[_async](timeout)'}, last_host=172.20.0.4:9042
+
+cassandra/cluster.py:5013: OperationTimedOut
+___________________ ERROR at setup of test_get_title_success ___________________
+
+session = <cassandra.cluster.Session object at 0x785ddb612270>
+
+    @pytest.fixture(scope="module")
+    def api_client(session):
+>       create_schema(session, KS_API, replication_factor=3)
+
+tests/test_api.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/schema.py:156: in create_schema
+    session.execute(query)
+cassandra/cluster.py:2642: in cassandra.cluster.Session.execute
+    return self.execute_async(query, parameters, trace, custom_payload, timeout, execution_profile, paging_state, host, execute_as).result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.OperationTimedOut: errors={'Connection defunct by heartbeat': 'Client request timeout. See Session.execute[_async](timeout)'}, last_host=172.20.0.4:9042
+
+cassandra/cluster.py:5013: OperationTimedOut
+___________________ ERROR at setup of test_get_genres_titles ___________________
+
+session = <cassandra.cluster.Session object at 0x785ddb612270>
+
+    @pytest.fixture(scope="module")
+    def api_client(session):
+>       create_schema(session, KS_API, replication_factor=3)
+
+tests/test_api.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/schema.py:156: in create_schema
+    session.execute(query)
+cassandra/cluster.py:2642: in cassandra.cluster.Session.execute
+    return self.execute_async(query, parameters, trace, custom_payload, timeout, execution_profile, paging_state, host, execute_as).result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.OperationTimedOut: errors={'Connection defunct by heartbeat': 'Client request timeout. See Session.execute[_async](timeout)'}, last_host=172.20.0.4:9042
+
+cassandra/cluster.py:5013: OperationTimedOut
+_____________ ERROR at setup of test_post_rating_validation_error ______________
+
+session = <cassandra.cluster.Session object at 0x785ddb612270>
+
+    @pytest.fixture(scope="module")
+    def api_client(session):
+>       create_schema(session, KS_API, replication_factor=3)
+
+tests/test_api.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/schema.py:156: in create_schema
+    session.execute(query)
+cassandra/cluster.py:2642: in cassandra.cluster.Session.execute
+    return self.execute_async(query, parameters, trace, custom_payload, timeout, execution_profile, paging_state, host, execute_as).result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.OperationTimedOut: errors={'Connection defunct by heartbeat': 'Client request timeout. See Session.execute[_async](timeout)'}, last_host=172.20.0.4:9042
+
+cassandra/cluster.py:5013: OperationTimedOut
+_________________ ERROR at setup of test_post_rating_not_found _________________
+
+session = <cassandra.cluster.Session object at 0x785ddb612270>
+
+    @pytest.fixture(scope="module")
+    def api_client(session):
+>       create_schema(session, KS_API, replication_factor=3)
+
+tests/test_api.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/schema.py:156: in create_schema
+    session.execute(query)
+cassandra/cluster.py:2642: in cassandra.cluster.Session.execute
+    return self.execute_async(query, parameters, trace, custom_payload, timeout, execution_profile, paging_state, host, execute_as).result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.OperationTimedOut: errors={'Connection defunct by heartbeat': 'Client request timeout. See Session.execute[_async](timeout)'}, last_host=172.20.0.4:9042
+
+cassandra/cluster.py:5013: OperationTimedOut
+____________ ERROR at setup of test_post_rating_success_and_history ____________
+
+session = <cassandra.cluster.Session object at 0x785ddb612270>
+
+    @pytest.fixture(scope="module")
+    def api_client(session):
+>       create_schema(session, KS_API, replication_factor=3)
+
+tests/test_api.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/schema.py:156: in create_schema
+    session.execute(query)
+cassandra/cluster.py:2642: in cassandra.cluster.Session.execute
+    return self.execute_async(query, parameters, trace, custom_payload, timeout, execution_profile, paging_state, host, execute_as).result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.OperationTimedOut: errors={'Connection defunct by heartbeat': 'Client request timeout. See Session.execute[_async](timeout)'}, last_host=172.20.0.4:9042
+
+cassandra/cluster.py:5013: OperationTimedOut
+___________________ ERROR at setup of test_trending_endpoint ___________________
+
+session = <cassandra.cluster.Session object at 0x785ddb612270>
+
+    @pytest.fixture(scope="module")
+    def api_client(session):
+>       create_schema(session, KS_API, replication_factor=3)
+
+tests/test_api.py:16: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+streaming/schema.py:156: in create_schema
+    session.execute(query)
+cassandra/cluster.py:2642: in cassandra.cluster.Session.execute
+    return self.execute_async(query, parameters, trace, custom_payload, timeout, execution_profile, paging_state, host, execute_as).result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.OperationTimedOut: errors={'Connection defunct by heartbeat': 'Client request timeout. See Session.execute[_async](timeout)'}, last_host=172.20.0.4:9042
+
+cassandra/cluster.py:5013: OperationTimedOut
+=================================== FAILURES ===================================
+_____________________________ test_replication_rf3 _____________________________
+
+cluster = <cassandra.cluster.Cluster object at 0x785ddb6dbe00>
+session = <cassandra.cluster.Session object at 0x785ddb612270>
+
+    def test_replication_rf3(cluster, session):
+        session.execute(f"DROP KEYSPACE IF EXISTS {KEYSPACE}")
+>       session.execute(
+            f"CREATE KEYSPACE {KEYSPACE} WITH replication = "
+            "{'class': 'NetworkTopologyStrategy', 'dc1': 3}"
+        )
+
+tests/test_cluster.py:22: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+cassandra/cluster.py:2642: in cassandra.cluster.Session.execute
+    return self.execute_async(query, parameters, trace, custom_payload, timeout, execution_profile, paging_state, host, execute_as).result()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+>   raise self._final_exception
+E   cassandra.OperationTimedOut: errors={'Connection defunct by heartbeat': 'Client request timeout. See Session.execute[_async](timeout)'}, last_host=172.20.0.4:9042
+
+cassandra/cluster.py:5013: OperationTimedOut
+------------------------------ Captured log call -------------------------------
+WARNING  cassandra.cluster:thread.py:59 Node 172.20.0.4:9042 is reporting a schema disagreement: {UUID('6fb18e0d-cfd0-34d5-bb9a-e415f6d02fa7'): [<DefaultEndPoint: 172.20.0.4:9042>, <DefaultEndPoint: 172.20.0.3:9042>], UUID('b2b211b7-07aa-34e2-af65-015f7f5779a6'): [<DefaultEndPoint: 172.20.0.2:9042>]}
+____________________________ test_normalize_genres _____________________________
+
+    def test_normalize_genres():
+>       assert normalize_genres(["Film d'animation", "Comédie romantique"]) == {"animation", "comedie", "romance"}
+E       AssertionError: assert {'animation', 'comedie'} == {'animation',...e', 'romance'}
+E         
+E         Extra items in the right set:
+E         'romance'
+E         
+E         Full diff: (-: missing in left side, +: extra in left side)
+E           {
+E               'animation',...
+E         
+E         ...Full output truncated, use '-vv' to show
+
+tests/test_ingest.py:62: AssertionError
+=============================== warnings summary ===============================
+../usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_dao.py::test_rating_dao_and_stats
+tests/test_dao.py::test_rating_dao_and_stats
+tests/test_services.py::test_services_catalog_and_review
+  /workspace/streaming/dao/ratings.py:69: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at = datetime.utcnow()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/test_cluster.py::test_replication_rf3 - cassandra.OperationTimed...
+FAILED tests/test_ingest.py::test_normalize_genres - AssertionError: assert {...
+ERROR tests/test_api.py::test_health_check - cassandra.OperationTimedOut: err...
+ERROR tests/test_api.py::test_get_title_not_found - cassandra.OperationTimedO...
+ERROR tests/test_api.py::test_get_title_success - cassandra.OperationTimedOut...
+ERROR tests/test_api.py::test_get_genres_titles - cassandra.OperationTimedOut...
+ERROR tests/test_api.py::test_post_rating_validation_error - cassandra.Operat...
+ERROR tests/test_api.py::test_post_rating_not_found - cassandra.OperationTime...
+ERROR tests/test_api.py::test_post_rating_success_and_history - cassandra.Ope...
+ERROR tests/test_api.py::test_trending_endpoint - cassandra.OperationTimedOut...
+======== 2 failed, 29 passed, 4 warnings, 8 errors in 239.43s (0:03:59) ========
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-36212dccdb76 Creating 
+ Container streaming-platform-tests-run-36212dccdb76 Created 
+

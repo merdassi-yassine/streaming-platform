@@ -1,0 +1,15 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 181,
+  "agent": "backend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-26T10:08:34+00:00",
+  "tool": "repo_browser.list_files",
+  "args": {
+    "directory": "streaming/ingest"
+  },
+  "result": {
+    "ok": false,
+    "error": "outil inconnu : repo_browser.list_files"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 187,
+  "agent": "backend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-26T10:09:14+00:00",
+  "tool": "read_file",
+  "args": {
+    "path": "streaming/ingest/wikidata.py"
+  },
+  "result": {
+    "ok": true,
+    "content": "\"\"\"Enrichissement des titres via Wikidata SPARQL (par lots).\"\"\"\n\nfrom __future__ import annotations\n\nimport time\nimport unicodedata\nimport httpx\n\nSPARQL_URL = \"https://query.wikidata.org/sparql\"\n\nBATCH_QUERY = \"\"\"SELECT ?label ?item ?pubDate ?start ?genreLabel ?descFr ?descEn WHERE {\n  VALUES ?label { __VALUES__ }\n  ?item rdfs:label ?label ; wdt:P31/wdt:P279* __CLASS__ .\n  OPTIONAL { ?item wdt:P577 ?pubDate . }\n  OPTIONAL { ?item wdt:P580 ?start . }\n  OPTIONAL { ?item wdt:P136 ?genre . ?genre rdfs:label ?"
+  }
+}

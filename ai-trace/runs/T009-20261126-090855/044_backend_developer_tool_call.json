@@ -1,0 +1,16 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 44,
+  "agent": "backend_developer",
+  "kind": "tool_call",
+  "timestamp": "2026-11-26T08:33:44+00:00",
+  "tool": "write_file",
+  "args": {
+    "path": "streaming/ingest/netflix.py",
+    "content": "\"\"\"Module d'ingestion des données Netflix Top 10 (source 1).\"\"\"\n\nfrom __future__ import annotations\n\nimport csv\nimport io\nimport uuid\nfrom datetime import datetime\nfrom typing import Dict, List, Optional\nimport httpx\n\nNETFLIX_URL = \"https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv\"\n\n\ndef fetch(http: httpx.Client) -> str:\n    \"\"\"Télécharge le fichier TSV Netflix brut et renvoie son contenu texte.\"\"\"\n    response = http.get(NETFLIX_URL)\n    response.raise_for_status()\n    return response.text\n\n\ndef parse(tsv_text: str, weeks: int = 4) -> List[Dict]:\n    \"\"\"Parse le TSV Netflix et ne garde que les `weeks` semaines les plus récentes.\"\"\"\n    f = io.StringIO(tsv_text.strip())\n    reader = csv.DictReader(f, delimiter=\"\\t\")\n    rows = list(reader)\n\n    # Récupérer toutes les semaines uniques triées de la plus ancienne à la plus récente\n    all_weeks = sorted({r[\"week\"] for r in rows if r.get(\"week\")})\n    recent_weeks_set = set(all_weeks[-weeks:]) if all_weeks else set()\n\n    parsed_rows = []\n    for r in rows:\n        wk_str = r.get(\"week\", \"\").strip()\n        if not wk_str or wk_str not in recent_weeks_set:\n            continue\n\n        week_date = datetime.strptime(wk_str, \"%Y-%m-%d\").date()\n        category = r.get(\"category\", \"\").strip()\n        kind = \"film\" if category.lower().startswith(\"films\") else \"serie\"\n\n        show_title = r.get(\"show_title\", \"\").strip()\n        season_title_raw = r.get(\"season_title\", \"\").strip()\n        season = None if season_title_raw in (\"\", \"N/A\") else season_title_raw\n\n        try:\n            rank = int(r.get(\"weekly_rank\", 0))\n        except ValueError:\n            rank = 0\n\n        views_raw = r.get(\"weekly_views\", \"\").strip()\n        try:\n            views = int(views_raw) if views_raw else 0\n        except ValueError:\n            views = 0\n\n        hours_raw = r.get(\"weekly_hours_viewed\", \"\").strip()\n        try:\n            hours = int(float(hours_raw)) if hours_raw else 0\n        except ValueError:\n            hours = 0\n\n        runtime_raw = r.get(\"runtime\", \"\").strip()\n        runtime_minutes = None\n        if runtime_raw:\n            try:\n                runtime_minutes = round(float(runtime_raw) * 60)\n            except ValueError:\n                pass\n\n        parsed_rows.append({\n            \"week\": week_date,\n            \"kind\": kind,\n            \"title\": show_title,\n            \"season\": season,\n            \"rank\": rank,\n            \"views\": views,\n            \"hours\": hours,\n            \"runtime_minutes\": runtime_minutes,\n            \"category\": category,\n        })\n\n    return parsed_rows\n\n\ndef title_id(kind: str, title: str) -> uuid.UUID:\n    \"\"\"Génère un UUID v5 stable pour un titre Netflix donné.\"\"\"\n    return uuid.uuid5(uuid.NAMESPACE_URL, f\"netflix-top10:{kind}:{title}\")\n"
+  },
+  "result": {
+    "ok": true,
+    "written": "streaming/ingest/netflix.py"
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 182,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T10:08:35+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 0.77,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_b303aac5-c5f1-4d34-a9a5-d28df7d07a31",
+      "name": "repo_browser.list_files",
+      "content": "{\"ok\": false, \"error\": \"outil inconnu : repo_browser.list_files\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-32a50f9c-1db1-416d-a7fb-49051c2c42ea",
+    "object": "chat.completion",
+    "created": 1795687714,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to list files correctly using the provided tool name: functions.list_files. Let's call that.",
+          "tool_calls": [
+            {
+              "id": "fc_04e1922c-4122-4cf4-bcb2-257f0f3c1845",
+              "type": "function",
+              "function": {
+                "name": "list_files",
+                "arguments": "{\"directory\":\"streaming/ingest\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.192108084,
+      "prompt_tokens": 3535,
+      "prompt_time": 0.242895848,
+      "completion_tokens": 45,
+      "completion_time": 0.094371785,
+      "total_tokens": 3580,
+      "total_time": 0.337267633,
+      "completion_tokens_details": {
+        "reasoning_tokens": 21
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_803c0ba83d",
+    "x_groq": {
+      "id": "req_01m8bn83jee2rs9n6d24wygqkk",
+      "seed": 404209809
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 3535,
+    "output_tokens": 45
+  }
+}

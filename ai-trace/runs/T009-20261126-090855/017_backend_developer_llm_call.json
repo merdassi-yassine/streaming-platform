@@ -1,0 +1,79 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 17,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T08:27:34+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 5.65,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "streaming/ingest/__init__.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_1421566162510860422",
+                "args": {
+                  "path": "streaming/ingest/netflix.py",
+                  "content": "\"\"\"Module d'ingestion des classements Netflix Top 10.\"\"\"\n\nfrom __future__ import annotations\n\nimport csv\nimport io\nimport uuid\nfrom datetime import date\nfrom typing import Dict, List, Optional\nimport httpx\n\nNETFLIX_URL = \"https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv\"\n\n\ndef fetch(client: httpx.Client) -> str:\n    \"\"\"Télécharge le fichier TSV Netflix Top 10 et retourne son contenu textuel.\"\"\"\n    response = client.get(NETFLIX_URL)\n    response.raise_for_status()\n    return response.text\n\n\ndef parse(tsv_text: str, weeks: int = 4) -> List[Dict]:\n    \"\"\"Parse le TSV Netflix et ne garde que les `weeks` semaines les plus récentes.\"\"\"\n    f = io.StringIO(tsv_text.strip())\n    reader = csv.DictReader(f, delimiter=\"\\t\")\n    rows = list(reader)\n\n    if not rows:\n        return []\n\n    # Extraire toutes les semaines uniques triées par ordre chronologique\n    all_weeks = sorted(list({r[\"week\"] for r in rows if r.get(\"week\")}))\n    if not all_weeks:\n        return []\n\n    recent_weeks = set(all_weeks[-weeks:])\n\n    parsed_rows = []\n    for r in rows:\n        week_str = r.get(\"week\", \"\").strip()\n        if week_str not in recent_weeks:\n            continue\n\n        category = r.get(\"category\", \"\").strip()\n        kind = \"film\" if category.startswith(\"Films\") else \"serie\"\n\n        show_title = r.get(\"show_title\", \"\").strip()\n        season_title = r.get(\"season_title\", \"\").strip()\n        if not season_title or season_title.upper() == \"N/A\":\n            season = None\n        else:\n            season = season_title\n\n        try:\n            rank = int(r.get(\"weekly_rank\", 0) or 0)\n        except ValueError:\n            rank = 0\n\n        views_raw = r.get(\"weekly_views\", \"\").strip()\n        try:\n            views = int(views_raw) if views_raw else 0\n        except ValueError:\n            views = 0\n\n        hours_raw = r.get(\"weekly_hours_viewed\", \"\").strip()\n        try:\n            hours = int(float(hours_raw)) if hours_raw else 0\n        except ValueError:\n            hours = 0\n\n        runtime_raw = r.get(\"runtime\", \"\").strip()\n        runtime_minutes = None\n        if runtime_raw:\n            try:\n                rt_val = float(runtime_raw)\n                runtime_minutes = round(rt_val * 60)\n            except ValueError:\n                pass\n\n        try:\n            week_date = date.fromisoformat(week_str)\n        except ValueError:\n            continue\n\n        parsed_rows.append({\n            \"week\": week_date,\n            \"kind\": kind,\n            \"title\": show_title,\n            \"season\": season,\n            \"rank\": rank,\n            \"views\": views,\n            \"hours\": hours,\n            \"runtime_minutes\": runtime_minutes,\n            \"category\": category,\n        })\n\n    return parsed_rows\n\n\ndef title_id(kind: str, title: str) -> uuid.UUID:\n    \"\"\"Génère un UUID v5 stable pour un titre Netflix donné.\"\"\"\n    return uuid.uuid5(uuid.NAMESPACE_URL, f\"netflix-top10:{kind}:{title}\")\n"
+                },
+                "name": "write_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfRNMODOiK-ExaVhWjj-eiqvETud1o46K-9QqJJwCNdB_YvFX1Co0aM2PB9uohF_xBapy4dkOra7NieWoJryT0Qk3_vXjEnvTvNSvPtaGDgNN_I7oEmtgFVotyfzSY37bcved7cYSpS4GMiIEcYyT2slVgcZatUDtMlhv-D3Jg8aJU01UbXwugCYxmmBhK6J5"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "ce0Ha-abM83_vdIPmeiiYQ",
+    "usage_metadata": {
+      "cache_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 6058
+        }
+      ],
+      "cached_content_token_count": 6058,
+      "candidates_token_count": 865,
+      "prompt_token_count": 8381,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 8381
+        }
+      ],
+      "total_token_count": 9246
+    }
+  },
+  "usage": {
+    "input_tokens": 8381,
+    "output_tokens": 865,
+    "thinking_tokens": null
+  }
+}

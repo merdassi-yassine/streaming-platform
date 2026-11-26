@@ -1,0 +1,79 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 47,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T08:33:59+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [],
+  "latency_s": 7.67,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "streaming/ingest/wikidata.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_13016822980882564932",
+                "args": {
+                  "content": "\"\"\"Module d'orchestration de l'ingestion (chargement et reset).\"\"\"\n\nfrom __future__ import annotations\n\nimport time\nfrom datetime import datetime\nfrom pathlib import Path\nfrom typing import Callable, Dict, List, Optional\nimport httpx\nfrom cassandra.cluster import Cluster\nfrom cassandra.policies import DCAwareRoundRobinPolicy\n\nfrom ..schema import KEYSPACE, TABLES, create_schema, drop_schema\nfrom ..dao.titles import TitleDAO\nfrom ..dao.views import ViewDAO\nfrom ..models import Title\nfrom .netflix import fetch, parse, title_id\nfrom .wikidata import enrich, normalize_genres, SPARQL_URL\n\n\ndef reset(session, keyspace: str = KEYSPACE) -> None:\n    \"\"\"Effectue un TRUNCATE de chaque table du keyspace.\"\"\"\n    for table in TABLES:\n        session.execute(f\"TRUNCATE TABLE {keyspace}.{table}\")\n\n\ndef load(session, keyspace: str, rows: List[Dict], enrich_fn: Callable[[str, str], Optional[Dict]]) -> Dict:\n    \"\"\"Charge les lignes Netflix et enrichit les titres via Wikidata.\"\"\"\n    title_dao = TitleDAO(session, keyspace)\n    view_dao = ViewDAO(session, keyspace)\n\n    # Regrouper par title_id pour identifier les titres distincts\n    distinct_titles: Dict[uuid.UUID, Dict] = {}\n    for r in rows:\n        t_id = title_id(r[\"kind\"], r[\"title\"])\n        if t_id not in distinct_titles:\n            distinct_titles[t_id] = {\n                \"title_id\": t_id,\n                \"title\": r[\"title\"],\n                \"kind\": \"film\" if r[\"kind\"] == \"film\" else \"serie\",  # normalisé en \"film\" / \"serie\"\n                \"runtime_minutes\": r[\"runtime_minutes\"],\n                \"week\": r[\"week\"],\n            }\n\n    titles_count = 0\n    wikidata_found = 0\n    wikidata_missing: List[str] = []\n    weeks_set = set()\n\n    for t_id, info in distinct_titles.items():\n        t_name = info[\"title\"]\n        t_kind = info[\"kind\"]\n        runtime_min = info[\"runtime_minutes\"]\n        fallback_year = info[\"week\"].year\n\n        # Appel enrich_fn UNE seule fois par titre distinct\n        wiki = enrich_fn(t_name, t_kind)\n\n        synopsis = \"Description indisponible sur Wikidata\"\n        release_year = fallback_year\n        genres = {\"autre\"}\n        duration_minutes = runtime_min if t_kind == \"film\" else None\n\n        if wiki:\n            wikidata_found += 1\n            if wiki.get(\"description\"):\n                synopsis = wiki[\"description\"]\n            if wiki.get(\"year\"):\n                release_year = wiki[\"year\"]\n            raw_genres = wiki.get(\"genres\", [])\n            if raw_genres:\n                genres = normalize_genres(raw_genres)\n        else:\n            wikidata_missing.append(t_name)\n\n        title_obj = Title(\n            title_id=t_id,\n            title=t_name,\n            kind=t_kind,\n            release_year=release_year,\n            genres=genres,\n            synopsis=synopsis,\n            duration_minutes=duration_minutes,\n            episodes_count=None,\n        )\n        title_dao.save(title_obj)\n        titles_count += 1\n\n    # Insérer les vues pour chaque ligne\n    for r in rows:\n        t_id = title_id(r[\"kind\"], r[\"title\"])\n        view_dao.add_views(t_id, r[\"week\"], r[\"views\"])\n        weeks_set.add(r[\"week\"].isoformat())\n\n    return {\n        \"titles\": titles_count,\n        \"rows\": len(rows),\n        \"weeks\": sorted(list(weeks_set)),\n        \"wikidata_found\": wikidata_found,\n        \"wikidata_missing\": sorted(wikidata_missing),\n    }\n\n\ndef main() -> None:\n    \"\"\"Point d'entrée principal pour l'ingestion de données réelles.\"\"\"\n    cluster = Cluster(\n        contact_points=[\"127.0.0.1\"],\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\"dc1\"),\n    )\n    session = cluster.connect()\n\n    print(f\"Création du schéma pour le keyspace {KEYSPACE}...\")\n    create_schema(session, KEYSPACE, replication_factor=3)\n    print(\"Réinitialisation des données (TRUNCATE)...\")\n    reset(session, KEYSPACE)\n\n    print(\"Téléchargement du Top 10 Netflix...\")\n    with httpx.Client(timeout=30, follow_redirects=True) as client:\n        tsv_text = fetch(client)\n        rows = parse(tsv_text, weeks=4)\n\n        print(f\"{len(rows)} lignes parsées. Lancement du chargement avec enrichissement Wikidata...\")\n\n        def bounded_enrich(title: str, kind: str) -> Optional[Dict]:\n            res = enrich(client, title, kind)\n            time.sleep(0.3)\n            return res\n\n        report_data = load(session, KEYSPACE, rows, bounded_enrich)\n\n    # Écriture du rapport\n    now_str = datetime.utcnow().strftime(\"%Y%m%d-%H%M%S\")\n    reports_dir = Path(\"reports/ingest\")\n    reports_dir.mkdir(parents=True, exist_ok=True)\n    report_path = reports_dir / f\"ingest-{now_str}.md\"\n\n    latest_week = report_data[\"weeks\"][-1] if report_data[\"weeks\"] else \"N/A\"\n\n    report_content = f\"\"\"# Rapport d'ingestion - {now_str}\n\n## Sources\n- **Netflix Top 10** : [https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv](https://www.netflix.com/tudum/top10/data/all-weeks-global.tsv) (Dernière semaine : {latest_week})\n- **Wikidata** : [{SPARQL_URL}]({SPARQL_URL}) (Licence CC0, téléchargement le {datetime.utcnow().strftime(\"%Y-%m-%d\")})\n\n## Statistiques\n- **Titres distincts chargés** : {report_data['titles']}\n- **Lignes de vues traitées** : {report_data['rows']}\n- **Semaines traitées** : {len(report_data['weeks'])} ({', '.join(report_data['weeks'])})\n- **Correspondances Wikidata trouvées** : {report_data['wikidata_found']}\n- **Titres sans correspondance Wikidata** : {len(report_data['wikidata_missing'])}\n\n## Titres sans correspondance Wikidata\n{'\\n'.join([f'- {t}' for t in report_data['wikidata_missing']]) if report_data['wikidata_missing'] else '- Aucun'}\n\"\"\"\n\n    report_path.write_text(report_content, encoding=\"utf-8\")\n    print(f\"Rapport d'ingestion généré avec succès : {report_path}\")\n\n    session.shutdown()\n    cluster.shutdown()\n\n\nif __name__ == \"__main__\":\n    main()\n",
+                  "path": "streaming/ingest/load.py"
+                },
+                "name": "write_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfROvlQU2Mi2HYw8mzPqbRET_a0tSu0YeDr42_O_Dx-UexgSppEbBYBeLf6XEpWhdfQLCqXC8BPSP6MPvDcqnMy7ptd9usRcGDKQE-K_QLa6FhdWN8Qv6bvlc7FtUvd33LZtzNTCRum6V8d8jNqBnIwtmJ95KNEErE4KyNcE9m8cJ7f3HNs27MHuwrcU8BRgV"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "8e4Ha9PpB5uV3boPmYKx2Qw",
+    "usage_metadata": {
+      "cache_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 8107
+        }
+      ],
+      "cached_content_token_count": 8107,
+      "candidates_token_count": 1734,
+      "prompt_token_count": 11373,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 11373
+        }
+      ],
+      "total_token_count": 13107
+    }
+  },
+  "usage": {
+    "input_tokens": 11373,
+    "output_tokens": 1734,
+    "thinking_tokens": null
+  }
+}

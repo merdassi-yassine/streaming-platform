@@ -1,0 +1,96 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 200,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T10:11:04+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "qwen/qwen3.8-27b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7408, Requested 4976. Please try again in 32.88s. Need more tokens? Upgrade to Dev Tier today at h"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6474, Requested 4976. Please try again in 25.875s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5028, Requested 6939. Please try again in 29.7525s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 1,
+      "code": 400,
+      "message": "HTTP 400 : {\"error\":{\"message\":\"Parsing failed. The model generated output that could not be parsed. Please adjust your prompt. See 'failed_generation' for more details.\",\"type\":\"invalid_request_error\",\"code\":\"output_parse_failed\",\"failed_generation\":\"\"}}\n"
+    }
+  ],
+  "latency_s": 20.04,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_773e3154-0d14-4a4b-a6e6-4cf431557b0a",
+      "name": "repo_browser.list_files",
+      "content": "{\"ok\": false, \"error\": \"outil inconnu : repo_browser.list_files\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-771f7b68-4f11-4553-b46a-3abb3f85fad4",
+    "object": "chat.completion",
+    "created": 1795687864,
+    "model": "qwen/qwen3.8-27b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "j7zv1rq4d",
+              "type": "function",
+              "function": {
+                "name": "list_files",
+                "arguments": "{\"directory\":\"streaming/ingest\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.448280867,
+      "prompt_tokens": 5557,
+      "prompt_time": 0.400817165,
+      "completion_tokens": 30,
+      "completion_time": 0.08571496,
+      "total_tokens": 5587,
+      "total_time": 0.486532125
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_a1293f40b5",
+    "x_groq": {
+      "id": "req_01m8bncn83eqz9yjb18g29c3kq",
+      "seed": 1617903715
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 5557,
+    "output_tokens": 30
+  }
+}

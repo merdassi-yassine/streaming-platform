@@ -1,0 +1,17 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 162,
+  "agent": "backend_developer",
+  "kind": "agent_result",
+  "timestamp": "2026-11-26T09:16:42+00:00",
+  "iteration": 6,
+  "summary": "### Résumé des modifications\n\n- **Fichiers modifiés / créés** :\n  - `streaming/dao/views.py` (modifié) : Ajout de la méthode `add_views(self, title_id, day: date, count: int)` incrémentant `title_stats` et `daily_views_by_title` sans écrire d'historique.\n  - `streaming/ingest/wikidata.py` (modifié) : Implémentation de `enrich_many(http, titles, kind, pause)` avec interrogation SPARQL par lots de 20 titres, gestion des réessais en cas de code 429/503 (avec `Retry-After`), lève `WikidataError` en cas d'échec persistant, regroupement des homonymes par item le plus récent, et conservation de `enrich()`.\n  - `streaming/ingest/load.py` (modifié) : Adaptation de `load()` pour appeler `enrich_many_fn` par type (film/série), capture des erreurs Wikidata dans `wikidata_errors`, et mise à jour de `main()` avec génération d'un rapport Markdown détaillé.\n  - `tests/test_ingest.py` (modifié) : Ajout de tests unitaires et d'intégration complets sans aucun appel réseau (tests de parsing, stabilité de `uuid5`, normalisation des genres, `enrich_many` avec homonymes et tris chronologiques, simulation de 429 avec retry et permanent `WikidataError`, et gestion des erreurs de chargement dans `wikidata_errors`).\n\n- **Modélisation & Choix d'architecture** :\n  - Batching SPARQL par lots de 20 titres pour éviter les HTTP 429 sur les volumes réels de Netflix Top 10.\n  - Respect strict des clés de partition et de clustering existantes sur Cassandra (tables Q7 et Q8).\n\n- **Points à vérifier** :\n  - Les tests n'ont pas été exécutés localement (absence d'environnement d'exécution de code) et doivent l'être sur le cluster cible.",
+  "steps": 14,
+  "stop_reason": "done",
+  "files_written": [
+    "streaming/dao/views.py",
+    "streaming/ingest/wikidata.py",
+    "streaming/ingest/load.py",
+    "tests/test_ingest.py"
+  ]
+}

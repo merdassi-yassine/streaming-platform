@@ -1,0 +1,18 @@
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-b4e7a7a5ffe5 Creating 
+ Container streaming-platform-tests-run-b4e7a7a5ffe5 Created 
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+    import streaming.ingest.load
+  File "/workspace/streaming/ingest/load.py", line 16, in <module>
+    from .wikidata import enrich_many, WikidataError
+ImportError: cannot import name 'enrich_many' from 'streaming.ingest.wikidata' (/workspace/streaming/ingest/wikidata.py)
+

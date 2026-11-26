@@ -1,0 +1,24 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 27,
+  "agent": "orchestrator",
+  "kind": "test_run",
+  "timestamp": "2026-11-26T08:32:10+00:00",
+  "iteration": 1,
+  "command": [
+    "docker",
+    "compose",
+    "--profile",
+    "tests",
+    "run",
+    "--rm",
+    "tests",
+    "sh",
+    "-c",
+    "python -m compileall -q streaming frontend tests && python -c 'import streaming.ingest.load' && pytest -v -p no:cacheprovider tests/"
+  ],
+  "exit_code": 1,
+  "passed": false,
+  "log": "tests_iter1.log",
+  "tail": "\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n=========================== short test summary info ============================\nFAILED tests/test_cluster.py::test_replication_rf3 - cassandra.OperationTimed...\nFAILED tests/test_ingest.py::test_normalize_genres - AssertionError: assert {...\nERROR tests/test_api.py::test_health_check - cassandra.OperationTimedOut: err...\nERROR tests/test_api.py::test_get_title_not_found - cassandra.OperationTimedO...\nERROR tests/test_api.py::test_get_title_success - cassandra.OperationTimedOut...\nERROR tests/test_api.py::test_get_genres_titles - cassandra.OperationTimedOut...\nERROR tests/test_api.py::test_post_rating_validation_error - cassandra.Operat...\nERROR tests/test_api.py::test_post_rating_not_found - cassandra.OperationTime...\nERROR tests/test_api.py::test_post_rating_success_and_history - cassandra.Ope...\nERROR tests/test_api.py::test_trending_endpoint - cassandra.OperationTimedOut...\n======== 2 failed, 29 passed, 4 warnings, 8 errors in 239.43s (0:03:59) ========\n Container streaming-platform-cassandra3-1 Running \n Container streaming-platform-cassandra1-1 Running \n Container streaming-platform-cassandra2-1 Running \n Container streaming-platform-cassandra1-1 Waiting \n Container streaming-platform-cassandra1-1 Healthy \n Container streaming-platform-cassandra2-1 Waiting \n Container streaming-platform-cassandra2-1 Healthy \n Container streaming-platform-cassandra3-1 Waiting \n Container streaming-platform-cassandra3-1 Healthy \n Container streaming-platform-tests-run-36212dccdb76 Creating \n Container streaming-platform-tests-run-36212dccdb76 Created"
+}

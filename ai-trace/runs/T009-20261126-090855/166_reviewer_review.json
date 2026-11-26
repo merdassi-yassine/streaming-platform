@@ -1,0 +1,11 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 166,
+  "agent": "reviewer",
+  "kind": "review",
+  "timestamp": "2026-11-26T09:17:20+00:00",
+  "iteration": 6,
+  "review": "Critères :\n✓ ViewDAO.add_views incrémente title_stats et daily_views_by_title de count, sans historique\n✓ parse ne garde que les N semaines les plus récentes et gère les valeurs vides\n✓ title_id stable (uuid5) ; un titre présent plusieurs semaines = un seul Title\n✓ enrich interroge Wikidata en SPARQL et renvoie None sans résultat ; aucun appel réseau dans les tests\n✓ load écrit un rapport avec les sources et les titres sans correspondance\n✓ tests sur un keyspace dédié, supprimé à la fin\n\nRemarques :\n- BLOQUANT : Erreur de syntaxe Python dans `streaming/ingest/wikidata.py` ligne 78 (`SyntaxError: unexpected character after line continuation character` due à l'imbrication de guillemets dans une f-string avec la même quote). Le code ne compile pas et bloque tous les tests.\n- À AMÉLIORER : `enrich` et `enrich_many` dans `wikidata.py` ne gèrent pas le paramètre `http` exactement tel que spécifié dans la consigne initiale de la tâche (signature et découpage des fonctions).\n\nRecommandation : DEMANDER DES CORRECTIONS — une erreur de syntaxe empêche la compilation et l'exécution du code.",
+  "steps": 1,
+  "stop_reason": "done"
+}

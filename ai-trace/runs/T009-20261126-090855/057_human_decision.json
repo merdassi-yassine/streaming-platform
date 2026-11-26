@@ -1,0 +1,11 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 57,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T08:35:03+00:00",
+  "iteration": 2,
+  "decision": "changes",
+  "feedback": "BLOQUANT : wikidata.py ne compile pas (f-string : accolade '}' non doublée) et la requête contient une ligne inventée « ?item rdt:notused 0 » (préfixe inexistant → erreur Wikidata). N'utilise PAS de f-string pour la requête : mets cette constante telle quelle (vérifiée en direct sur query.wikidata.org le 26/11/2026) et remplace __TITLE__ (titre échappé) et __CLASS__ (wd:Q11424 ou wd:Q5398426) avec str.replace :\nQUERY_TEMPLATE = \"\"\"SELECT ?item ?pubDate ?start ?genreLabel ?descFr ?descEn WHERE {\n  ?item rdfs:label \"__TITLE__\"@en ; wdt:P31/wdt:P279* __CLASS__ .\n  OPTIONAL { ?item wdt:P577 ?pubDate . }\n  OPTIONAL { ?item wdt:P580 ?start . }\n  OPTIONAL { ?item wdt:P136 ?genre . ?genre rdfs:label ?genreLabel . FILTER(LANG(?genreLabel) = \"fr\") }\n  OPTIONAL { ?item schema:description ?descFr . FILTER(LANG(?descFr) = \"fr\") }\n  OPTIONAL { ?item schema:description ?descEn . FILTER(LANG(?descEn) = \"en\") }\n} LIMIT 200\"\"\"\nLes bindings ont les clés item, pubDate, start, genreLabel, descFr, descEn (chacune {\"value\": ...}). Regroupe par item ; année = min(pubDate[:4]) sinon min(start[:4]) sinon None ; garde l'item à l'année la plus récente (None en dernier) ; description = descFr sinon descEn. Lis seulement streaming/ingest/wikidata.py et tests/test_ingest.py, réécris wikidata.py en entier ; adapte les réponses factices des tests à ces clés si besoin.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

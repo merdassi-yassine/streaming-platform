@@ -1,0 +1,24 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 206,
+  "agent": "orchestrator",
+  "kind": "test_run",
+  "timestamp": "2026-11-26T10:11:45+00:00",
+  "iteration": 7,
+  "command": [
+    "docker",
+    "compose",
+    "--profile",
+    "tests",
+    "run",
+    "--rm",
+    "tests",
+    "sh",
+    "-c",
+    "python -m compileall -q streaming frontend tests && python -c 'import streaming.ingest.load' && pytest -v -p no:cacheprovider tests/"
+  ],
+  "exit_code": 1,
+  "passed": false,
+  "log": "tests_iter7.log",
+  "tail": "Container streaming-platform-cassandra1-1 Running \n Container streaming-platform-cassandra2-1 Running \n Container streaming-platform-cassandra3-1 Running \n Container streaming-platform-cassandra1-1 Waiting \n Container streaming-platform-cassandra1-1 Healthy \n Container streaming-platform-cassandra2-1 Waiting \n Container streaming-platform-cassandra2-1 Healthy \n Container streaming-platform-cassandra3-1 Waiting \n Container streaming-platform-cassandra3-1 Healthy \n Container streaming-platform-tests-run-b4e7a7a5ffe5 Creating \n Container streaming-platform-tests-run-b4e7a7a5ffe5 Created \nTraceback (most recent call last):\n  File \"<string>\", line 1, in <module>\n    import streaming.ingest.load\n  File \"/workspace/streaming/ingest/load.py\", line 16, in <module>\n    from .wikidata import enrich_many, WikidataError\nImportError: cannot import name 'enrich_many' from 'streaming.ingest.wikidata' (/workspace/streaming/ingest/wikidata.py)"
+}

@@ -1,0 +1,11 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 85,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T08:36:19+00:00",
+  "iteration": 3,
+  "decision": "changes",
+  "feedback": "BLOQUANT 1) tests/test_ingest.py ne compile pas : une fixture est écrite « pytest_keyspace(session): » sans le mot-clé def. 2) load.py, rapport : l'expression chr(join_lines := ...) est invalide ; construis d'abord missing = '\\n'.join(f'  - {t}' for t in report['wikidata_missing']) or '  - Aucun', puis insère {missing}. Lis tests/test_ingest.py et streaming/ingest/load.py, réécris-les en entier, sans rien changer d'autre. Relis ton code ligne par ligne avant d'écrire : il doit compiler.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

@@ -1,0 +1,78 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 188,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T10:09:14+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-120b",
+  "errors_before_success": [],
+  "latency_s": 0.43,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_1361f53e-3bbe-4c09-af66-361437bdfa46",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"Enrichissement des titres via Wikidata SPARQL (par lots).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport time\\nimport unicodedata\\nimport httpx\\n\\nSPARQL_URL = \\\"https://query.wikidata.org/sparql\\\"\\n\\nBATCH_QUERY = \\\"\\\"\\\"SELECT ?label ?item ?pubDate ?start ?genreLabel ?descFr ?descEn WHERE {\\n  VALUES ?label { __VALUES__ }\\n  ?item rdfs:label ?label ; wdt:P31/wdt:P279* __CLASS__ .\\n  OPTIONAL { ?item wdt:P577 ?pubDate . }\\n  OPTIONAL { ?item wdt:P580 ?start . }\\n  OPTIONAL { ?item wdt:P136 ?genre . ?genre rdfs:label ?\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-0ed179ba-5e34-4e8f-bd09-ec5d71609295",
+    "object": "chat.completion",
+    "created": 1795687754,
+    "model": "openai/gpt-oss-120b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to read the wikidata file to modify. The content is truncated. Let's read full file.",
+          "tool_calls": [
+            {
+              "id": "fc_e65be757-dfca-4d29-82d7-af2a44a45757",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"line_end\":400,\"line_start\":1,\"path\":\"streaming/ingest/wikidata.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.048053581,
+      "prompt_tokens": 3881,
+      "prompt_time": 0.028560169,
+      "completion_tokens": 59,
+      "completion_time": 0.122682405,
+      "total_tokens": 3940,
+      "total_time": 0.151242574,
+      "prompt_tokens_details": {
+        "cached_tokens": 3328
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 22
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_fe269835c7",
+    "x_groq": {
+      "id": "req_01m8bn9a4xed7vwx4xschmazzx",
+      "seed": 1429893674
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 3881,
+    "output_tokens": 59
+  }
+}

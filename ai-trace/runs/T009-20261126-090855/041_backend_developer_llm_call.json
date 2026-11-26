@@ -1,0 +1,85 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 41,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T08:33:39+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [
+    {
+      "model": "gemini-3.5-flash-lite",
+      "attempt": 1,
+      "code": 503,
+      "message": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+    }
+  ],
+  "latency_s": 10.22,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"Modèles de données simples utilisés par les DAO.\n\nCes dataclasses ne contiennent que les champs nécessaires aux tables Cassandra.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport datetime\nimport uuid\nfrom dataclasses import dataclass\nfrom typing import Optional, Set\n\n\n@dataclass(frozen=True)\nclass Title:\n    \"\"\"Représente la fiche d'un titre (film ou série).\"\"\"\n\n    title_id: uuid.UUID\n    title: str\n    kind: str  # \"movie\" ou \"series\"\n    release_year: int\n    genres: Set[str]\n    synopsis: Optional[str] = None\n    duration_minutes: Optional[int] = None  # pour les films\n    episodes_count: Optional[int] = None  # pour les séries\n\n\n@dataclass(frozen=True)\nclass User:\n    \"\"\"Profil d'un utilisateur.\"\"\"\n\n    user_id: uuid.UUID\n    email: str\n    username: str\n    created_at: datetime.datetime\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_15922228164636093920",
+                "args": {
+                  "path": "streaming/schema.py"
+                },
+                "name": "read_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfROeCgEUvFjWsuUdMA5RapcZV6QfI5qTmPaX1Dt3s5qovziVF6KCnfGH-hwAH0TRQpCDlcCdRdb--XmDfjemSnpZKz3KdlGhYCf-J8D3c4CTP-PikpVbWFTA75JHU09SOEBRolM2eP7M_43vOzyxlnmSI4iIApSB-t6VSIYwPofkxRSQf89MUEv7csv-Df2J"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "3-4Ha5f9K_Kp28oPp-nO8AQ",
+    "usage_metadata": {
+      "cache_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 4045
+        }
+      ],
+      "cached_content_token_count": 4045,
+      "candidates_token_count": 20,
+      "prompt_token_count": 7007,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 7007
+        }
+      ],
+      "total_token_count": 7027
+    }
+  },
+  "usage": {
+    "input_tokens": 7007,
+    "output_tokens": 20,
+    "thinking_tokens": null
+  }
+}

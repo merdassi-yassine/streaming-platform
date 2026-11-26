@@ -1,0 +1,11 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 117,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T08:51:32+00:00",
+  "iteration": 4,
+  "decision": "changes",
+  "feedback": "BLOQUANT (seul test en échec) : normalize_genres([\"comédie romantique\"]) renvoie {\"comedie\"} : le mot-clé « romanti » demandé à l'itération 2 a disparu, ainsi que la comparaison sans accents. Ne modifie QUE KEYWORDS_MAP et normalize_genres dans streaming/ingest/wikidata.py (lis ce fichier seulement, réécris-le en entier, le reste à l'identique) :\n- ajoute une fonction _plain(s) : minuscules + suppression des accents (unicodedata.normalize(\"NFKD\", s) puis on retire les caractères combinants) ; compare _plain(mot-clé) à _plain(libellé) ;\n- remplace KEYWORDS_MAP par (mots-clés sans accents) :\n  science-fiction: [\"science-fiction\", \"science fiction\", \"sci-fi\"]  (retire « sf » : faux positifs)\n  action: [\"action\"] ; drame: [\"drame\", \"drama\", \"dramatique\"] ; comedie: [\"comedie\", \"comedy\"]\n  animation: [\"animation\", \"anime\", \"dessin anime\"] ; thriller: [\"thriller\", \"suspense\", \"espionnage\", \"enigme\", \"mystere\"]\n  horreur: [\"horreur\", \"horror\", \"epouvante\"] ; fantastique: [\"fantastique\", \"fantasy\", \"surnaturel\"]\n  romance: [\"romance\", \"romanti\", \"sentimental\"] ; documentaire: [\"documentaire\", \"documentary\"]\n  crime: [\"crime\", \"criminel\", \"policier\", \"detective\", \"gangster\"] ; aventure: [\"aventure\", \"adventure\"]\n  famille: [\"famille\", \"familial\", \"family\", \"jeunesse\"] ; telerealite: [\"telerealite\", \"tele-realite\", \"reality\", \"emission de realite\"]\nLes tests existants doivent passer tels quels (ne modifie pas tests/test_ingest.py).",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

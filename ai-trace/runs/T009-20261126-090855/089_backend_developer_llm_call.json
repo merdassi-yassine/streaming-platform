@@ -1,0 +1,163 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 89,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T08:40:43+00:00",
+  "models_requested": [
+    "gemini-3.5-flash",
+    "gemini-3.8-flash",
+    "gemini-3.5-flash-lite"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [
+    {
+      "model": "gemini-3.5-flash",
+      "attempt": 1,
+      "code": 503,
+      "message": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "attempt": 2,
+      "code": 503,
+      "message": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "attempt": 3,
+      "code": 503,
+      "message": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+    },
+    {
+      "model": "gemini-3.8-flash",
+      "attempt": 1,
+      "code": 503,
+      "message": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+    },
+    {
+      "model": "gemini-3.8-flash",
+      "attempt": 2,
+      "code": 503,
+      "message": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+    },
+    {
+      "model": "gemini-3.8-flash",
+      "attempt": 3,
+      "code": 503,
+      "message": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+    }
+  ],
+  "latency_s": 65.01,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "list_files",
+          "response": {
+            "ok": true,
+            "files": [
+              ".gitignore",
+              "demo/__init__.py",
+              "demo/demo_distribution.py",
+              "demo/demo_distribution.sh",
+              "demo/seed.py",
+              "docker/tests.Dockerfile",
+              "docker-compose.yml",
+              "docs/graphe-squad.mmd",
+              "docs/journal/phase-1.md",
+              "docs/rapport-tracabilite.md",
+              "docs/SYNTHESE.md",
+              "frontend/__init__.py",
+              "frontend/api_client.py",
+              "frontend/settings.py",
+              "frontend/templates/frontend/base.html",
+              "frontend/templates/frontend/error.html",
+              "frontend/templates/frontend/genre.html",
+              "frontend/templates/frontend/history.html",
+              "frontend/templates/frontend/home.html",
+              "frontend/templates/frontend/title.html",
+              "frontend/urls.py",
+              "frontend/views.py",
+              "frontend/wsgi.py",
+              "pytest.ini",
+              "README.md",
+              "reports/demo/api-smoke-20261126-030559.txt",
+              "reports/demo/demo-20261126-030349.txt",
+              "reports/demo/demo-20261126-084111.txt",
+              "reports/demo/web-smoke-20261126-085959.txt",
+              "reports/tests/latest.xml",
+              "requirements-dev.txt",
+              "streaming/__init__.py",
+              "streaming/api.py",
+              "streaming/dao/__init__.py",
+              "streaming/dao/ratings.py",
+              "streaming/dao/stats.py",
+              "streaming/dao/titles.py",
+              "streaming/dao/users.py",
+              "streaming/dao/views.py",
+              "streaming/ingest/__init__.py",
+              "streaming/ingest/load.py",
+              "streaming/ingest/netflix.py",
+              "streaming/ingest/wikidata.py",
+              "streaming/models.py",
+              "streaming/schema.py",
+              "streaming/services.py",
+              "tests/conftest.py",
+              "tests/test_api.py",
+              "tests/test_cluster.py",
+              "tests/test_dao.py",
+              "tests/test_frontend.py",
+              "tests/test_ingest.py",
+              "tests/test_schema.py",
+              "tests/test_services.py"
+            ]
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_861295136008720476",
+                "args": {
+                  "path": "streaming/dao/views.py"
+                },
+                "name": "read_file"
+              },
+              "thought_signature": "EpYBCpMBAWkUfRNKD5Lz1-HLsJxqVX0gwWoTBLC30T7CAGmb9G-LE7x8eR-VVoLGrTRUlQ7vQhYe0nXyiOmtCezr6Ey0TvvOKzHJzicXv7mNzIC6YXfSWCsVAGo6t7ZhUeMOtijWEGiw40aFJoa1ukwvz9ZxpWgwjyG6bURGLZunasibcDzOt7fKYPaklKNADnyEAyj2Ksn0"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "ifAHa-_BGpywvdIPwcWBgAE",
+    "usage_metadata": {
+      "candidates_token_count": 22,
+      "prompt_token_count": 4175,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 4175
+        }
+      ],
+      "total_token_count": 4197
+    }
+  },
+  "usage": {
+    "input_tokens": 4175,
+    "output_tokens": 22,
+    "thinking_tokens": null
+  }
+}

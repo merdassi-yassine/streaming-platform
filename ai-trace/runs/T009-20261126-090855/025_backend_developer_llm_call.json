@@ -1,0 +1,79 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 25,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T08:28:05+00:00",
+  "models_requested": [
+    "gemini-3.5-flash-lite",
+    "gemini-3.5-flash",
+    "gemini-3.8-flash"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [
+    {
+      "model": "gemini-3.5-flash-lite",
+      "attempt": 1,
+      "code": 503,
+      "message": "503 UNAVAILABLE. {'error': {'code': 503, 'message': 'This model is currently experiencing high demand. Spikes in demand are usually temporary. Please try again later.', 'status': 'UNAVAILABLE'}}"
+    }
+  ],
+  "latency_s": 11.07,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "tests/test_ingest.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "Fichiers créés / modifiés :\n- **Modifiés** :\n  - `streaming/dao/views.py` : ajout de la méthode `add_views(self, title_id, day: date, count: int)` utilisant des requêtes préparées pour incrémenter directement `title_stats` (`view_count = view_count + ?`) et `daily_views_by_title` (`view_count = view_count + ?`).\n- **Créés** :\n  - `streaming/ingest/__init__.py` : paquet d'ingestion vide.\n  - `streaming/ingest/netflix.py` : téléchargement, parsing du TSV Netflix (sélection des `weeks` semaines les plus récentes, gestion des valeurs vides et du runtime en heures converti en minutes), et génération d'UUID v5 stables (`title_id`).\n  - `streaming/ingest/wikidata.py` : enrichissement via SPARQL (requête Wikidata pour récupérer QID, date de publication, description en français/anglais, et genres), et normalisation des genres par mots-clés (`normalize_genres`).\n  - `streaming/ingest/load.py` : logique de chargement dans Cassandra (`load` avec enrichissement unique par titre distinct et enregistrement des vues, `reset` pour vider les tables) et point d'entrée `main()` générant le rapport Markdown dans `reports/ingest/`.\n  - `tests/test_ingest.py` : tests complets sans appel réseau réel (mock de transport httpx pour Wikidata, TSV factice pour Netflix, test de la stabilité de l'UUID, test de la normalisation des genres, test des compteurs de vues et test de bout en bout avec keyspace de test dédié et supprimé à la fin).\n\nModélisation et choix techniques :\n- **Clés de partition et clustering** : conformes aux tables existantes (`title_stats`, `daily_views_by_title`, `title_by_id`, `titles_by_genre`), exploitant les compteurs natifs Cassandra (`counter`).\n- **Stabilité des identifiants** : utilisation de `uuid.uuid5(NAMESPACE_URL, ...)` garantissant qu'un même film ou série présent sur plusieurs semaines de classements conserve le même `title_id`.\n- **Robustesse** : gestion des valeurs vides ou manquantes dans le TSV Netflix et dans les réponses SPARQL Wikidata (valeurs par défaut, fallback \"autre\" ou \"Description indisponible sur Wikidata\").\n\nPoints à vérifier :\n- Les tests n'ont pas été exécutés localement (environnement sans accès shell). Ils restent à lancer via pytest dans l'environnement de test doté d'un cluster Cassandra actif.",
+              "thought_signature": "EpYBCpMBAWkUfRPFCPW3QVppA2F45E-YLesAGG30514mEWxsgP0_bGfbodH13yXkaiuiZ1ptxXyOkseDaLeG44DD4bWhMuy3xkUYGyZzbzpU9xeemXPbFiSMsF3WEw05V-c2ofzDjWiJ9d2csrKjXePC7xsHL0UXyT5DFCpEkNnifK-Usfa2p9hYdL2BeO9s1b3XiFCUtvQ9"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "kO0Ha_GdKOCX3boP1qHkQA",
+    "usage_metadata": {
+      "cache_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 12153
+        }
+      ],
+      "cached_content_token_count": 12153,
+      "candidates_token_count": 594,
+      "prompt_token_count": 14267,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 14267
+        }
+      ],
+      "total_token_count": 14861
+    }
+  },
+  "usage": {
+    "input_tokens": 14267,
+    "output_tokens": 594,
+    "thinking_tokens": null
+  }
+}

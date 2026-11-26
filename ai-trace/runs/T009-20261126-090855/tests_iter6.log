@@ -1,0 +1,18 @@
+*** Error compiling 'streaming/ingest/wikidata.py'...
+  File "streaming/ingest/wikidata.py", line 78
+    values_str = " ".join(f'"{t.replace('"', \'\\"\')}"@en' for t in chunk)
+                                              ^
+SyntaxError: unexpected character after line continuation character
+
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-e5e060c0ab65 Creating 
+ Container streaming-platform-tests-run-e5e060c0ab65 Created 
+

@@ -1,0 +1,14 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 128,
+  "agent": "backend_developer",
+  "kind": "agent_result",
+  "timestamp": "2026-11-26T08:59:30+00:00",
+  "iteration": 5,
+  "summary": "Fichiers modifiés :\n- `streaming/ingest/wikidata.py`\n\nModélisation et implémentations :\n- Ajout de la fonction `_plain(s)` pour convertir les chaînes en minuscules et supprimer les accents (normalisation NFKD et suppression des caractères combinants).\n- Mise à jour de `KEYWORDS_MAP` avec les mots-clés sans accents demandés (`science-fiction`, `romance` incluant `\"romanti\"`, etc.) et retrait de `\"sf\"` pour éviter les faux positifs.\n- Adaptation de `normalize_genres` pour comparer les libellés et mots-clés normalisés via `_plain`.\n\nÀ vérifier :\n- L'exécution de `pytest` sur la suite de tests (notamment `test_normalize_genres` qui valide désormais la correspondance de « comédie romantique » vers `{\"comedie\", \"romance\"}`).",
+  "steps": 5,
+  "stop_reason": "done",
+  "files_written": [
+    "streaming/ingest/wikidata.py"
+  ]
+}

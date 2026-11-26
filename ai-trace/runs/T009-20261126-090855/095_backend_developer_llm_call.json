@@ -1,0 +1,71 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 95,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T08:48:11+00:00",
+  "models_requested": [
+    "gemini-3.5-flash",
+    "gemini-3.8-flash",
+    "gemini-3.5-flash-lite"
+  ],
+  "model_used": "gemini-3.5-flash",
+  "errors_before_success": [],
+  "latency_s": 32.27,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"Modèles de données simples utilisés par les DAO.\n\nCes dataclasses ne contiennent que les champs nécessaires aux tables Cassandra.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport datetime\nimport uuid\nfrom dataclasses import dataclass\nfrom typing import Optional, Set\n\n\n@dataclass(frozen=True)\nclass Title:\n    \"\"\"Représente la fiche d'un titre (film ou série).\"\"\"\n\n    title_id: uuid.UUID\n    title: str\n    kind: str  # \"movie\" ou \"series\"\n    release_year: int\n    genres: Set[str]\n    synopsis: Optional[str] = None\n    duration_minutes: Optional[int] = None  # pour les films\n    episodes_count: Optional[int] = None  # pour les séries\n\n\n@dataclass(frozen=True)\nclass User:\n    \"\"\"Profil d'un utilisateur.\"\"\"\n\n    user_id: uuid.UUID\n    email: str\n    username: str\n    created_at: datetime.datetime\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "function_call": {
+                "id": "call_17606452033735671462",
+                "args": {
+                  "path": "streaming/schema.py"
+                },
+                "name": "read_file"
+              },
+              "thought_signature": "Ep8BCpwBAWkUfRNZFcUuLblcpQN3HI7bnLfDH3sh9LNviPEdqyf6PCActYDwoHl8_p2oQyun17HsifvvkteQ9X8dOxl8wbj261F5I1mDJE9d9NEhjXBgXl76xD45ph8OL2mqRWcA5wqT3sLQAbMwXH25Lk_Lr7sabmEjQ2vcQUGjDTZ8fO4mbftqmW1s17IySEn7UiXQe9SCGfWfwJtAWGnD"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.6-flash",
+    "response_id": "LPIHa-7IHqOuvdIPiqmn8QM",
+    "usage_metadata": {
+      "candidates_token_count": 20,
+      "prompt_token_count": 6648,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 6648
+        }
+      ],
+      "total_token_count": 6668
+    }
+  },
+  "usage": {
+    "input_tokens": 6648,
+    "output_tokens": 20,
+    "thinking_tokens": null
+  }
+}

@@ -1,0 +1,109 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 127,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T08:59:30+00:00",
+  "models_requested": [
+    "gemini-3.5-flash",
+    "gemini-3.8-flash",
+    "gemini-3.5-flash-lite"
+  ],
+  "model_used": "gemini-3.5-flash-lite",
+  "errors_before_success": [
+    {
+      "model": "gemini-3.5-flash",
+      "attempt": 1,
+      "code": 429,
+      "message": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Q"
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "attempt": 2,
+      "code": 429,
+      "message": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Q"
+    },
+    {
+      "model": "gemini-3.5-flash",
+      "attempt": 3,
+      "code": 429,
+      "message": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Q"
+    },
+    {
+      "model": "gemini-3.8-flash",
+      "attempt": 1,
+      "code": 429,
+      "message": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Q"
+    },
+    {
+      "model": "gemini-3.8-flash",
+      "attempt": 2,
+      "code": 429,
+      "message": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Q"
+    },
+    {
+      "model": "gemini-3.8-flash",
+      "attempt": 3,
+      "code": 429,
+      "message": "429 RESOURCE_EXHAUSTED. {'error': {'code': 429, 'message': 'You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://aistudio.google.com/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. \\n* Q"
+    }
+  ],
+  "latency_s": 36.01,
+  "system_prompt": "(identique au 1er appel)",
+  "input": {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "streaming/ingest/wikidata.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  "response_raw": {
+    "candidates": [
+      {
+        "content": {
+          "parts": [
+            {
+              "text": "Fichiers modifiés :\n- `streaming/ingest/wikidata.py`\n\nModélisation et implémentations :\n- Ajout de la fonction `_plain(s)` pour convertir les chaînes en minuscules et supprimer les accents (normalisation NFKD et suppression des caractères combinants).\n- Mise à jour de `KEYWORDS_MAP` avec les mots-clés sans accents demandés (`science-fiction`, `romance` incluant `\"romanti\"`, etc.) et retrait de `\"sf\"` pour éviter les faux positifs.\n- Adaptation de `normalize_genres` pour comparer les libellés et mots-clés normalisés via `_plain`.\n\nÀ vérifier :\n- L'exécution de `pytest` sur la suite de tests (notamment `test_normalize_genres` qui valide désormais la correspondance de « comédie romantique » vers `{\"comedie\", \"romance\"}`).",
+              "thought_signature": "EpYBCpMBAWkUfRNSRTWK64y01P1qpxGsdY3h4LeyBC9QT6YP1z-xKfIpX11SwQ-ORkudOBxbr5K8A6WoJlMZ2DRJ409ua7B1-KMsPI1h7QIsCCvD8lF1CUi3Y84B9at8YlSn20vUcRThkVKFT2Gi-kPG5OtF8IP69H99TwNFk5tc7EFzWWOlAGOnlZnk8USDYyXCANfvkmgt"
+            }
+          ],
+          "role": "model"
+        },
+        "finish_reason": "STOP",
+        "index": 0
+      }
+    ],
+    "model_version": "gemini-3.5-flash-lite",
+    "response_id": "7_QHa4a7LdafvdIP68iiiAQ",
+    "usage_metadata": {
+      "cache_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 6090
+        }
+      ],
+      "cached_content_token_count": 6090,
+      "candidates_token_count": 193,
+      "prompt_token_count": 9945,
+      "prompt_tokens_details": [
+        {
+          "modality": "TEXT",
+          "token_count": 9945
+        }
+      ],
+      "total_token_count": 10138
+    }
+  },
+  "usage": {
+    "input_tokens": 9945,
+    "output_tokens": 193,
+    "thinking_tokens": null
+  }
+}

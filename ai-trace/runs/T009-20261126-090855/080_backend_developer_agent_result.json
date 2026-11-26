@@ -1,0 +1,18 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 80,
+  "agent": "backend_developer",
+  "kind": "agent_result",
+  "timestamp": "2026-11-26T08:35:48+00:00",
+  "iteration": 3,
+  "summary": "### Résumé des modifications\n\n- **Fichiers créés / modifiés** :\n  - `streaming/dao/views.py` (modifié : ajout de la méthode `add_views`)\n  - `streaming/ingest/__init__.py` (créé : fichier vide)\n  - `streaming/ingest/netflix.py` (créé : parsing du TSV Netflix Top 10, fonction `fetch`, `parse`, `title_id`)\n  - `streaming/ingest/wikidata.py` (créé : requête SPARQL Wikidata avec requête littérale et `.replace()`, normalisation des genres par mots-clés)\n  - `streaming/ingest/load.py` (créé : chargement global, reset, enrichissement, rapport Markdown)\n  - `tests/test_ingest.py` (créé : tests unitaires et d'intégration complets sans appel réseau réel)\n\n- **Modélisation & Choix de conception** :\n  - **Identifiant stable (`title_id`)** : utilisation de `uuid.uuid5(uuid.NAMESPACE_URL, f\"netflix-top10:{kind}:{title}\")` pour garantir qu'un même titre présent sur plusieurs semaines ne crée qu'un seul enregistrement dans `title_by_id`.\n  - **Incrémentation des compteurs** : `ViewDAO.add_views` met à jour `title_stats` et `daily_views_by_title` de manière atomique et ciblée par partition, sans insérer d'historique de visionnage utilisateur superflu (`watch_history_by_user`).\n  - **Requête Wikidata robuste** : utilisation d'une constante `QUERY_TEMPLATE` brute sans f-string (évitant toute erreur de syntaxe sur les accolades) combinée à `str.replace` pour injecter le titre échappé et la classe d'entité (`wd:Q11424` / `wd:Q5398426`).\n\n- **Points à vérifier** :\n  - Exécution des tests via `pytest` sur le vrai cluster Cassandra dans l'environnement d'intégration.\n  - Vérification du bon formatage des rapports générés dans `reports/ingest/`.",
+  "steps": 11,
+  "stop_reason": "done",
+  "files_written": [
+    "streaming/dao/views.py",
+    "streaming/ingest/netflix.py",
+    "streaming/ingest/wikidata.py",
+    "streaming/ingest/load.py",
+    "tests/test_ingest.py"
+  ]
+}

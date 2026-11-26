@@ -1,0 +1,94 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 174,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T10:07:31+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-20b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6711, Requested 3979. Please try again in 20.175s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5810, Requested 3759. Please try again in 11.7675s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4249, Requested 3759. Please try again in 60ms. Need more tokens? Upgrade to Dev Tier today at htt"
+    }
+  ],
+  "latency_s": 19.39,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_d70a7d50-f12b-4809-b27d-de20e357dce2",
+      "name": "repo_browser.read_file",
+      "content": "{\"ok\": false, \"error\": \"outil inconnu : repo_browser.read_file\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-100667ce-5631-4830-b4c3-2c306e52c548",
+    "object": "chat.completion",
+    "created": 1795687650,
+    "model": "openai/gpt-oss-20b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "The tool name is `read_file` not `repo_browser.read_file`. Use correct.",
+          "tool_calls": [
+            {
+              "id": "fc_d2852a0c-9bdb-449a-8132-f1ff1206db92",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/dao/views.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.209941154,
+      "prompt_tokens": 3719,
+      "prompt_time": 0.203877645,
+      "completion_tokens": 44,
+      "completion_time": 0.045658197,
+      "total_tokens": 3763,
+      "total_time": 0.249535842,
+      "completion_tokens_details": {
+        "reasoning_tokens": 19
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_bb6a356524",
+    "x_groq": {
+      "id": "req_01m8bn64t9e1ztwrxxcrweedt1",
+      "seed": 1537628493
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 3719,
+    "output_tokens": 44
+  }
+}

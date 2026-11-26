@@ -1,0 +1,71 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /usr/local/bin/python3.13
+rootdir: /workspace
+configfile: pytest.ini
+plugins: anyio-4.16.0
+collecting ... collected 38 items
+
+tests/test_api.py::test_health_check PASSED                              [  2%]
+tests/test_api.py::test_get_title_not_found PASSED                       [  5%]
+tests/test_api.py::test_get_title_success PASSED                         [  7%]
+tests/test_api.py::test_get_genres_titles PASSED                         [ 10%]
+tests/test_api.py::test_post_rating_validation_error PASSED              [ 13%]
+tests/test_api.py::test_post_rating_not_found PASSED                     [ 15%]
+tests/test_api.py::test_post_rating_success_and_history PASSED           [ 18%]
+tests/test_api.py::test_trending_endpoint PASSED                         [ 21%]
+tests/test_cluster.py::test_version_cassandra_5 PASSED                   [ 23%]
+tests/test_cluster.py::test_trois_noeuds_visibles_et_up PASSED           [ 26%]
+tests/test_cluster.py::test_replication_rf3 PASSED                       [ 28%]
+tests/test_dao.py::test_title_dao_roundtrip PASSED                       [ 31%]
+tests/test_dao.py::test_user_dao_roundtrip PASSED                        [ 34%]
+tests/test_dao.py::test_list_by_genre PASSED                             [ 36%]
+tests/test_dao.py::test_rating_dao_and_stats PASSED                      [ 39%]
+tests/test_dao.py::test_view_dao_history_and_day PASSED                  [ 42%]
+tests/test_dao.py::test_extra_dao_coverage_users PASSED                  [ 44%]
+tests/test_dao.py::test_extra_dao_coverage_titles PASSED                 [ 47%]
+tests/test_frontend.py::test_wsgi_application PASSED                     [ 50%]
+tests/test_frontend.py::test_home_view PASSED                            [ 52%]
+tests/test_frontend.py::test_genre_view PASSED                           [ 55%]
+tests/test_frontend.py::test_title_detail_view PASSED                    [ 57%]
+tests/test_frontend.py::test_title_detail_not_found PASSED               [ 60%]
+tests/test_frontend.py::test_post_rating_success PASSED                  [ 63%]
+tests/test_frontend.py::test_post_rating_unprocessable PASSED            [ 65%]
+tests/test_frontend.py::test_api_unavailable PASSED                      [ 68%]
+tests/test_frontend.py::test_user_history PASSED                         [ 71%]
+tests/test_ingest.py::test_parse_netflix PASSED                          [ 73%]
+tests/test_ingest.py::test_title_id_stability PASSED                     [ 76%]
+tests/test_ingest.py::test_normalize_genres PASSED                       [ 78%]
+tests/test_ingest.py::test_enrich_wikidata_mock PASSED                   [ 81%]
+tests/test_ingest.py::test_load_end_to_end PASSED                        [ 84%]
+tests/test_schema.py::test_create_schema_and_idempotence PASSED          [ 86%]
+tests/test_schema.py::test_primary_keys_and_clustering PASSED            [ 89%]
+tests/test_schema.py::test_drop_schema PASSED                            [ 92%]
+tests/test_services.py::test_services_catalog_and_review PASSED          [ 94%]
+tests/test_services.py::test_trending_service_top10 PASSED               [ 97%]
+tests/test_services.py::test_catalog_service_genre PASSED                [100%]
+
+=============================== warnings summary ===============================
+../usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+tests/test_api.py::test_post_rating_success_and_history
+tests/test_dao.py::test_rating_dao_and_stats
+tests/test_dao.py::test_rating_dao_and_stats
+tests/test_services.py::test_services_catalog_and_review
+  /workspace/streaming/dao/ratings.py:69: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+    created_at = datetime.utcnow()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 38 passed, 5 warnings in 107.55s (0:01:47) ==================
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-a18e373dac0c Creating 
+ Container streaming-platform-tests-run-a18e373dac0c Created 

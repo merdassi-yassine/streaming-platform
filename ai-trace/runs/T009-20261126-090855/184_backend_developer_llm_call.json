@@ -1,0 +1,94 @@
+{
+  "run_id": "T009-20261126-090855",
+  "seq": 184,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-26T10:08:53+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-20b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 7357, Requested 3782. Please try again in 23.542499999s. Need more tokens? Upgrade to Dev Tier tod"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6594, Requested 3682. Please try again in 17.07s. Need more tokens? Upgrade to Dev Tier today at h"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5059, Requested 3653. Please try again in 5.34s. Need more tokens? Upgrade to Dev Tier today at ht"
+    }
+  ],
+  "latency_s": 17.88,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_04e1922c-4122-4cf4-bcb2-257f0f3c1845",
+      "name": "list_files",
+      "content": "{\"ok\": true, \"files\": [\"streaming/ingest/__init__.py\", \"streaming/ingest/load.py\", \"streaming/ingest/netflix.py\", \"streaming/ingest/wikidata.py\"]}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-812d8875-159a-4377-a0a0-97b71557ccd7",
+    "object": "chat.completion",
+    "created": 1795687732,
+    "model": "openai/gpt-oss-20b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to read the files to modify. Let's read them.",
+          "tool_calls": [
+            {
+              "id": "fc_0f9da2c1-7172-438d-b74b-508c3241f642",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/dao/views.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.016951767,
+      "prompt_tokens": 3613,
+      "prompt_time": 0.225379667,
+      "completion_tokens": 38,
+      "completion_time": 0.039380276,
+      "total_tokens": 3651,
+      "total_time": 0.264759943,
+      "completion_tokens_details": {
+        "reasoning_tokens": 14
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_d3e146e1a5",
+    "x_groq": {
+      "id": "req_01m8bn8n9hebetajp8km18thf7",
+      "seed": 2015178019
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 3613,
+    "output_tokens": 38
+  }
+}
