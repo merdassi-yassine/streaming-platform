@@ -1,0 +1,11 @@
+{
+  "run_id": "T005-20261126-013959",
+  "seq": 57,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T00:43:05+00:00",
+  "iteration": 2,
+  "decision": "changes",
+  "feedback": "BLOQUANT (non vu par le relecteur) : dans tests/test_api.py, la fixture setup_default_keyspace crée puis SUPPRIME le keyspace de production 'streaming' (drop_schema(session, 'streaming')) : interdit, cela effacerait les données réelles. Supprime entièrement cette fixture : depuis ta correction, rien ne se connecte à 'streaming' à l'import, elle est inutile. Dans api_client, utilise replication_factor=3 (comme les autres tests). Ne modifie pas streaming/api.py. Réécris tests/test_api.py en entier.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

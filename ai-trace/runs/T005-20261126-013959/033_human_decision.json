@@ -1,0 +1,11 @@
+{
+  "run_id": "T005-20261126-013959",
+  "seq": 33,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T00:40:40+00:00",
+  "iteration": 1,
+  "decision": "changes",
+  "feedback": "Les tests échouent à l'import : streaming/api.py crée 'app' et se connecte au keyspace 'streaming' au moment de l'import (CASSANDRA_CONTACT_POINTS est défini dans le conteneur de tests). Ne crée AUCUNE connexion à l'import : supprime 'app' au niveau du module et ajoute à la place une fonction build_app() -> FastAPI (sans argument) qui crée le Cluster/la session depuis les variables d'environnement, à lancer avec 'uvicorn --factory streaming.api:build_app'. Les tests continuent d'utiliser create_app(session, KS). Ne crée pas le keyspace 'streaming' dans les tests. Pour /health, utilise h.is_up directement (pas getattr avec défaut True).",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

@@ -1,0 +1,24 @@
+{
+  "run_id": "T005-20261126-013959",
+  "seq": 73,
+  "agent": "orchestrator",
+  "kind": "test_run",
+  "timestamp": "2026-11-26T00:44:50+00:00",
+  "iteration": 3,
+  "command": [
+    "docker",
+    "compose",
+    "--profile",
+    "tests",
+    "run",
+    "--rm",
+    "tests",
+    "sh",
+    "-c",
+    "python -m compileall -q streaming tests && pytest -v -p no:cacheprovider tests/"
+  ],
+  "exit_code": 0,
+  "passed": true,
+  "log": "tests_iter3.log",
+  "tail": "=============================== warnings summary ===============================\n../usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1\n  /usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\ntests/test_api.py::test_post_rating_success_and_history\ntests/test_dao.py::test_rating_dao_and_stats\ntests/test_dao.py::test_rating_dao_and_stats\ntests/test_services.py::test_services_catalog_and_review\n  /workspace/streaming/dao/ratings.py:69: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).\n    created_at = datetime.utcnow()\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n================== 24 passed, 5 warnings in 94.52s (0:01:34) ===================\n Container streaming-platform-cassandra3-1 Running \n Container streaming-platform-cassandra1-1 Running \n Container streaming-platform-cassandra2-1 Running \n Container streaming-platform-cassandra1-1 Waiting \n Container streaming-platform-cassandra1-1 Healthy \n Container streaming-platform-cassandra2-1 Waiting \n Container streaming-platform-cassandra2-1 Healthy \n Container streaming-platform-cassandra3-1 Waiting \n Container streaming-platform-cassandra3-1 Healthy \n Container streaming-platform-tests-run-df5f16e5591e Creating \n Container streaming-platform-tests-run-df5f16e5591e Created"
+}

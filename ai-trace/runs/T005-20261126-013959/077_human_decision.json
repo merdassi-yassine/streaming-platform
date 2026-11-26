@@ -1,0 +1,11 @@
+{
+  "run_id": "T005-20261126-013959",
+  "seq": 77,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T00:45:03+00:00",
+  "iteration": 3,
+  "decision": "approve",
+  "feedback": "Approuvé : 24 tests réels OK. Problème bloquant de l'itération 2 (suppression du keyspace de production 'streaming' dans les tests), non relevé par le relecteur, corrigé à l'itération 3.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

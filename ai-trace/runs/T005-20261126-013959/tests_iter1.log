@@ -1,0 +1,48 @@
+============================= test session starts ==============================
+platform linux -- Python 3.13.18, pytest-9.2.0, pluggy-1.7.0 -- /usr/local/bin/python3.13
+rootdir: /workspace
+configfile: pytest.ini
+plugins: anyio-4.16.0
+collecting ... collected 16 items / 1 error
+
+==================================== ERRORS ====================================
+______________________ ERROR collecting tests/test_api.py ______________________
+tests/test_api.py:6: in <module>
+    from streaming.api import create_app
+streaming/api.py:109: in <module>
+    app = create_app(_session, _keyspace)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+streaming/api.py:28: in create_app
+    titles_dao = TitleDAO(session, keyspace)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+streaming/dao/titles.py:21: in __init__
+    self._stmt_save_q1 = session.prepare(
+cassandra/cluster.py:3188: in cassandra.cluster.Session.prepare
+    raise
+cassandra/cluster.py:3185: in cassandra.cluster.Session.prepare
+    response = future.result().one()
+cassandra/cluster.py:5013: in cassandra.cluster.ResponseFuture.result
+    raise self._final_exception
+E   cassandra.InvalidRequest: Error from server: code=2200 [Invalid query] message="keyspace streaming does not exist"
+=============================== warnings summary ===============================
+../usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1
+  /usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+ERROR tests/test_api.py - cassandra.InvalidRequest: Error from server: code=2...
+!!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
+========================= 1 warning, 1 error in 0.83s ==========================
+ Container streaming-platform-cassandra1-1 Running 
+ Container streaming-platform-cassandra2-1 Running 
+ Container streaming-platform-cassandra3-1 Running 
+ Container streaming-platform-cassandra1-1 Waiting 
+ Container streaming-platform-cassandra1-1 Healthy 
+ Container streaming-platform-cassandra2-1 Waiting 
+ Container streaming-platform-cassandra2-1 Healthy 
+ Container streaming-platform-cassandra3-1 Waiting 
+ Container streaming-platform-cassandra3-1 Healthy 
+ Container streaming-platform-tests-run-8d03368f8f66 Creating 
+ Container streaming-platform-tests-run-8d03368f8f66 Created 
+

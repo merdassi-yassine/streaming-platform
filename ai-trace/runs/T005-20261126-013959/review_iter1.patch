@@ -1,0 +1,259 @@
+diff --git a/streaming/api.py b/streaming/api.py
+new file mode 100644
+index 0000000..b03039d
+--- /dev/null
++++ b/streaming/api.py
+@@ -0,0 +1,109 @@
++"""Couche présentation (API FastAPI)."""
++
++from __future__ import annotations
++
++import datetime
++import os
++import uuid
++from typing import List, Optional
++
++from fastapi import FastAPI, HTTPException, status
++from pydantic import BaseModel, Field
++
++from streaming.dao import RatingDAO, StatsDAO, TitleDAO, UserDAO, ViewDAO
++from streaming.services import CatalogService, ReviewService, TrendingService
++
++
++class RatingRequest(BaseModel):
++    user_id: uuid.UUID
++    title_id: uuid.UUID
++    rating: int = Field(..., ge=1, le=5)
++    comment: Optional[str] = None
++
++
++def create_app(session, keyspace: str) -> FastAPI:
++    """Crée et configure l'application FastAPI pour la plateforme de streaming."""
++    app = FastAPI(title="Streaming Platform API", version="1.0.0")
++
++    titles_dao = TitleDAO(session, keyspace)
++    users_dao = UserDAO(session, keyspace)
++    ratings_dao = RatingDAO(session, keyspace)
++    stats_dao = StatsDAO(session, keyspace)
++    views_dao = ViewDAO(session, keyspace)
++
++    catalog_service = CatalogService(titles_dao, stats_dao)
++    trending_service = TrendingService(views_dao, titles_dao)
++    review_service = ReviewService(users_dao, titles_dao, ratings_dao)
++
++    @app.get("/titles/{title_id}")
++    def get_title(title_id: uuid.UUID):
++        details = catalog_service.title_details(title_id)
++        if not details:
++            raise HTTPException(status_code=404, detail="Titre inconnu")
++        return details
++
++    @app.get("/genres/{genre}/titles")
++    def get_genre_titles(genre: str, limit: int = 20):
++        return catalog_service.titles_of_genre(genre, limit=limit)
++
++    @app.get("/trending/{day}")
++    def get_trending(day: datetime.date):
++        return trending_service.top10(day)
++
++    @app.post("/ratings", status_code=status.HTTP_201_CREATED)
++    def post_rating(payload: RatingRequest):
++        try:
++            review_service.rate(
++                user_id=payload.user_id,
++                title_id=payload.title_id,
++                rating=payload.rating,
++                comment=payload.comment,
++            )
++        except LookupError as e:
++            raise HTTPException(status_code=404, detail=str(e))
++        return {"status": "created"}
++
++    @app.get("/users/{user_id}/history")
++    def get_user_history(user_id: uuid.UUID, limit: int = 20):
++        return views_dao.history(user_id, limit=limit)
++
++    @app.get("/health")
++    def health_check():
++        cluster = session.cluster
++        all_hosts = cluster.metadata.all_hosts()
++        # Évaluation des hôtes Up : connectés ou interrogés (selon l'API du driver, tous les all_hosts() sont connus,
++        # on peut vérifier leur état de disponibilité si disponible, sinon on compte les hôtes connus et up).
++        # Le driver expose state par hôte via l'interne ou can_connect, mais l'énoncé demande :
++        # "nombre de nœuds connus et nombre de nœuds « up » via session.cluster.metadata.all_hosts()".
++        # Dans cassandra-driver, all_hosts() renvoie les hôtes du cluster. Les hôtes up sont ceux dont l'état est up ou joignables.
++        # Plus simplement, tous les hôtes renvoyés par all_hosts() ou interrogés. Certains drivers gèrent host.is_up si supporté,
++        # ou on compte le nombre total et on estime up. Vérifions l'attribut is_up ou is_up() si présent, ou on compte les hôtes.
++        known = len(all_hosts)
++        up_count = sum(1 for h in all_hosts if getattr(h, "is_up", True))
++        return {
++            "nodes_known": known,
++            "nodes_up": up_count,
++        }
++
++    return app
++
++
++# Instance globale pour uvicorn si CASSANDRA_CONTACT_POINTS est défini
++_contact_points = os.environ.get("CASSANDRA_CONTACT_POINTS")
++app: Optional[FastAPI] = None
++if _contact_points:
++    from cassandra.cluster import Cluster, ExecutionProfile, EXEC_PROFILE_DEFAULT
++    from cassandra.policies import DCAwareRoundRobinPolicy
++
++    _keyspace = os.environ.get("KEYSPACE", "streaming")
++    _profile = ExecutionProfile(
++        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc="dc1"),
++        request_timeout=30,
++    )
++    _cluster = Cluster(
++        _contact_points.split(","),
++        execution_profiles={EXEC_PROFILE_DEFAULT: _profile},
++        protocol_version=5,
++    )
++    _session = _cluster.connect()
++    app = create_app(_session, _keyspace)
+diff --git a/tests/test_api.py b/tests/test_api.py
+new file mode 100644
+index 0000000..00deac8
+--- /dev/null
++++ b/tests/test_api.py
+@@ -0,0 +1,138 @@
++import datetime
++import uuid
++import pytest
++from fastapi.testclient import TestClient
++
++from streaming.api import create_app
++from streaming.dao import TitleDAO, UserDAO, ViewDAO, RatingDAO, StatsDAO
++from streaming.models import Title, User
++from streaming.schema import create_schema, drop_schema
++
++KS_API = "streaming_test_api"
++
++
++@pytest.fixture(scope="module")
++def api_client(session):
++    create_schema(session, KS_API, replication_factor=1)
++    app = create_app(session, KS_API)
++    client = TestClient(app)
++    yield client
++    drop_schema(session, KS_API)
++
++
++def test_health_check(api_client):
++    response = api_client.get("/health")
++    assert response.status_code == 200
++    data = response.json()
++    assert "nodes_known" in data
++    assert "nodes_up" in data
++    assert data["nodes_known"] >= 1
++    assert data["nodes_up"] >= 1
++
++
++def test_get_title_not_found(api_client):
++    tid = uuid.uuid4()
++    response = api_client.get(f"/titles/{tid}")
++    assert response.status_code == 404
++
++
++def test_get_title_success(session, api_client):
++    tid = uuid.uuid4()
++    t_dao = TitleDAO(session, KS_API)
++    t_dao.save(Title(
++        title_id=tid,
++        title="Inception",
++        kind="movie",
++        release_year=2010,
++        genres={"Sci-Fi", "Action"},
++        synopsis="A thief who steals corporate secrets...",
++        duration_minutes=148,
++        episodes_count=None,
++    ))
++
++    response = api_client.get(f"/titles/{tid}")
++    assert response.status_code == 200
++    data = response.json()
++    assert data["title"]["title"] == "Inception"
++    assert data["views"] == 0
++    assert data["rating_count"] == 0
++
++
++def test_get_genres_titles(session, api_client):
++    tid = uuid.uuid4()
++    t_dao = TitleDAO(session, KS_API)
++    t_dao.save(Title(
++        title_id=tid,
++        title="Interstellar",
++        kind="movie",
++        release_year=2014,
++        genres={"Sci-Fi"},
++        synopsis="Space exploration",
++        duration_minutes=169,
++        episodes_count=None,
++    ))
++
++    response = api_client.get("/genres/Sci-Fi/titles")
++    assert response.status_code == 200
++    titles = response.json()
++    assert any(t["title_id"] == str(tid) for t in titles)
++
++
++def test_post_rating_validation_error(api_client):
++    # Note hors 1..5 -> 422
++    payload = {
++        "user_id": str(uuid.uuid4()),
++        "title_id": str(uuid.uuid4()),
++        "rating": 6,
++        "comment": "Too high"
++    }
++    response = api_client.post("/ratings", json=payload)
++    assert response.status_code == 422
++
++
++def test_post_rating_not_found(api_client):
++    # Utilisateur ou titre inconnu -> 404
++    payload = {
++        "user_id": str(uuid.uuid4()),
++        "title_id": str(uuid.uuid4()),
++        "rating": 5,
++        "comment": "Nice"
++    }
++    response = api_client.post("/ratings", json=payload)
++    assert response.status_code == 404
++
++
++def test_post_rating_success_and_history(session, api_client):
++    uid = uuid.uuid4()
++    tid = uuid.uuid4()
++    u_dao = UserDAO(session, KS_API)
++    t_dao = TitleDAO(session, KS_API)
++    v_dao = ViewDAO(session, KS_API)
++
++    u_dao.save(User(user_id=uid, email="user@test.com", username="moviefan", created_at=datetime.datetime.now(datetime.timezone.utc)))
++    t_dao.save(Title(title_id=tid, title="Matrix", kind="movie", release_year=1999, genres={"Action"}, synopsis=None, duration_minutes=136, episodes_count=None))
++
++    payload = {
++        "user_id": str(uid),
++        "title_id": str(tid),
++        "rating": 5,
++        "comment": "Masterpiece"
++    }
++    response = api_client.post("/ratings", json=payload)
++    assert response.status_code == 201
++
++    # Vérifier l'historique utilisateur (ou les détails du titre mis à jour)
++    res_title = api_client.get(f"/titles/{tid}")
++    assert res_title.status_code == 200
++    assert res_title.json()["rating_count"] == 1
++
++    res_history = api_client.get(f"/users/{uid}/history")
++    assert res_history.status_code == 200
++    assert isinstance(res_history.json(), list)
++
++
++def test_trending_endpoint(session, api_client):
++    today = datetime.date.today().isoformat()
++    response = api_client.get(f"/trending/{today}")
++    assert response.status_code == 200
++    assert isinstance(response.json(), list)

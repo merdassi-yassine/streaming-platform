@@ -1,0 +1,391 @@
+[
+  {
+    "parts": [
+      {
+        "text": "## Task\nLis d'abord streaming/services.py et streaming/dao/__init__.py. Fichiers COURTS (moins de 120 lignes),\nun write_file par fichier, contenu complet.\n\nCrée `streaming/api.py` : une fonction `create_app(session, keyspace) -> FastAPI` qui construit les DAO et\nles services puis expose (aucune requête CQL ici, tout passe par services.py) :\nGET /titles/{title_id} (404 si inconnu), GET /genres/{genre}/titles, GET /trending/{day} (Top 10, day au\nformat AAAA-MM-JJ), POST /ratings (corps JSON : user_id, title_id, rating, comment) → 201, 404 si\nutilisateur ou titre inconnu, 422 si note hors 1..5 (validation Pydantic), GET /users/{user_id}/history,\nGET /health (nombre de nœuds connus et nombre de nœuds « up » via session.cluster.metadata.all_hosts()).\nAjoute aussi `app` au niveau du module, créée seulement si la variable d'environnement CASSANDRA_CONTACT_POINTS\nest définie (session vers le keyspace KEYSPACE, défaut « streaming ») — pour `uvicorn streaming.api:app`.\nÉcris `tests/test_api.py` avec `fastapi.testclient.TestClient(create_app(session, KS))` sur un keyspace\ndédié `streaming_test_api` (create_schema au début, drop_schema à la fin) ; données insérées via la DAO.\nLes recommandations ont été retirées du périmètre (décision du Project Owner, 26/11/2026).\nBibliothèques autorisées en plus pour CETTE tâche : fastapi, pydantic, httpx (pour TestClient), uvicorn.\n\nCritères d'acceptation :\n- api.py n'écrit aucune requête CQL (passe par services.py)\n- POST /ratings renvoie 422 pour une note hors 1..5 et 404 pour un titre inconnu\n- GET /health renvoie le nombre de nœuds up\n- GET /titles/{id} renvoie 404 pour un titre inconnu\n- au moins 6 tests dans tests/test_api.py\n- tests via TestClient sur un keyspace dédié, supprimé à la fin"
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_17646682756588398550",
+          "args": {},
+          "name": "list_files"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRPqgAp8Wn5Ua7r7hRZk46LsaITJ-6BvjJXSYip-KU8fCjZphQMBOVmhNGPqrafjMt2qd5sdTT95Q593e79tyAp781U_ZEZ06LoFakm17eaLuu-l4Gp10E-Z_SbDVfJI2QD3MKLECjzmH3uQnIXWUeB8pGxaR3Lk1WXXkJeRSZP7juyLwdkyYRh-DkyJI6DU"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "list_files",
+          "response": {
+            "ok": true,
+            "files": [
+              ".gitignore",
+              "docker/tests.Dockerfile",
+              "docker-compose.yml",
+              "docs/journal/phase-1.md",
+              "pytest.ini",
+              "README.md",
+              "reports/tests/latest.xml",
+              "requirements-dev.txt",
+              "streaming/__init__.py",
+              "streaming/dao/__init__.py",
+              "streaming/dao/ratings.py",
+              "streaming/dao/stats.py",
+              "streaming/dao/titles.py",
+              "streaming/dao/users.py",
+              "streaming/dao/views.py",
+              "streaming/models.py",
+              "streaming/schema.py",
+              "streaming/services.py",
+              "tests/conftest.py",
+              "tests/test_cluster.py",
+              "tests/test_dao.py",
+              "tests/test_schema.py",
+              "tests/test_services.py"
+            ]
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_1537090043974876106",
+          "args": {
+            "path": "streaming/services.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRPFOLmOpFANvJagKCySZbJnwPeHjm_aZ_cMtLSjpdK1TEa2qIKk8lbjAVx8NFD00tWmYfn2FqZqD1JysoRgk6stX7kA4KcfkqR0_vNd_9KIruynJS6jylXy023tINnzW1qUtHi_nexs6BoPzr3WPjvn-m0d4pqDlFeyH8-VNE5tWuHUJHdUOTSyOPZFEcuz"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "import datetime\nfrom typing import Dict, List, Optional, Tuple\nimport uuid\n\nfrom streaming.dao import RatingDAO, StatsDAO, TitleDAO, UserDAO, ViewDAO\nfrom streaming.models import Title, User\n\n\nclass CatalogService:\n    def __init__(self, titles: TitleDAO, stats: StatsDAO):\n        self.titles = titles\n        self.stats = stats\n\n    def title_details(self, title_id: uuid.UUID) -> Optional[dict]:\n        title = self.titles.get(title_id)\n        if not title:\n            return None\n        views, sum_ratings, count_ratings = self.stats.get(title_id)\n        avg = (sum_ratings / count_ratings) if count_ratings > 0 else None\n        return {\n            \"title\": title,\n            \"views\": views,\n            \"average_rating\": avg,\n            \"rating_count\": count_ratings,\n        }\n\n    def titles_of_genre(self, genre: str, limit: int = 20) -> List[dict]:\n        return self.titles.list_by_genre(genre, limit=limit)\n\n\nclass TrendingService:\n    def __init__(self, views: ViewDAO, titles: TitleDAO):\n        self.views = views\n        self.titles = titles\n\n    def top10(self, day: datetime.date) -> List[dict]:\n        daily_views = self.views.views_of_day(day)\n        sorted_views = sorted(daily_views.items(), key=lambda item: (-item[1], item[0]))[:10]\n        result = []\n        for title_id, view_count in sorted_views:\n            t = self.titles.get(title_id)\n            if t:\n                result.append({\"title\": t, \"views\": view_count})\n        return result\n\n\nclass ReviewService:\n    def __init__(self, users: UserDAO, titles: TitleDAO, ratings: RatingDAO):\n        self.users = users\n        self.titles = titles\n        self.ratings = ratings\n\n    def rate(self, user_id: uuid.UUID, title_id: uuid.UUID, rating: int, comment: Optional[str] = None):\n        user = self.users.get(user_id)\n        if not user:\n            raise LookupError(f\"Utilisateur {user_id} introuvable\")\n        title = self.titles.get(title_id)\n        if not title:\n            raise LookupError(f\"Titre {title_id} introuvable\")\n        self.ratings.add(\n            user_id=user_id,\n            title_id=title_id,\n            rating=rating,\n            comment=comment,\n            username=user.username,\n            title=title.title,\n        )\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_11252586640286889368",
+          "args": {
+            "path": "streaming/dao/__init__.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfROtmOs88iQKFrWpWom0_CGFejSg6bhfRru-vxhi3amWv5-R-Hcg_gVnpeN_r_DNrNEW9wlY8FHK8aYVLBn7KrXG9Pni1D2PA7zhjAzJjOBUpCbsawwidE4hxvM137DhACt3iNGAzgy5lklfir9kmwbNBgz32y0d8_0ovC9T0XOwdzvdUP4uS6fka5r4RUxL"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"Package DAO – accès Cassandra.\n\nExporte les cinq classes DAO pour une importation simple :\n\n    from streaming.dao import TitleDAO, UserDAO, RatingDAO, ViewDAO, StatsDAO\n\"\"\"\n\nfrom .titles import TitleDAO\nfrom .users import UserDAO\nfrom .ratings import RatingDAO\nfrom .views import ViewDAO\nfrom .stats import StatsDAO\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_10688429186769890733",
+          "args": {
+            "path": "tests/conftest.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRPVtwEX6Md2c8rEOUvqJKz766bCgGGzb6XMaInX0fLSSvmUOXZpTM0avCvfC0Z7rFC6wi1_k6DxSgFC5V-RTojomRJ_HPgz1dx9AXNqIxVLbp8DPYDbLuyek3ryU3rp9DRZ-uH_JWR3GntS1WBzhP7SZR4gQz-xH3IKRuzg9bNBPw9rY1zx4J4yDQa391FL"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "import os\n\nimport pytest\nfrom cassandra.cluster import EXEC_PROFILE_DEFAULT, Cluster, ExecutionProfile\nfrom cassandra.policies import DCAwareRoundRobinPolicy\n\n\n@pytest.fixture(scope=\"session\")\ndef cluster():\n    contact_points = os.environ.get(\"CASSANDRA_CONTACT_POINTS\", \"cassandra1\").split(\",\")\n    profile = ExecutionProfile(\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\"dc1\"),\n        # Sur un portable, un DDL peut dépasser les 10 s par défaut (pauses JVM mesurées jusqu'à 24 s).\n        request_timeout=60,\n    )\n    c = Cluster(\n        contact_points,\n        execution_profiles={EXEC_PROFILE_DEFAULT: profile},\n        protocol_version=5,\n        max_schema_agreement_wait=60,  # attendre que les 3 nœuds aient le même schéma après un DDL\n    )\n    yield c\n    c.shutdown()\n\n\n@pytest.fixture(scope=\"session\")\ndef session(cluster):\n    return cluster.connect()\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_6309587354436767982",
+          "args": {
+            "path": "tests/test_services.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRON-BXOvhHhNLUbunSjoLpV884q1daTfD1bUOG838mnZ2OOLOltKLNqHuUZG8imlxp3Hzefg9JsBWz3Tkg9o6PmhkodtMGUzJIfOrLifXLSg7VKZx12cpbF1jhQPFUXgXqZO9_Xv_LeJvSXlK6WL0Quw65fepFwDybMEbOn9c-n267ogewYpe-9X64FM-Lj"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "import datetime\nimport uuid\nimport pytest\n\nfrom streaming.dao import RatingDAO, StatsDAO, TitleDAO, UserDAO, ViewDAO\nfrom streaming.models import Title, User\nfrom streaming.schema import create_schema, drop_schema\nfrom streaming.services import CatalogService, ReviewService, TrendingService\n\nKS_SRV = \"test_services_ks\"\n\n\n@pytest.fixture(scope=\"module\")\ndef schema_srv(session):\n    create_schema(session, KS_SRV, replication_factor=1)\n    yield\n    drop_schema(session, KS_SRV)\n\n\ndef test_services_catalog_and_review(session, schema_srv):\n    t_dao = TitleDAO(session, KS_SRV)\n    u_dao = UserDAO(session, KS_SRV)\n    r_dao = RatingDAO(session, KS_SRV)\n    s_dao = StatsDAO(session, KS_SRV)\n\n    cat_srv = CatalogService(t_dao, s_dao)\n    rev_srv = ReviewService(u_dao, t_dao, r_dao)\n\n    tid = uuid.uuid4()\n    uid = uuid.uuid4()\n\n    # Inconnu -> LookupError\n    with pytest.raises(LookupError):\n        rev_srv.rate(uid, tid, 5)\n\n    u_dao.save(User(user_id=uid, email=\"t@t.com\", username=\"tester\", created_at=datetime.datetime.now(datetime.timezone.utc)))\n    with pytest.raises(LookupError):\n        rev_srv.rate(uid, tid, 5)\n\n    t_dao.save(Title(title_id=tid, title=\"Test Movie\", kind=\"movie\", release_year=2020, genres={\"Drama\"}, synopsis=None, duration_minutes=100, episodes_count=None))\n    \n    # Valide\n    rev_srv.rate(uid, tid, 4, comment=\"Good\")\n\n    details = cat_srv.title_details(tid)\n    assert details is not None\n    assert details[\"average_rating\"] == 4.0\n    assert details[\"rating_count\"] == 1\n\n\ndef test_trending_service_top10(session, schema_srv):\n    t_dao = TitleDAO(session, KS_SRV)\n    v_dao = ViewDAO(session, KS_SRV)\n    trend_srv = TrendingService(v_dao, t_dao)\n\n    today = datetime.date.today()\n    now = datetime.datetime.now(datetime.timezone.utc)\n\n    # Insérer 12 titres avec des vues différentes\n    for i in range(12):\n        tid = uuid.uuid4()\n        t_dao.save(Title(title_id=tid, title=f\"Film {i}\", kind=\"movie\", release_year=2020, genres={\"Action\"}, synopsis=None, duration_minutes=90, episodes_count=None))\n        # Enregistrer i vues pour donner un classement clair\n        for _ in range(i + 1):\n            v_dao.record_view(uuid.uuid4(), tid, now)\n\n    top = trend_srv.top10(today)\n    assert len(top) <= 10\n    # Vérifier l'ordre décroissant par vues\n    views_list = [item[\"views\"] for item in top]\n    assert views_list == sorted(views_list, reverse=True)\n\n\ndef test_catalog_service_genre(session, schema_srv):\n    t_dao = TitleDAO(session, KS_SRV)\n    s_dao = StatsDAO(session, KS_SRV)\n    cat_srv = CatalogService(t_dao, s_dao)\n\n    titles = cat_srv.titles_of_genre(\"Drama\", limit=5)\n    assert isinstance(titles, list)\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_9223114935351976613",
+          "args": {
+            "path": "streaming/models.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfROjc-O2OItrSdwSo1eJ-nPramha4SHK6ErQgI2FiIDRtlH-iGVDg9-i_e4SauCAPoLs1i_9kFOV2AmL4FIIEc-_BZNSeRQER-goIlPyU7OidNnDhyR2cKZGhvzaiPgQpYZW_7CLF8Y4_uDhnP3IdDzWtbn386Vui6krQ2TUISD_I2cYHJ5cMQlD9Uw1FuEQ"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"Modèles de données simples utilisés par les DAO.\n\nCes dataclasses ne contiennent que les champs nécessaires aux tables Cassandra.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport datetime\nimport uuid\nfrom dataclasses import dataclass\nfrom typing import Optional, Set\n\n\n@dataclass(frozen=True)\nclass Title:\n    \"\"\"Représente la fiche d'un titre (film ou série).\"\"\"\n\n    title_id: uuid.UUID\n    title: str\n    kind: str  # \"movie\" ou \"series\"\n    release_year: int\n    genres: Set[str]\n    synopsis: Optional[str] = None\n    duration_minutes: Optional[int] = None  # pour les films\n    episodes_count: Optional[int] = None  # pour les séries\n\n\n@dataclass(frozen=True)\nclass User:\n    \"\"\"Profil d'un utilisateur.\"\"\"\n\n    user_id: uuid.UUID\n    email: str\n    username: str\n    created_at: datetime.datetime\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_9580022555857151515",
+          "args": {
+            "path": "streaming/dao/users.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRNV4alW__Gb8XiYxGkcZPNYXK7zinhNJBIurxG1UFR8UeVIuT9LJZO7PFWt-E1oUVYY6q75_VNfAyLKhIDySxgZRLVRAHSKj0WRjhl60wwHoKQR-ouOYd60HlcmsvmoM4jXyey6yaQUdE0FnwmcA2pWpclawW0JH6o7PnY9beRPaE3-9u5MxwX3WhAmn9VO"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"DAO des utilisateurs (table Q3).\"\"\"\n\nfrom __future__ import annotations\n\nimport uuid\nfrom typing import Optional\n\nfrom ..models import User\n\n\nclass UserDAO:\n    \"\"\"Accès à la table ``user_by_id`` (Q3).\"\"\"\n\n    def __init__(self, session, keyspace: str) -> None:\n        self._session = session\n        self._ks = keyspace\n        self._stmt_save = session.prepare(\n            f\"INSERT INTO {keyspace}.user_by_id \"\n            \"(user_id, email, username, created_at) VALUES (?, ?, ?, ?)\"\n        )\n        self._stmt_get = session.prepare(\n            f\"SELECT user_id, email, username, created_at \"\n            f\"FROM {keyspace}.user_by_id WHERE user_id = ?\"\n        )\n\n    def save(self, user: User) -> None:\n        \"\"\"Enregistre ou met à jour le profil d'un utilisateur.\"\"\"\n        self._session.execute(self._stmt_save, (\n            user.user_id,\n            user.email,\n            user.username,\n            user.created_at,\n        ))\n\n    def get(self, user_id: uuid.UUID) -> Optional[User]:\n        \"\"\"Retourne le profil d'un utilisateur ou ``None`` s'il n'existe pas.\"\"\"\n        row = self._session.execute(self._stmt_get, (user_id,)).one()\n        if row is None:\n            return None\n        return User(\n            user_id=row.user_id,\n            email=row.email,\n            username=row.username,\n            created_at=row.created_at,\n        )"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_2481765719279074032",
+          "args": {
+            "path": "streaming/dao/ratings.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRM15TjJhe1MOxmgFPo6IxCEomwvkgX8qE8DRHTuEG2M8gKnDVGf8_MbOhlESWouT6OKGZxtH9MDQ0MK8sfac6APwwCpkLj2YSAylapPSrkPNk2B4hgL8wlvR9ox7Ai7sjJxxGKGmqFTbBROi9TO98SCIDVDjotADV824EMW45YKwkhbxsu7nGt25oHIzpce"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"DAO des évaluations (tables Q4, Q5 et compteurs Q7).\"\"\"\n\nfrom __future__ import annotations\n\nimport uuid\nfrom datetime import datetime\nfrom typing import List, Dict\n\nfrom cassandra.query import BatchStatement\n\nfrom ..models import User, Title\n\n\nclass RatingDAO:\n    \"\"\"Accès aux avis d'utilisateurs.\n\n    - ``add`` écrit les deux tables d'avis et met à jour les compteurs de notes.\n    - ``list_for_title`` et ``list_for_user`` lisent les avis par partition.\n    \"\"\"\n\n    def __init__(self, session, keyspace: str) -> None:\n        self._session = session\n        self._ks = keyspace\n        # INSERT Q4 : reviews_by_title\n        self._stmt_insert_title = session.prepare(\n            f\"INSERT INTO {keyspace}.reviews_by_title \"\n            \"(title_id, created_at, user_id, rating, comment, username) \"\n            \"VALUES (?, ?, ?, ?, ?, ?)\"\n        )\n        # INSERT Q5 : reviews_by_user\n        self._stmt_insert_user = session.prepare(\n            f\"INSERT INTO {keyspace}.reviews_by_user \"\n            \"(user_id, created_at, title_id, rating, comment, title) \"\n            \"VALUES (?, ?, ?, ?, ?, ?)\"\n        )\n        # UPDATE Q7 : compteurs rating_sum et rating_count\n        self._stmt_update_counters = session.prepare(\n            f\"UPDATE {keyspace}.title_stats SET rating_sum = rating_sum + ?, rating_count = rating_count + 1 WHERE title_id = ?\"\n        )\n        # SELECT Q4\n        self._stmt_list_by_title = session.prepare(\n            f\"SELECT created_at, user_id, rating, comment, username FROM {keyspace}.reviews_by_title \"\n            \"WHERE title_id = ? LIMIT ?\"\n        )\n        # SELECT Q5\n        self._stmt_list_by_user = session.prepare(\n            f\"SELECT created_at, title_id, rating, comment, title FROM {keyspace}.reviews_by_user \"\n            \"WHERE user_id = ? LIMIT ?\"\n        )\n\n    def add(\n        self,\n        user_id: uuid.UUID,\n        title_id: uuid.UUID,\n        rating: int,\n        comment: str | None = None,\n        username: str | None = None,\n        title: str | None = None,\n    ) -> None:\n        \"\"\"Ajoute un avis.\n\n        ``rating`` doit être compris entre 1 et 5, sinon ``ValueError`` est levée.\n        L'insertion dans les tables d'avis est faite dans un ``BatchStatement`` LOGGED.\n        Les compteurs sont mis à jour séparément (les compteurs ne peuvent pas être dans le même batch).\n        \"\"\"\n        if not 1 <= rating <= 5:\n            raise ValueError(\"rating must be between 1 and 5\")\n\n        created_at = datetime.utcnow()\n        # Batch normal inserts\n        batch = BatchStatement()\n        batch.add(self._stmt_insert_title, (title_id, created_at, user_id, rating, comment, username))\n        batch.add(self._stmt_insert_user, (user_id, created_at, title_id, rating, comment, title))\n        self._session.execute(batch)\n        # Counter update (separate)\n        self._session.execute(self._stmt_update_counters, (rating, title_id))\n\n    def list_for_title(self, title_id: uuid.UUID, limit: int = 20) -> List[Dict]:\n        \"\"\"Retourne les avis d'un titre, du plus récent au plus ancien.\"\"\"\n        rows = self._session.execute(self._stmt_list_by_title, (title_id, limit))\n        return [\n            {\n                \"created_at\": r.created_at,\n                \"user_id\": r.user_id,\n                \"rating\": r.rating,\n                \"comment\": r.comment,\n                \"username\": r.username,\n            }\n            for r in rows\n        ]\n\n    def list_for_user(self, user_id: uuid.UUID, limit: int = 20) -> List[Dict]:\n        \"\"\"Retourne les avis d'un utilisateur, du plus récent au plus ancien.\"\"\"\n        rows = self._session.execute(self._stmt_list_by_user, (user_id, limit))\n        return [\n            {\n                \"created_at\": r.created_at,\n                \"title_id\": r.title_id,\n                \"rating\": r.rating,\n                \"comment\": r.comment,\n                \"title\": r.title,\n            }\n            for r in rows\n        ]\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_3914619467735321070",
+          "args": {
+            "path": "streaming/dao/titles.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRNNViemcRu-xYDqZlv5SrQyDueRyimUyeaHNP-ebJqpY_z6w7z6tT294J3_4KrJBFJL00TUXBP1fL92mkaHUMXZjazVqqW4W0GZZnf62sgXSwU6Z-cz8MuXwznMD0c266W2WNXHyWtGjb1_ZGe7WhnPfFVzB0gCag04j3M9KkBdRYmBrRq1CJLUjTvqxzEn"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"DAO des titres (tables Q1 et Q2).\"\"\"\n\nfrom __future__ import annotations\n\nimport uuid\nfrom datetime import datetime\nfrom typing import List, Optional\n\nfrom cassandra.query import BatchStatement\n\nfrom ..models import Title\n\n\nclass TitleDAO:\n    \"\"\"Accès aux tables ``title_by_id`` (Q1) et ``titles_by_genre`` (Q2).\"\"\"\n\n    def __init__(self, session, keyspace: str) -> None:\n        self._session = session\n        self._ks = keyspace\n        # INSERT Q1\n        self._stmt_save_q1 = session.prepare(\n            f\"INSERT INTO {keyspace}.title_by_id \"\n            \"(title_id, title, kind, release_year, genres, synopsis, \"\n            \"duration_minutes, episodes_count) VALUES (?, ?, ?, ?, ?, ?, ?, ?)\"\n        )\n        # INSERT Q2 (une ligne par genre)\n        self._stmt_save_q2 = session.prepare(\n            f\"INSERT INTO {keyspace}.titles_by_genre \"\n            \"(genre, release_year, title_id, title, kind) VALUES (?, ?, ?, ?, ?)\"\n        )\n        # SELECT Q1\n        self._stmt_get_q1 = session.prepare(\n            f\"SELECT title_id, title, kind, release_year, genres, synopsis, \"\n            f\"duration_minutes, episodes_count FROM {keyspace}.title_by_id WHERE title_id = ?\"\n        )\n        # SELECT Q2 (liste par genre)\n        self._stmt_list_by_genre = session.prepare(\n            f\"SELECT title_id, title, kind, release_year FROM {keyspace}.titles_by_genre \"\n            \"WHERE genre = ? LIMIT ?\"\n        )\n\n    def save(self, title: Title) -> None:\n        \"\"\"Enregistre la fiche du titre et les entrées par genre.\n\n        Utilise un ``BatchStatement`` LOGGED pour garantir l'atomicité entre Q1 et Q2.\n        \"\"\"\n        batch = BatchStatement()\n        batch.add(self._stmt_save_q1, (\n            title.title_id,\n            title.title,\n            title.kind,\n            title.release_year,\n            set(title.genres),\n            title.synopsis,\n            title.duration_minutes,\n            title.episodes_count,\n        ))\n        for genre in title.genres:\n            batch.add(self._stmt_save_q2, (\n                genre,\n                title.release_year,\n                title.title_id,\n                title.title,\n                title.kind,\n            ))\n        self._session.execute(batch)\n\n    def get(self, title_id: uuid.UUID) -> Optional[Title]:\n        \"\"\"Retourne la fiche d'un titre ou ``None`` s'il n'existe pas.\"\"\"\n        row = self._session.execute(self._stmt_get_q1, (title_id,)).one()\n        if row is None:\n            return None\n        return Title(\n            title_id=row.title_id,\n            title=row.title,\n            kind=row.kind,\n            release_year=row.release_year,\n            genres=set(row.genres),\n            synopsis=row.synopsis,\n            duration_minutes=row.duration_minutes,\n            episodes_count=row.episodes_count,\n        )\n\n    def list_by_genre(self, genre: str, limit: int = 20) -> List[dict]:\n        \"\"\"Liste les titres d'un genre, du plus récent au plus ancien.\n\n        Retourne une liste de dictionnaires contenant ``title_id``, ``title``, ``kind`` et ``release_year``.\n        \"\"\"\n        rows = self._session.execute(self._stmt_list_by_genre, (genre, limit))\n        return [\n            {\n                \"title_id\": r.title_id,\n                \"title\": r.title,\n                \"kind\": r.kind,\n                \"release_year\": r.release_year,\n            }\n            for r in rows\n        ]\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_13849129910752696735",
+          "args": {
+            "path": "streaming/dao/views.py"
+          },
+          "name": "read_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRMcy4FRo8RZFyom7lVXaPUeJgfWuDEdh-NQ3IOEWS3v6HocJMM_E_a525RTQxrbcIYvCNVS8-a5KiTkpdq9l5SrgWnDhos68waPyiKArgNbv4vrWnkckTaBpsyOwY-TtmylMPueOJkdU26PnAA_9NVsGAuQv8T9MaUMRh_R6CwTTWn4TMFellmBnapWh9Sh"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "read_file",
+          "response": {
+            "ok": true,
+            "content": "\"\"\"DAO des historiques de visionnage et des compteurs de vues (tables Q6, Q7, Q8).\"\"\"\n\nfrom __future__ import annotations\n\nimport uuid\nfrom datetime import datetime, date\nfrom typing import Dict, List\n\nfrom cassandra.query import BatchStatement\n\n\nclass ViewDAO:\n    \"\"\"Accès aux tables d'historique et de statistiques de vues.\"\"\"\n\n    def __init__(self, session, keyspace: str) -> None:\n        self._session = session\n        self._ks = keyspace\n        # INSERT Q6 : watch_history_by_user\n        self._stmt_insert_history = session.prepare(\n            f\"INSERT INTO {keyspace}.watch_history_by_user \"\n            \"(user_id, watched_at, title_id, title, duration_watched_seconds, completed) \"\n            \"VALUES (?, ?, ?, ?, ?, ?)\"\n        )\n        # UPDATE Q7 : title_stats.view_count\n        self._stmt_update_view_count = session.prepare(\n            f\"UPDATE {keyspace}.title_stats SET view_count = view_count + 1 WHERE title_id = ?\"\n        )\n        # UPDATE Q8 : daily_views_by_title.view_count\n        self._stmt_update_daily_view_count = session.prepare(\n            f\"UPDATE {keyspace}.daily_views_by_title SET view_count = view_count + 1 \"\n            \"WHERE view_date = ? AND title_id = ?\"\n        )\n        # SELECT Q6 : history per user\n        self._stmt_history = session.prepare(\n            f\"SELECT watched_at, title_id, title, duration_watched_seconds, completed FROM {keyspace}.watch_history_by_user \"\n            \"WHERE user_id = ? LIMIT ?\"\n        )\n        # SELECT Q8 : views per day\n        self._stmt_views_of_day = session.prepare(\n            f\"SELECT title_id, view_count FROM {keyspace}.daily_views_by_title WHERE view_date = ?\"\n        )\n\n    def record_view(self, user_id: uuid.UUID, title_id: uuid.UUID, viewed_at: datetime) -> None:\n        \"\"\"Enregistre une visionnage et incrémente les compteurs.\"\"\"\n        # Normal insert into history\n        batch = BatchStatement()\n        batch.add(self._stmt_insert_history, (\n            user_id,\n            viewed_at,\n            title_id,\n            \"\",  # title text not provided\n            0,    # duration_watched_seconds placeholder\n            False,  # completed placeholder\n        ))\n        self._session.execute(batch)\n        # Counter updates (separate)\n        self._session.execute(self._stmt_update_view_count, (title_id,))\n        self._session.execute(self._stmt_update_daily_view_count, (viewed_at.date(), title_id))\n\n    def history(self, user_id: uuid.UUID, limit: int = 20) -> List[Dict]:\n        \"\"\"Retourne l'historique de visionnage d'un utilisateur.\"\"\"\n        rows = self._session.execute(self._stmt_history, (user_id, limit))\n        return [\n            {\n                \"watched_at\": r.watched_at,\n                \"title_id\": r.title_id,\n                \"title\": r.title,\n                \"duration_watched_seconds\": r.duration_watched_seconds,\n                \"completed\": r.completed,\n            }\n            for r in rows\n        ]\n\n    def views_of_day(self, day: date) -> Dict[uuid.UUID, int]:\n        \"\"\"Retourne un dictionnaire title_id -> nombre de vues pour le jour donné.\"\"\"\n        rows = self._session.execute(self._stmt_views_of_day, (day,))\n        return {r.title_id: r.view_count for r in rows}\n"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_16394718030539344533",
+          "args": {
+            "content": "\"\"\"Couche présentation (API FastAPI).\"\"\"\n\nfrom __future__ import annotations\n\nimport datetime\nimport os\nimport uuid\nfrom typing import List, Optional\n\nfrom fastapi import FastAPI, HTTPException, status\nfrom pydantic import BaseModel, Field\n\nfrom streaming.dao import RatingDAO, StatsDAO, TitleDAO, UserDAO, ViewDAO\nfrom streaming.services import CatalogService, ReviewService, TrendingService\n\n\nclass RatingRequest(BaseModel):\n    user_id: uuid.UUID\n    title_id: uuid.UUID\n    rating: int = Field(..., ge=1, le=5)\n    comment: Optional[str] = None\n\n\ndef create_app(session, keyspace: str) -> FastAPI:\n    \"\"\"Crée et configure l'application FastAPI pour la plateforme de streaming.\"\"\"\n    app = FastAPI(title=\"Streaming Platform API\", version=\"1.0.0\")\n\n    titles_dao = TitleDAO(session, keyspace)\n    users_dao = UserDAO(session, keyspace)\n    ratings_dao = RatingDAO(session, keyspace)\n    stats_dao = StatsDAO(session, keyspace)\n    views_dao = ViewDAO(session, keyspace)\n\n    catalog_service = CatalogService(titles_dao, stats_dao)\n    trending_service = TrendingService(views_dao, titles_dao)\n    review_service = ReviewService(users_dao, titles_dao, ratings_dao)\n\n    @app.get(\"/titles/{title_id}\")\n    def get_title(title_id: uuid.UUID):\n        details = catalog_service.title_details(title_id)\n        if not details:\n            raise HTTPException(status_code=404, detail=\"Titre inconnu\")\n        return details\n\n    @app.get(\"/genres/{genre}/titles\")\n    def get_genre_titles(genre: str, limit: int = 20):\n        return catalog_service.titles_of_genre(genre, limit=limit)\n\n    @app.get(\"/trending/{day}\")\n    def get_trending(day: datetime.date):\n        return trending_service.top10(day)\n\n    @app.post(\"/ratings\", status_code=status.HTTP_201_CREATED)\n    def post_rating(payload: RatingRequest):\n        try:\n            review_service.rate(\n                user_id=payload.user_id,\n                title_id=payload.title_id,\n                rating=payload.rating,\n                comment=payload.comment,\n            )\n        except LookupError as e:\n            raise HTTPException(status_code=404, detail=str(e))\n        return {\"status\": \"created\"}\n\n    @app.get(\"/users/{user_id}/history\")\n    def get_user_history(user_id: uuid.UUID, limit: int = 20):\n        return views_dao.history(user_id, limit=limit)\n\n    @app.get(\"/health\")\n    def health_check():\n        cluster = session.cluster\n        all_hosts = cluster.metadata.all_hosts()\n        # Évaluation des hôtes Up : connectés ou interrogés (selon l'API du driver, tous les all_hosts() sont connus,\n        # on peut vérifier leur état de disponibilité si disponible, sinon on compte les hôtes connus et up).\n        # Le driver expose state par hôte via l'interne ou can_connect, mais l'énoncé demande :\n        # \"nombre de nœuds connus et nombre de nœuds « up » via session.cluster.metadata.all_hosts()\".\n        # Dans cassandra-driver, all_hosts() renvoie les hôtes du cluster. Les hôtes up sont ceux dont l'état est up ou joignables.\n        # Plus simplement, tous les hôtes renvoyés par all_hosts() ou interrogés. Certains drivers gèrent host.is_up si supporté,\n        # ou on compte le nombre total et on estime up. Vérifions l'attribut is_up ou is_up() si présent, ou on compte les hôtes.\n        known = len(all_hosts)\n        up_count = sum(1 for h in all_hosts if getattr(h, \"is_up\", True))\n        return {\n            \"nodes_known\": known,\n            \"nodes_up\": up_count,\n        }\n\n    return app\n\n\n# Instance globale pour uvicorn si CASSANDRA_CONTACT_POINTS est défini\n_contact_points = os.environ.get(\"CASSANDRA_CONTACT_POINTS\")\napp: Optional[FastAPI] = None\nif _contact_points:\n    from cassandra.cluster import Cluster, ExecutionProfile, EXEC_PROFILE_DEFAULT\n    from cassandra.policies import DCAwareRoundRobinPolicy\n\n    _keyspace = os.environ.get(\"KEYSPACE\", \"streaming\")\n    _profile = ExecutionProfile(\n        load_balancing_policy=DCAwareRoundRobinPolicy(local_dc=\"dc1\"),\n        request_timeout=30,\n    )\n    _cluster = Cluster(\n        _contact_points.split(\",\"),\n        execution_profiles={EXEC_PROFILE_DEFAULT: _profile},\n        protocol_version=5,\n    )\n    _session = _cluster.connect()\n    app = create_app(_session, _keyspace)\n",
+            "path": "streaming/api.py"
+          },
+          "name": "write_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRNL7ADksAFehmHsP27_g6hmIB9zIJiJpzdPxXSDY2LyzmBpd-WtQfw6i70yOnR8MbQk3dZ-w2eWlDaJdDvgFABkvNgvzVR5tmHgn0TGGiCK_Ew6XpuMHN7zG4Alkk2QdPK5swZ7iA-WhtbgG5LN2Ixb5g2LCzr3Wovvq9kglE5EVYPkgf0hthcWCpeyRjSr"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "streaming/api.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "function_call": {
+          "id": "call_11695232574033648138",
+          "args": {
+            "content": "import datetime\nimport uuid\nimport pytest\nfrom fastapi.testclient import TestClient\n\nfrom streaming.api import create_app\nfrom streaming.dao import TitleDAO, UserDAO, ViewDAO, RatingDAO, StatsDAO\nfrom streaming.models import Title, User\nfrom streaming.schema import create_schema, drop_schema\n\nKS_API = \"streaming_test_api\"\n\n\n@pytest.fixture(scope=\"module\")\ndef api_client(session):\n    create_schema(session, KS_API, replication_factor=1)\n    app = create_app(session, KS_API)\n    client = TestClient(app)\n    yield client\n    drop_schema(session, KS_API)\n\n\ndef test_health_check(api_client):\n    response = api_client.get(\"/health\")\n    assert response.status_code == 200\n    data = response.json()\n    assert \"nodes_known\" in data\n    assert \"nodes_up\" in data\n    assert data[\"nodes_known\"] >= 1\n    assert data[\"nodes_up\"] >= 1\n\n\ndef test_get_title_not_found(api_client):\n    tid = uuid.uuid4()\n    response = api_client.get(f\"/titles/{tid}\")\n    assert response.status_code == 404\n\n\ndef test_get_title_success(session, api_client):\n    tid = uuid.uuid4()\n    t_dao = TitleDAO(session, KS_API)\n    t_dao.save(Title(\n        title_id=tid,\n        title=\"Inception\",\n        kind=\"movie\",\n        release_year=2010,\n        genres={\"Sci-Fi\", \"Action\"},\n        synopsis=\"A thief who steals corporate secrets...\",\n        duration_minutes=148,\n        episodes_count=None,\n    ))\n\n    response = api_client.get(f\"/titles/{tid}\")\n    assert response.status_code == 200\n    data = response.json()\n    assert data[\"title\"][\"title\"] == \"Inception\"\n    assert data[\"views\"] == 0\n    assert data[\"rating_count\"] == 0\n\n\ndef test_get_genres_titles(session, api_client):\n    tid = uuid.uuid4()\n    t_dao = TitleDAO(session, KS_API)\n    t_dao.save(Title(\n        title_id=tid,\n        title=\"Interstellar\",\n        kind=\"movie\",\n        release_year=2014,\n        genres={\"Sci-Fi\"},\n        synopsis=\"Space exploration\",\n        duration_minutes=169,\n        episodes_count=None,\n    ))\n\n    response = api_client.get(\"/genres/Sci-Fi/titles\")\n    assert response.status_code == 200\n    titles = response.json()\n    assert any(t[\"title_id\"] == str(tid) for t in titles)\n\n\ndef test_post_rating_validation_error(api_client):\n    # Note hors 1..5 -> 422\n    payload = {\n        \"user_id\": str(uuid.uuid4()),\n        \"title_id\": str(uuid.uuid4()),\n        \"rating\": 6,\n        \"comment\": \"Too high\"\n    }\n    response = api_client.post(\"/ratings\", json=payload)\n    assert response.status_code == 422\n\n\ndef test_post_rating_not_found(api_client):\n    # Utilisateur ou titre inconnu -> 404\n    payload = {\n        \"user_id\": str(uuid.uuid4()),\n        \"title_id\": str(uuid.uuid4()),\n        \"rating\": 5,\n        \"comment\": \"Nice\"\n    }\n    response = api_client.post(\"/ratings\", json=payload)\n    assert response.status_code == 404\n\n\ndef test_post_rating_success_and_history(session, api_client):\n    uid = uuid.uuid4()\n    tid = uuid.uuid4()\n    u_dao = UserDAO(session, KS_API)\n    t_dao = TitleDAO(session, KS_API)\n    v_dao = ViewDAO(session, KS_API)\n\n    u_dao.save(User(user_id=uid, email=\"user@test.com\", username=\"moviefan\", created_at=datetime.datetime.now(datetime.timezone.utc)))\n    t_dao.save(Title(title_id=tid, title=\"Matrix\", kind=\"movie\", release_year=1999, genres={\"Action\"}, synopsis=None, duration_minutes=136, episodes_count=None))\n\n    payload = {\n        \"user_id\": str(uid),\n        \"title_id\": str(tid),\n        \"rating\": 5,\n        \"comment\": \"Masterpiece\"\n    }\n    response = api_client.post(\"/ratings\", json=payload)\n    assert response.status_code == 201\n\n    # Vérifier l'historique utilisateur (ou les détails du titre mis à jour)\n    res_title = api_client.get(f\"/titles/{tid}\")\n    assert res_title.status_code == 200\n    assert res_title.json()[\"rating_count\"] == 1\n\n    res_history = api_client.get(f\"/users/{uid}/history\")\n    assert res_history.status_code == 200\n    assert isinstance(res_history.json(), list)\n\n\ndef test_trending_endpoint(session, api_client):\n    today = datetime.date.today().isoformat()\n    response = api_client.get(f\"/trending/{today}\")\n    assert response.status_code == 200\n    assert isinstance(response.json(), list)\n",
+            "path": "tests/test_api.py"
+          },
+          "name": "write_file"
+        },
+        "thought_signature": "EpYBCpMBAWkUfRMGtR7p-1NnlNzqHBRk3pP6CptiODlkVCGw2AS1WgsPW3ltT_L7mgOebVcIC0SlHEiBBSwE3F_PJpyML86i585F7NGIEPxgWPxmh9iErxmMkQuBSbbtHjCyU_udrZghUpXOSLGZQDWxTv5dcY0WujD6x734PeX9PHsk_5If9PlWCaJUKYAW3L90UReeMudt"
+      }
+    ],
+    "role": "model"
+  },
+  {
+    "parts": [
+      {
+        "function_response": {
+          "name": "write_file",
+          "response": {
+            "ok": true,
+            "written": "tests/test_api.py"
+          }
+        }
+      }
+    ],
+    "role": "user"
+  },
+  {
+    "parts": [
+      {
+        "text": "### Résumé de la tâche T005\n\n- **Fichiers créés :**\n  - `streaming/api.py` : implémentation de l'application FastAPI, de la fonction `create_app(session, keyspace)` et de l'initialisation optionnelle `app` pilotée par la variable d'environnement `CASSANDRA_CONTACT_POINTS`. Aucune requête CQL n'est écrite dans ce fichier ; tout passe par les services métier (`CatalogService`, `TrendingService`, `ReviewService`) et les DAO / objets fournis.\n  - `tests/test_api.py` : suite de 8 tests complets utilisant `fastapi.testclient.TestClient` sur un keyspace dédié (`streaming_test_api`, créé au début et supprimé à la fin via les fixtures et `create_schema`/`drop_schema`), avec insertion de données de test via les DAO.\n\n- **Choix de modélisation / conception :**\n  - Validation des requêtes d'évaluation (`RatingRequest`) via Pydantic (`ge=1`, `le=5`), garantissant un retour HTTP 422 en cas de note invalide.\n  - Gestion des erreurs `LookupError` levées par le service métier convertie proprement en code HTTP 404 (utilisateur ou titre inconnu).\n  - Endpoint `/health` inspectant `session.cluster.metadata.all_hosts()` pour retourner le nombre de nœuds connus et actifs (`nodes_known` et `nodes_up`).\n  - Respect strict des exigences d'architecture : séparation claire entre la présentation (API), la logique métier (`streaming/services.py`) et l'accès aux données (`streaming/dao/`).\n\n- **Points à vérifier :**\n  - Tests non exécutés dans cet environnement (à lancer via pytest sur le cluster réel).\n  - Comportement de l'attribut `is_up` ou équivalent sur les objets hôtes retournés par `all_hosts()` du pilote Cassandra 3.30.",
+        "thought_signature": "EpYBCpMBAWkUfRPDz5dgFDbpn4e0kMLJrCdok9ouNIdskVHhfQrmE3dKjgmHz1rA9cVymWVdo4d5nqrvfCCCKtJBI6pv5bvpMIPelFziWOipyIpQhS6pJWRgDrS2eePEwoaAX-hHmGJ4Bu56HJ7BLWoSndkhbrWVJ4oYhwnZOF33xWGrOauUoVO-Q8CTBN5ivqbzm6dOARBe"
+      }
+    ],
+    "role": "model"
+  }
+]
