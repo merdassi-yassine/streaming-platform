@@ -1,0 +1,11 @@
+{
+  "run_id": "T004-20261126-005252",
+  "seq": 57,
+  "agent": "human",
+  "kind": "decision",
+  "timestamp": "2026-11-26T00:03:20+00:00",
+  "iteration": 1,
+  "decision": "reject",
+  "feedback": "Aucun fichier écrit : boucle de relecture des fichiers DAO (quota Groq). Relancé avec les signatures dans la tâche et l'anti-boucle.",
+  "decided_by": "Claude (délégation du Project Owner, 26/11/2026)"
+}

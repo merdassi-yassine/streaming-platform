@@ -1,0 +1,109 @@
+{
+  "run_id": "T004-20261126-005252",
+  "seq": 43,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T23:58:19+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-20b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196116, Requested 4340. Please try again in 3m16.992s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196103, Requested 4340. Please try again in 3m11.376s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196080, Requested 4955. Please try again in 7m27.12s. Need more tokens? Upgrade to Dev Tier today a"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5612, Requested 4337. Please try again in 14.6175s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4918, Requested 4381. Please try again in 9.7425s. Need more tokens? Upgrade to Dev Tier today at h"
+    }
+  ],
+  "latency_s": 31.43,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_e46a788d-ad7b-49c7-8c8f-290cab8508f6",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"Modèles de données simples utilisés par les DAO.\\n\\nCes dataclasses ne contiennent que les champs nécessaires aux tables Cassandra.\\n\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport datetime\\nimport uuid\\nfrom dataclasses import dataclass\\nfrom typing import Optional, Set\\n\\n\\n@dataclass(frozen=True)\\nclass Title:\\n    \\\"\\\"\\\"Représente la fiche d'un titre (film ou série).\\\"\\\"\\\"\\n\\n    title_id: uuid.UUID\\n    title: str\\n    kind: str  # \\\"movie\\\" ou \\\"series\\\"\\n    release_year: int\\n    genres: Set[str]\\n    synopsis: Optional[str] = None\\n    duration_minutes: Optional[int] = None  # pour les films\\n    episodes_count: Optional[int] = None  # pour les séries\\n\\n\\n@dataclass(frozen=True)\\nclass User:\\n    \\\"\\\"\\\"Profil d'un utilisateur.\\\"\\\"\\\"\\n\\n    user_id: uuid.UUID\\n    email: str\\n    username: str\\n    created_at: datetime.datetime\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-d351d67e-8e88-4abf-bbd5-06a7a1c4e6eb",
+    "object": "chat.completion",
+    "created": 1795651098,
+    "model": "openai/gpt-oss-20b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to inspect dao/titles, dao/views, dao/stats.",
+          "tool_calls": [
+            {
+              "id": "fc_20c8197a-6ede-4062-b1da-9cbc14f6c56b",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/dao/titles.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.017338522,
+      "prompt_tokens": 4300,
+      "prompt_time": 0.176772104,
+      "completion_tokens": 41,
+      "completion_time": 0.042471476,
+      "total_tokens": 4341,
+      "total_time": 0.21924358,
+      "prompt_tokens_details": {
+        "cached_tokens": 1536
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 16
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_9340e7d14d",
+    "x_groq": {
+      "id": "req_01m8ajang8e57vxczf56n3s7b0",
+      "seed": 1954820154
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 4300,
+    "output_tokens": 41
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "run_id": "T004-20261126-005252",
+  "seq": 56,
+  "agent": "reviewer",
+  "kind": "review",
+  "timestamp": "2026-11-26T00:00:13+00:00",
+  "iteration": 1,
+  "review": "Critères :\n✗ services.py n'importe pas cassandra\n✗ top10 renvoie au plus 10 titres triés par vues décroissantes\n✗ rate lève LookupError pour un titre ou un utilisateur inconnu\n✗ tests/test_dao.py couvre les 5 classes DAO (au moins 7 tests)\n✗ tests/test_services.py couvre les 3 services (au moins 4 tests)\n✗ les keyspaces de test sont dédiés et supprimés à la fin ; « streaming » n'est jamais utilisé\n\nRemarques :\n- MINEUR : le diff fourni est vide, aucune modification n'a été apportée au dépôt.\n\nRecommandation : DEMANDER DES CORRECTIONS — modification vide, aucune fonctionnalité ajoutée.",
+  "steps": 3,
+  "stop_reason": "done"
+}

@@ -1,0 +1,106 @@
+{
+  "run_id": "T004-20261126-005252",
+  "seq": 41,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T23:57:47+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-20b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196189, Requested 4909. Please try again in 7m54.336s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196177, Requested 4910. Please try again in 7m49.584s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196153, Requested 4910. Please try again in 7m39.216s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4950, Requested 4907. Please try again in 13.9275s. Need more tokens? Upgrade to Dev Tier today at "
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4239, Requested 4890. Please try again in 8.467499999s. Need more tokens? Upgrade to Dev Tier today"
+    }
+  ],
+  "latency_s": 31.72,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_40ef1e9f-c9a4-4e27-98f0-643be0969c82",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"DAO des évaluations (tables Q4, Q5 et compteurs Q7).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport uuid\\nfrom datetime import datetime\\nfrom typing import List, Dict\\n\\nfrom cassandra.query import BatchStatement\\n\\nfrom ..models import User, Title\\n\\n\\nclass RatingDAO:\\n    \\\"\\\"\\\"Accès aux avis d'utilisateurs.\\n\\n    - ``add`` écrit les deux tables d'avis et met à jour les compteurs de notes.\\n    - ``list_for_title`` et ``list_for_user`` lisent les avis par partition.\\n    \\\"\\\"\\\"\\n\\n    def __init__(self, session, keyspace: str) -> None:\\n        self._session = session\\n        self._ks = keyspace\\n        # INSERT Q4 : reviews_by_title\\n        self._stmt_insert_title = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.reviews_by_title \\\"\\n            \\\"(title_id, created_at, user_id, rating, comment, username) \\\"\\n            \\\"VALUES (?, ?, ?, ?, ?, ?)\\\"\\n        )\\n        # INSERT Q5 : reviews_by_user\\n        self._stmt_insert_user = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.reviews_by_user \\\"\\n            \\\"(user_id, created_at, title_id, rating, comment, title) \\\"\\n            \\\"VALUES (?, ?, ?, ?, ?, ?)\\\"\\n        )\\n        # UPDATE Q7 : compteurs rating_sum et rating_count\\n        self._stmt_update_counters = session.prepare(\\n            f\\\"UPDATE {keyspace}.title_stats SET rating_sum = rating_sum + ?, rating_count = rating_count + 1 WHERE title_id = ?\\\"\\n        )\\n        # SELECT Q4\\n        self._stmt_list_by_title = session.prepare(\\n            f\\\"SELECT created_at, user_id, rating, comment, username FROM {keyspace}.reviews_by_title \\\"\\n            \\\"WHERE title_id = ? LIMIT ?\\\"\\n        )\\n        # SELECT Q5\\n        self._stmt_list_by_user = session.prepare(\\n            f\\\"SELECT created_at, title_id, rating, comment, title FROM {keyspace}.reviews_by_user \\\"\\n            \\\"WHERE user_id = ? LIMIT ?\\\"\\n        )\\n\\n    def add(\\n        self,\\n        user_id: uuid.UUID,\\n        title_id: uuid.UUID,\\n        rating: int,\\n        comment: str | None = None,\\n        username: str | None = None,\\n        title: str | None = None,\\n    ) -> None:\\n        \\\"\\\"\\\"Ajoute un avis.\\n\\n        ``rating`` doit être compris entre 1 et 5, sinon ``ValueError`` est levée.\\n        L'insertion dans les tables d'avis est faite dans un ``BatchStatement`` LOGGED.\\n        Les compteurs sont mis à jour séparément (les compteurs ne peuvent pas être dans le même batch).\\n        \\\"\\\"\\\"\\n        if not 1 <= rating <= 5:\\n            raise ValueError(\\\"rating must be between 1 and 5\\\")\\n\\n        created_at = datetime.utcnow()\\n        # Batch normal inserts\\n        batch = BatchStatement()\\n        batch.add(self._stmt_insert_title, (title_id, created_at, user_id, rating, comment, username))\\n        batch.add(self._stmt_insert_user, (user_id, created_at, title_id, rating, comment, title))\\n        self._session.execute(batch)\\n        # Counter update (separate)\\n        self._session.execute(self._stmt_update_counters, (rating, title_id))\\n\\n    def list_for_title(self, title_id: uuid.UUID, limit: int = 20) -> List[Dict]:\\n        \\\"\\\"\\\"Retourne les avis d'un titre, du plus récent au plus ancien.\\\"\\\"\\\"\\n        rows = self._session.execute(self._stmt_list_by_title, (title_id, limit))\\n        return [\\n            {\\n                \\\"created_at\\\": r.created_at,\\n                \\\"user_id\\\": r.user_id,\\n                \\\"rating\\\": r.rating,\\n                \\\"comment\\\": r.comment,\\n                \\\"username\\\": r.username,\\n            }\\n            for r in rows\\n        ]\\n\\n    def list_for_user(self, user_id: uuid.UUID, limit: int = 20) -> List[Dict]:\\n        \\\"\\\"\\\"Retourne les avis d'un utilisateur, du plus récent au plus ancien.\\\"\\\"\\\"\\n        rows = self._session.execute(self._stmt_list_by_user, (user_id, limit))\\n        return [\\n            {\\n                \\\"created_at\\\": r.created_at,\\n                \\\"title_id\\\": r.title_id,\\n                \\\"rating\\\": r.rating,\\n                \\\"comment\\\": r.comment,\\n                \\\"title\\\": r.title,\\n            }\\n            for r in rows\\n        ]\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-cd96a633-5aa0-4c5f-8c7c-a11cab770cb1",
+    "object": "chat.completion",
+    "created": 1795651066,
+    "model": "openai/gpt-oss-20b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We need to write services.py and tests. We need to inspect models to know fields.",
+          "tool_calls": [
+            {
+              "id": "fc_e46a788d-ad7b-49c7-8c8f-290cab8508f6",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/models.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.211388664,
+      "prompt_tokens": 4870,
+      "prompt_time": 0.264422706,
+      "completion_tokens": 40,
+      "completion_time": 0.042667697,
+      "total_tokens": 4910,
+      "total_time": 0.307090403,
+      "completion_tokens_details": {
+        "reasoning_tokens": 28
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_aef561cf8e",
+    "x_groq": {
+      "id": "req_01m8aj9ph0evqsv4s43t56a5tj",
+      "seed": 1236002212
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 4870,
+    "output_tokens": 40
+  }
+}

@@ -1,0 +1,84 @@
+{
+  "run_id": "T004-20261126-005252",
+  "seq": 47,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T23:59:06+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-20b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 195970, Requested 4282. Please try again in 1m48.864s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 195958, Requested 4281. Please try again in 1m43.248s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 195934, Requested 4897. Please try again in 5m58.991999999s. Need more tokens? Upgrade to Dev Tier "
+    }
+  ],
+  "latency_s": 15.91,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_21a0f870-db8d-45d4-bdf2-a3da79a3c5b2",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"DAO des utilisateurs (table Q3).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport uuid\\nfrom typing import Optional\\n\\nfrom ..models import User\\n\\n\\nclass UserDAO:\\n    \\\"\\\"\\\"Accès à la table ``user_by_id`` (Q3).\\\"\\\"\\\"\\n\\n    def __init__(self, session, keyspace: str) -> None:\\n        self._session = session\\n        self._ks = keyspace\\n        self._stmt_save = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.user_by_id \\\"\\n            \\\"(user_id, email, username, created_at) VALUES (?, ?, ?, ?)\\\"\\n        )\\n        self._stmt_get = session.prepare(\\n            f\\\"SELECT user_id, email, username, created_at \\\"\\n            f\\\"FROM {keyspace}.user_by_id WHERE user_id = ?\\\"\\n        )\\n\\n    def save(self, user: User) -> None:\\n        \\\"\\\"\\\"Enregistre ou met à jour le profil d'un utilisateur.\\\"\\\"\\\"\\n        self._session.execute(self._stmt_save, (\\n            user.user_id,\\n            user.email,\\n            user.username,\\n            user.created_at,\\n        ))\\n\\n    def get(self, user_id: uuid.UUID) -> Optional[User]:\\n        \\\"\\\"\\\"Retourne le profil d'un utilisateur ou ``None`` s'il n'existe pas.\\\"\\\"\\\"\\n        row = self._session.execute(self._stmt_get, (user_id,)).one()\\n        if row is None:\\n            return None\\n        return User(\\n            user_id=row.user_id,\\n            email=row.email,\\n            username=row.username,\\n            created_at=row.created_at,\\n        )\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-4dd5aefd-e06a-43ea-87a3-e37401b0d403",
+    "object": "chat.completion",
+    "created": 1795651145,
+    "model": "openai/gpt-oss-20b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "content": ""
+        },
+        "logprobs": null,
+        "finish_reason": "stop"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.016835877,
+      "prompt_tokens": 4242,
+      "prompt_time": 0.140223401,
+      "completion_tokens": 6,
+      "completion_time": 0.006201739,
+      "total_tokens": 4248,
+      "total_time": 0.14642514,
+      "prompt_tokens_details": {
+        "cached_tokens": 2304
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_9340e7d14d",
+    "x_groq": {
+      "id": "req_01m8ajc3tgeyw9n3ghyqce1cj7",
+      "seed": 178612179
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 4242,
+    "output_tokens": 6
+  }
+}

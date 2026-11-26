@@ -1,0 +1,93 @@
+{
+  "run_id": "T004-20261126-005252",
+  "seq": 19,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T23:54:13+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-20b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 6558, Requested 4271. Please try again in 21.2175s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 5859, Requested 4936. Please try again in 20.9625s. Need more tokens? Upgrade to Dev Tier today at"
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4497, Requested 4271. Please try again in 5.76s. Need more tokens? Upgrade to Dev Tier today at ht"
+    }
+  ],
+  "latency_s": 15.86,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "fc_013fe5d4-639f-4fcc-bce5-55835927dec9",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"DAO pour la table title_stats.\\n\\nLa classe ne fait que lire les compteurs d'un titre.\\n\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nfrom cassandra.cluster import Session\\nfrom typing import Tuple\\n\\n\\nclass StatsDAO:\\n    \\\"\\\"\\\"Accès aux statistiques d'un titre.\\n\\n    La table ``title_stats`` contient uniquement des compteurs.  La méthode\\n    :py:meth:`get` renvoie un tuple ``(view_count, rating_sum, rating_count)``.\\n    \\\"\\\"\\\"\\n\\n    def __init__(self, session: Session, keyspace: str):\\n        self._session = session\\n        self._keyspace = keyspace\\n        self._get_stmt = session.prepare(\\n            f\\\"SELECT view_count, rating_sum, rating_count FROM {keyspace}.title_stats WHERE title_id = ?\\\"\\n        )\\n\\n    def get(self, title_id) -> Tuple[int, int, int]:\\n        \\\"\\\"\\\"Renvoie les compteurs pour *title_id*.\\n\\n        Si le titre n'existe pas, la méthode renvoie ``(0, 0, 0)``.\\n        \\\"\\\"\\\"\\n        row = self._session.execute(self._get_stmt, (title_id,)).one()\\n        if row is None:\\n            return 0, 0, 0\\n        return row.view_count, row.rating_sum, row.rating_count\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-c9e0bac4-45b0-4915-a7ae-bb56c23dff44",
+    "object": "chat.completion",
+    "created": 1795650852,
+    "model": "openai/gpt-oss-20b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "tool_calls": [
+            {
+              "id": "fc_e9485750-87db-419a-ab97-23e9dbeb3daa",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/dao/users.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.015918061,
+      "prompt_tokens": 4231,
+      "prompt_time": 0.169497426,
+      "completion_tokens": 19,
+      "completion_time": 0.019125288,
+      "total_tokens": 4250,
+      "total_time": 0.188622714,
+      "prompt_tokens_details": {
+        "cached_tokens": 1536
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_565badff47",
+    "x_groq": {
+      "id": "req_01m8aj35ntev5rnntrbwfdqsrx",
+      "seed": 1664971228
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 4231,
+    "output_tokens": 19
+  }
+}

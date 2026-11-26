@@ -1,0 +1,106 @@
+{
+  "run_id": "T004-20261126-005252",
+  "seq": 37,
+  "agent": "backend_developer",
+  "kind": "llm_call",
+  "timestamp": "2026-11-25T23:56:44+00:00",
+  "provider": "groq",
+  "models_requested": [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b"
+  ],
+  "model_used": "openai/gpt-oss-20b",
+  "errors_before_success": [
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196336, Requested 4577. Please try again in 6m34.415999999s. Need more tokens? Upgrade to Dev Tier "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196324, Requested 4577. Please try again in 6m29.232s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-120b",
+      "attempt": 3,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-120b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per day (TPD): Limit 200000, Used 196300, Requested 4578. Please try again in 6m19.296s. Need more tokens? Upgrade to Dev Tier today "
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 1,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4747, Requested 4619. Please try again in 10.245s. Need more tokens? Upgrade to Dev Tier today at h"
+    },
+    {
+      "model": "openai/gpt-oss-20b",
+      "attempt": 2,
+      "code": 429,
+      "message": "HTTP 429 : {\"error\":{\"message\":\"Rate limit reached for model `openai/gpt-oss-20b` in organization `org_01m8790dpre859f7c2rzeetzxc` service tier `on_demand` on tokens per minute (TPM): Limit 8000, Used 4051, Requested 4619. Please try again in 5.025s. Need more tokens? Upgrade to Dev Tier today at ht"
+    }
+  ],
+  "latency_s": 31.68,
+  "system_prompt": "(identique au 1er appel)",
+  "input": [
+    {
+      "role": "tool",
+      "tool_call_id": "pqe8jhwv5",
+      "name": "read_file",
+      "content": "{\"ok\": true, \"content\": \"\\\"\\\"\\\"DAO des historiques de visionnage et des compteurs de vues (tables Q6, Q7, Q8).\\\"\\\"\\\"\\n\\nfrom __future__ import annotations\\n\\nimport uuid\\nfrom datetime import datetime, date\\nfrom typing import Dict, List\\n\\nfrom cassandra.query import BatchStatement\\n\\n\\nclass ViewDAO:\\n    \\\"\\\"\\\"Accès aux tables d'historique et de statistiques de vues.\\\"\\\"\\\"\\n\\n    def __init__(self, session, keyspace: str) -> None:\\n        self._session = session\\n        self._ks = keyspace\\n        # INSERT Q6 : watch_history_by_user\\n        self._stmt_insert_history = session.prepare(\\n            f\\\"INSERT INTO {keyspace}.watch_history_by_user \\\"\\n            \\\"(user_id, watched_at, title_id, title, duration_watched_seconds, completed) \\\"\\n            \\\"VALUES (?, ?, ?, ?, ?, ?)\\\"\\n        )\\n        # UPDATE Q7 : title_stats.view_count\\n        self._stmt_update_view_count = session.prepare(\\n            f\\\"UPDATE {keyspace}.title_stats SET view_count = view_count + 1 WHERE title_id = ?\\\"\\n        )\\n        # UPDATE Q8 : daily_views_by_title.view_count\\n        self._stmt_update_daily_view_count = session.prepare(\\n            f\\\"UPDATE {keyspace}.daily_views_by_title SET view_count = view_count + 1 \\\"\\n            \\\"WHERE view_date = ? AND title_id = ?\\\"\\n        )\\n        # SELECT Q6 : history per user\\n        self._stmt_history = session.prepare(\\n            f\\\"SELECT watched_at, title_id, title, duration_watched_seconds, completed FROM {keyspace}.watch_history_by_user \\\"\\n            \\\"WHERE user_id = ? LIMIT ?\\\"\\n        )\\n        # SELECT Q8 : views per day\\n        self._stmt_views_of_day = session.prepare(\\n            f\\\"SELECT title_id, view_count FROM {keyspace}.daily_views_by_title WHERE view_date = ?\\\"\\n        )\\n\\n    def record_view(self, user_id: uuid.UUID, title_id: uuid.UUID, viewed_at: datetime) -> None:\\n        \\\"\\\"\\\"Enregistre une visionnage et incrémente les compteurs.\\\"\\\"\\\"\\n        # Normal insert into history\\n        batch = BatchStatement()\\n        batch.add(self._stmt_insert_history, (\\n            user_id,\\n            viewed_at,\\n            title_id,\\n            \\\"\\\",  # title text not provided\\n            0,    # duration_watched_seconds placeholder\\n            False,  # completed placeholder\\n        ))\\n        self._session.execute(batch)\\n        # Counter updates (separate)\\n        self._session.execute(self._stmt_update_view_count, (title_id,))\\n        self._session.execute(self._stmt_update_daily_view_count, (viewed_at.date(), title_id))\\n\\n    def history(self, user_id: uuid.UUID, limit: int = 20) -> List[Dict]:\\n        \\\"\\\"\\\"Retourne l'historique de visionnage d'un utilisateur.\\\"\\\"\\\"\\n        rows = self._session.execute(self._stmt_history, (user_id, limit))\\n        return [\\n            {\\n                \\\"watched_at\\\": r.watched_at,\\n                \\\"title_id\\\": r.title_id,\\n                \\\"title\\\": r.title,\\n                \\\"duration_watched_seconds\\\": r.duration_watched_seconds,\\n                \\\"completed\\\": r.completed,\\n            }\\n            for r in rows\\n        ]\\n\\n    def views_of_day(self, day: date) -> Dict[uuid.UUID, int]:\\n        \\\"\\\"\\\"Retourne un dictionnaire title_id -> nombre de vues pour le jour donné.\\\"\\\"\\\"\\n        rows = self._session.execute(self._stmt_views_of_day, (day,))\\n        return {r.title_id: r.view_count for r in rows}\\n\"}"
+    }
+  ],
+  "response_raw": {
+    "id": "chatcmpl-d95e8f75-b34a-4f03-a840-c67b408126dd",
+    "object": "chat.completion",
+    "created": 1795651003,
+    "model": "openai/gpt-oss-20b",
+    "choices": [
+      {
+        "index": 0,
+        "message": {
+          "role": "assistant",
+          "reasoning": "We didn't read users, ratings. Let's read them.",
+          "tool_calls": [
+            {
+              "id": "fc_2ad45667-16e9-41c0-b0ec-fe39bd7d3135",
+              "type": "function",
+              "function": {
+                "name": "read_file",
+                "arguments": "{\"path\":\"streaming/dao/users.py\"}"
+              }
+            }
+          ]
+        },
+        "logprobs": null,
+        "finish_reason": "tool_calls"
+      }
+    ],
+    "usage": {
+      "queue_time": 0.279778117,
+      "prompt_tokens": 4538,
+      "prompt_time": 0.245733127,
+      "completion_tokens": 37,
+      "completion_time": 0.038867776,
+      "total_tokens": 4575,
+      "total_time": 0.284600903,
+      "completion_tokens_details": {
+        "reasoning_tokens": 12
+      }
+    },
+    "usage_breakdown": null,
+    "system_fingerprint": "fp_a12402de73",
+    "x_groq": {
+      "id": "req_01m8aj7renetbrawvtcmqj47fw",
+      "seed": 1280539138
+    },
+    "service_tier": "on_demand"
+  },
+  "usage": {
+    "input_tokens": 4538,
+    "output_tokens": 37
+  }
+}
