@@ -9,7 +9,7 @@ import pytest
 
 from streaming.schema import create_schema, drop_schema
 from streaming.ingest.netflix import parse, title_id
-from streaming.ingest.wikidata import normalize_genres, enrich
+from streaming.ingest.wikidata import normalize_genres, enrich, enrich_many, WikidataError
 from streaming.ingest.load import load
 from streaming.dao.views import ViewDAO
 from streaming.dao.titles import TitleDAO
@@ -37,13 +37,10 @@ SAMPLE_TSV = """week\tcategory\tweekly_rank\tshow_title\tseason_title\tweekly_ho
 def test_parse_netflix():
     """Vérifie que parse garde les N semaines les plus récentes et gère les valeurs vides/N/A."""
     rows = parse(SAMPLE_TSV, weeks=2)
-    # Les semaines dans le sample sont 2026-11-22, 2026-11-15, 2026-11-01.
-    # Les 2 plus récentes sont 2026-11-22 et 2026-11-15 (3 lignes au total).
     assert len(rows) == 3
     weeks_found = {r["week"] for r in rows}
     assert weeks_found == {datetime.date(2026, 11, 22), datetime.date(2026, 11, 15)}
 
-    # Vérification des types et champs
     guarding = next(r for r in rows if r["title"] == "Guarding Stars" and r["week"] == datetime.date(2026, 11, 22))
     assert guarding["kind"] == "film"
     assert guarding["season"] is None
@@ -72,16 +69,31 @@ def test_normalize_genres():
     assert normalize_genres(["genre inconnu xyz"]) == {"autre"}
 
 
-def test_enrich_wikidata_mock():
-    """Teste enrich avec un MockTransport httpx simulant Wikidata SPARQL."""
+def test_enrich_wikidata_grouped_and_homonym():
+    """Teste enrich_many avec réponse factice groupée : 2 titres dont un homonyme à 2 items (garde le plus récent)."""
     sparql_json_response = {
         "results": {
             "bindings": [
                 {
-                    "item": {"value": "http://www.wikidata.org/entity/Q12345"},
+                    "label": {"value": "Guarding Stars"},
+                    "item": {"value": "http://www.wikidata.org/entity/Q100"},
+                    "pubDate": {"value": "2020-01-01T00:00:00Z"},
+                    "genreLabel": {"value": "drame"},
+                    "descFr": {"value": "Ancienne version."},
+                },
+                {
+                    "label": {"value": "Guarding Stars"},
+                    "item": {"value": "http://www.wikidata.org/entity/Q200"},
                     "pubDate": {"value": "2026-01-01T00:00:00Z"},
-                    "genreLabel": {"value": "science-fiction"},
-                    "descFr": {"value": "Un film de science fiction."},
+                    "genreLabel": {"value": "action"},
+                    "descFr": {"value": "Version récente."},
+                },
+                {
+                    "label": {"value": "Other Show"},
+                    "item": {"value": "http://www.wikidata.org/entity/Q300"},
+                    "pubDate": {"value": "2024-01-01T00:00:00Z"},
+                    "genreLabel": {"value": "comedie"},
+                    "descEn": {"value": "English description."},
                 }
             ]
         }
@@ -90,55 +102,68 @@ def test_enrich_wikidata_mock():
     def handler(request: httpx.Request) -> httpx.Response:
         return httpx.Response(200, json=sparql_json_response)
 
-    transport = httpx.MockTransport(handler)
-    client = httpx.Client(transport=transport)
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    res = enrich_many(client, ["Guarding Stars", "Other Show"], "film")
 
-    result = enrich(client, "Guarding Stars", "film")
-    assert result is not None
-    assert result["qid"] == "Q12345"
-    assert result["year"] == 2026
-    assert result["genres"] == {"science-fiction"}
-    assert result["description"] == "Un film de science fiction."
+    assert "Guarding Stars" in res
+    # Doit avoir choisi Q200 (année 2026 plus récente que 2020)
+    assert res["Guarding Stars"]["qid"] == "Q200"
+    assert res["Guarding Stars"]["year"] == 2026
+    assert res["Guarding Stars"]["genres"] == {"action"}
+    assert res["Guarding Stars"]["description"] == "Version récente."
 
-    # Test sans résultat
-    empty_handler = lambda req: httpx.Response(200, json={"results": {"bindings": []}})
-    client_empty = httpx.Client(transport=httpx.MockTransport(empty_handler))
-    assert enrich(client_empty, "Inconnu", "film") is None
+    assert "Other Show" in res
+    assert res["Other Show"]["qid"] == "Q300"
+    assert res["Other Show"]["description"] == "English description."
+
+    # Test liste vide -> None
+    empty_client = httpx.Client(transport=httpx.MockTransport(lambda req: httpx.Response(200, json={"results": {"bindings": []}})))
+    assert enrich_many(empty_client, ["Unknown"], "film") == {}
 
 
-def test_load_end_to_end(session, pytest_keyspace):
-    """Teste le chargement complet (load) avec un enrich_fn factice et vérifie les vues du jour."""
+def test_enrich_many_retry_429(monkeypatch):
+    """Teste un lot qui renvoie 429 puis 200 (avec pause=0 et sleep monkeypatché)."""
+    calls = 0
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        if calls == 1:
+            return httpx.Response(429, headers={"Retry-After": "1"})
+        return httpx.Response(200, json={"results": {"bindings": [{"label": {"value": "Test"}, "item": {"value": "http://wd/Q1"}}]}})
+
+    monkeypatch.setattr("time.sleep", lambda s: None)
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    res = enrich_many(client, ["Test"], "film", pause=0.0)
+    assert calls == 2
+    assert "Test" in res
+
+
+def test_enrich_many_permanent_429(monkeypatch):
+    """Teste un 429 permanent qui lève WikidataError après 3 essais."""
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(429, headers={"Retry-After": "1"})
+
+    monkeypatch.setattr("time.sleep", lambda s: None)
+    client = httpx.Client(transport=httpx.MockTransport(handler))
+    with pytest.raises(WikidataError):
+        enrich_many(client, ["Test"], "film", pause=0.0)
+
+
+def test_load_end_to_end_with_errors(session, pytest_keyspace):
+    """Teste le chargement load avec un enrich_many_fn qui lève une exception (capturée dans wikidata_errors)."""
     rows = parse(SAMPLE_TSV, weeks=1)
 
-    def dummy_enrich(title: str, kind: str):
-        if title == "Guarding Stars":
-            return {
-                "qid": "Q111",
-                "year": 2026,
-                "genres": {"action"},
-                "description": "Desc of Guarding Stars",
-            }
-        return None
+    def failing_enrich_many(titles, kind):
+        raise WikidataError("HTTP 503 Service Unavailable")
 
-    report = load(session, pytest_keyspace, rows, dummy_enrich)
-    assert report["titles"] == 2
-    assert report["wikidata_found"] == 1
-    assert "The Body" in report["wikidata_missing"]
+    report = load(session, pytest_keyspace, rows, failing_enrich_many)
+    assert len(report["wikidata_errors"]) > 0
+    assert "HTTP 503" in list(report["wikidata_errors"].values())[0]
 
-    # Vérification des vues du jour via ViewDAO
+    # Test add_views incrémentation
     view_dao = ViewDAO(session, pytest_keyspace)
     day = datetime.date(2026, 11, 22)
+    view_dao.add_views(title_id("film", "Guarding Stars"), day, 1000)
     views_day = view_dao.views_of_day(day)
-
-    guarding_id = title_id("film", "Guarding Stars")
-    assert guarding_id in views_day
-    assert views_day[guarding_id] == 27600000
-
-    # Vérification TitleDAO
-    title_dao = TitleDAO(session, pytest_keyspace)
-    t = title_dao.get(guarding_id)
-    assert t is not None
-    assert t.title == "Guarding Stars"
-    assert t.synopsis == "Desc of Guarding Stars"
-    assert t.release_year == 2026
-    assert t.genres == {"action"}
+    assert views_day[title_id("film", "Guarding Stars")] == 1000

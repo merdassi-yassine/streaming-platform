@@ -13,7 +13,7 @@ from ..dao.titles import TitleDAO
 from ..dao.views import ViewDAO
 from ..models import Title
 from .netflix import fetch, parse, title_id
-from .wikidata import enrich
+from .wikidata import enrich_many, WikidataError
 
 
 def reset(session, keyspace: str = KEYSPACE) -> None:
@@ -22,12 +22,12 @@ def reset(session, keyspace: str = KEYSPACE) -> None:
         session.execute(f"TRUNCATE {keyspace}.{table}")
 
 
-def load(session, keyspace: str, rows: list[dict], enrich_fn) -> dict:
-    """Charge les lignes Netflix et enrichit via Wikidata, puis insère dans Cassandra."""
+def load(session, keyspace: str, rows: list[dict], enrich_many_fn) -> dict:
+    """Charge les lignes Netflix et enrichit via Wikidata par type (film/serie), puis insère dans Cassandra."""
     title_dao = TitleDAO(session, keyspace)
     view_dao = ViewDAO(session, keyspace)
 
-    # Regrouper par title_id pour traiter chaque titre unique une seule fois
+    # Regrouper par title_id
     titles_map = {}
     for r in rows:
         t_id = title_id(r["kind"], r["title"])
@@ -40,52 +40,78 @@ def load(session, keyspace: str, rows: list[dict], enrich_fn) -> dict:
             }
         titles_map[t_id]["weeks"].append((r["week"], r["views"]))
 
+    # Séparer les titres par type ("film" et "serie")
+    films_by_title = {}  # title -> t_id
+    series_by_title = {}  # title -> t_id
+    for t_id, info in titles_map.items():
+        if info["kind"] == "film":
+            films_by_title[info["title"]] = t_id
+        else:
+            series_by_title[info["title"]] = t_id
+
     wikidata_found = 0
     wikidata_missing = []
+    wikidata_errors = {}
     weeks_set = set()
 
-    for t_id, info in titles_map.items():
-        weeks_set.update([w[0] for w in info["weeks"]])
-        
-        # Appel enrich_fn UNE seule fois par titre distinct
-        wiki_data = enrich_fn(info["title"], info["kind"])
-        
-        synopsis = "Description indisponible sur Wikidata"
-        release_year = None
-        genres = {"autre"}
-        duration_minutes = info["runtime_minutes"] if info["kind"] == "film" else None
+    # Fonction d'appel et d'intégration pour un ensemble de titres d'un type donné
+    def process_category_titles(titles_dict: dict, kind: str):
+        nonlocal wikidata_found
+        if not titles_dict:
+            return
 
-        if wiki_data:
-            wikidata_found += 1
-            if wiki_data.get("description"):
-                synopsis = wiki_data["description"]
-            if wiki_data.get("year"):
-                release_year = wiki_data["year"]
-            if wiki_data.get("genres"):
-                genres = wiki_data["genres"]
-        else:
-            wikidata_missing.append(info["title"])
+        titles_list = list(titles_dict.keys())
+        try:
+            enriched_dict = enrich_many_fn(titles_list, kind)
+        except Exception as e:
+            err_msg = str(e)
+            for t in titles_list:
+                wikidata_errors[t] = err_msg
+            return
 
-        # Si release_year toujours None, prendre l'année de la première semaine dispo
-        if release_year is None and info["weeks"]:
-            release_year = info["weeks"][0][0].year
+        for title_str, t_id in titles_dict.items():
+            wiki_data = enriched_dict.get(title_str)
+            info = titles_map[t_id]
+            weeks_set.update([w[0] for w in info["weeks"]])
 
-        title_obj = Title(
-            title_id=t_id,
-            title=info["title"],
-            kind="movie" if info["kind"] == "film" else "series",
-            release_year=release_year or 2026,
-            genres=genres,
-            synopsis=synopsis,
-            duration_minutes=duration_minutes,
-            episodes_count=None,
-        )
-        title_dao.save(title_obj)
+            synopsis = "Description indisponible sur Wikidata"
+            release_year = None
+            genres = {"autre"}
+            duration_minutes = info["runtime_minutes"] if kind == "film" else None
 
-        # Enregistrer les vues par semaine (ViewDAO.add_views)
-        for week_date, views_count in info["weeks"]:
-            if views_count > 0:
-                view_dao.add_views(t_id, week_date, views_count)
+            if wiki_data:
+                wikidata_found += 1
+                if wiki_data.get("description"):
+                    synopsis = wiki_data["description"]
+                if wiki_data.get("year"):
+                    release_year = wiki_data["year"]
+                if wiki_data.get("genres"):
+                    genres = wiki_data["genres"]
+            else:
+                wikidata_missing.append(title_str)
+
+            if release_year is None and info["weeks"]:
+                release_year = info["weeks"][0][0].year
+
+            title_obj = Title(
+                title_id=t_id,
+                title=title_str,
+                kind="movie" if kind == "film" else "series",
+                release_year=release_year or 2026,
+                genres=genres,
+                synopsis=synopsis,
+                duration_minutes=duration_minutes,
+                episodes_count=None,
+            )
+            title_dao.save(title_obj)
+
+            for week_date, views_count in info["weeks"]:
+                if views_count > 0:
+                    view_dao.add_views(t_id, week_date, views_count)
+
+    # Traiter les films puis les séries
+    process_category_titles(films_by_title, "film")
+    process_category_titles(series_by_title, "serie")
 
     weeks_iso = sorted([w.isoformat() for w in weeks_set])
 
@@ -95,6 +121,7 @@ def load(session, keyspace: str, rows: list[dict], enrich_fn) -> dict:
         "weeks": weeks_iso,
         "wikidata_found": wikidata_found,
         "wikidata_missing": wikidata_missing,
+        "wikidata_errors": wikidata_errors,
     }
 
 
@@ -124,15 +151,13 @@ def main() -> None:
     print("Parsing des 4 semaines les plus récentes...")
     rows = parse(tsv_text, weeks=4)
 
-    print("Chargement et enrichissement Wikidata en cours...")
+    print("Chargement et enrichissement Wikidata par lots en cours...")
     wikidata_client = httpx.Client(timeout=30, follow_redirects=True)
 
-    def rate_limited_enrich(title: str, kind: str):
-        res = enrich(wikidata_client, title, kind)
-        time.sleep(0.3)
-        return res
+    def enrich_many_wrapper(titles: list[str], kind: str):
+        return enrich_many(wikidata_client, titles, kind, pause=1.0)
 
-    report = load(session, KEYSPACE, rows, rate_limited_enrich)
+    report = load(session, KEYSPACE, rows, enrich_many_wrapper)
     wikidata_client.close()
 
     # Écriture du rapport dans reports/ingest/
@@ -142,15 +167,20 @@ def main() -> None:
     report_path = reports_dir / f"ingest-{now_str}.md"
 
     missing = "\n".join(f"  - {t}" for t in report["wikidata_missing"]) or "  - Aucun"
+    errors = "\n".join(f"  - {t}: {err}" for t, err in report["wikidata_errors"].items()) or "  - Aucune"
+
     report_content = f"""# Rapport d'ingestion – {now_str}
 
 - **Source Netflix** : {fetch.__globals__.get('NETFLIX_URL')}
+- **Source Wikidata** : https://query.wikidata.org/sparql (licence CC0)
 - **Semaines traitées** : {report['weeks']}
 - **Titres distincts chargés** : {report['titles']}
 - **Lignes de visionnage traitées** : {report['rows']}
 - **Correspondances Wikidata trouvées** : {report['wikidata_found']}
 - **Titres sans correspondance Wikidata** :
 {missing}
+- **Erreurs Wikidata (429/503/réseau)** :
+{errors}
 """
     report_path.write_text(report_content, encoding="utf-8")
     print(f"Rapport d'ingestion généré : {report_path}")
