@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import unicodedata
 import httpx
 
 SPARQL_URL = "https://query.wikidata.org/sparql"
@@ -15,38 +16,42 @@ QUERY_TEMPLATE = """SELECT ?item ?pubDate ?start ?genreLabel ?descFr ?descEn WHE
   OPTIONAL { ?item schema:description ?descEn . FILTER(LANG(?descEn) = "en") }
 } LIMIT 200"""
 
-# Vocabulaire cible et mots-clés associés
+# Vocabulaire cible et mots-clés associés (sans accents)
 KEYWORDS_MAP = {
-    "science-fiction": ["science-fiction", "science fiction", "sci-fi", "sf"],
+    "science-fiction": ["science-fiction", "science fiction", "sci-fi"],
     "action": ["action"],
-    "drame": ["drame", "drama"],
-    "comedie": ["comedie", "comedy", "comédie"],
-    "animation": ["animation", "anime", "dessin animé"],
-    "thriller": ["thriller", "suspense"],
+    "drame": ["drame", "drama", "dramatique"],
+    "comedie": ["comedie", "comedy"],
+    "animation": ["animation", "anime", "dessin anime"],
+    "thriller": ["thriller", "suspense", "espionnage", "enigme", "mystere"],
     "horreur": ["horreur", "horror", "epouvante"],
-    "fantastique": ["fantastique", "fantasy"],
-    "romance": ["romance", "sentimental"],
+    "fantastique": ["fantastique", "fantasy", "surnaturel"],
+    "romance": ["romance", "romanti", "sentimental"],
     "documentaire": ["documentaire", "documentary"],
-    "crime": ["crime", "policier", "detective"],
+    "crime": ["crime", "criminel", "policier", "detective", "gangster"],
     "aventure": ["aventure", "adventure"],
-    "famille": ["famille", "family", "jeunesse"],
-    "telerealite": ["tele-realite", "télé-réalité", "reality"],
+    "famille": ["famille", "familial", "family", "jeunesse"],
+    "telerealite": ["telerealite", "tele-realite", "reality", "emission de realite"],
 }
 
 
+def _plain(s: str) -> str:
+    """Met en minuscules et supprime les accents d'une chaîne."""
+    nfkd = unicodedata.normalize("NFKD", s.lower())
+    return "".join(c for c in nfkd if not unicodedata.combining(c))
+
+
 def normalize_genres(labels: list[str]) -> set[str]:
-    """Ramène les libellés Wikidata à notre vocabulaire par mots-clés."""
+    """Ramène les libellés Wikidata à notre vocabulaire par mots-clés sans accents."""
     matched = set()
     for label in labels:
-        lbl_lower = label.lower()
+        lbl_plain = _plain(label)
         found = False
         for target_genre, kws in KEYWORDS_MAP.items():
-            if any(kw in lbl_lower for kw in kws):
+            if any(_plain(kw) in lbl_plain for kw in kws):
                 matched.add(target_genre)
                 found = True
         if not found:
-            # Si aucun mot-clé reconnu, on ignore ou on n'ajoute rien pour ce libellé spécifique,
-            # mais si l'ensemble final est vide, load/normalize gèrera.
             pass
 
     if not matched:
@@ -146,7 +151,6 @@ def enrich(client: httpx.Client, title: str, kind: str) -> dict | None:
         processed_items.append((min_year, info))
 
     # Trier pour garder l'item à l'année la plus récente (None en dernier)
-    # Tri clé : (year is not None, year)
     processed_items.sort(key=lambda x: (x[0] is not None, x[0] if x[0] is not None else 0), reverse=True)
 
     best_year, best_info = processed_items[0]
