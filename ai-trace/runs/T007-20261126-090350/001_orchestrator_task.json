@@ -1,0 +1,39 @@
+{
+  "run_id": "T007-20261126-090350",
+  "seq": 1,
+  "agent": "orchestrator",
+  "kind": "task",
+  "timestamp": "2026-11-26T08:03:50+00:00",
+  "task": {
+    "id": "T007",
+    "title": "Historique de visionnage complet (titre, durée, terminé)",
+    "role": "backend_developer",
+    "prompt_template": "prompts/backend_developer.v2.md",
+    "review": true,
+    "test_command": [
+      "docker",
+      "compose",
+      "--profile",
+      "tests",
+      "run",
+      "--rm",
+      "tests",
+      "sh",
+      "-c",
+      "python -m compileall -q streaming frontend tests && pytest -v -p no:cacheprovider tests/"
+    ],
+    "test_timeout": 1800,
+    "write_allow": [
+      "streaming/dao/",
+      "tests/"
+    ],
+    "description": "Lis d'abord streaming/dao/views.py puis tests/test_dao.py. Ne lis pas les autres fichiers.\nAujourd'hui ViewDAO.record_view écrit un titre vide \"\" et une durée 0 dans watch_history_by_user\n(valeurs provisoires signalées par le relecteur en T002). Corrige-le :\nnouvelle signature `record_view(self, user_id, title_id, viewed_at, title: str = \"\",\nduration_watched_seconds: int = 0, completed: bool = False) -> None` : les valeurs reçues sont écrites dans\nl'historique (les appels existants à 3 arguments doivent continuer de fonctionner). Les compteurs ne changent pas.\nLe BatchStatement d'une seule instruction est inutile : exécute directement l'INSERT préparé.\nDans tests/test_dao.py, modifie SEULEMENT test_view_dao_history_and_day pour appeler record_view avec\ntitle=\"Inception\", duration_watched_seconds=5400, completed=True et vérifier ces trois valeurs dans history().\nRéécris views.py et test_dao.py en entier (contenu complet, rien d'autre ne change).\n",
+    "acceptance": [
+      "record_view écrit le titre, la durée et l'état terminé reçus",
+      "les appels existants à 3 arguments fonctionnent toujours",
+      "test_view_dao_history_and_day vérifie title, duration_watched_seconds et completed",
+      "aucun autre test supprimé ou affaibli"
+    ]
+  },
+  "branch": "squad/T007-090350"
+}

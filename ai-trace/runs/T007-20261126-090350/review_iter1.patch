@@ -1,0 +1,66 @@
+diff --git a/streaming/dao/views.py b/streaming/dao/views.py
+index 65a2b82..10e4623 100644
+--- a/streaming/dao/views.py
++++ b/streaming/dao/views.py
+@@ -6,8 +6,6 @@ import uuid
+ from datetime import datetime, date
+ from typing import Dict, List
+ 
+-from cassandra.query import BatchStatement
+-
+ 
+ class ViewDAO:
+     """Accès aux tables d'historique et de statistiques de vues."""
+@@ -40,19 +38,20 @@ class ViewDAO:
+             f"SELECT title_id, view_count FROM {keyspace}.daily_views_by_title WHERE view_date = ?"
+         )
+ 
+-    def record_view(self, user_id: uuid.UUID, title_id: uuid.UUID, viewed_at: datetime) -> None:
+-        """Enregistre une visionnage et incrémente les compteurs."""
+-        # Normal insert into history
+-        batch = BatchStatement()
+-        batch.add(self._stmt_insert_history, (
+-            user_id,
+-            viewed_at,
+-            title_id,
+-            "",  # title text not provided
+-            0,    # duration_watched_seconds placeholder
+-            False,  # completed placeholder
+-        ))
+-        self._session.execute(batch)
++    def record_view(
++        self,
++        user_id: uuid.UUID,
++        title_id: uuid.UUID,
++        viewed_at: datetime,
++        title: str = "",
++        duration_watched_seconds: int = 0,
++        completed: bool = False,
++    ) -> None:
++        """Enregistre un visionnage, les détails et incrémente les compteurs."""
++        self._session.execute(
++            self._stmt_insert_history,
++            (user_id, viewed_at, title_id, title, duration_watched_seconds, completed)
++        )
+         # Counter updates (separate)
+         self._session.execute(self._stmt_update_view_count, (title_id,))
+         self._session.execute(self._stmt_update_daily_view_count, (viewed_at.date(), title_id))
+diff --git a/tests/test_dao.py b/tests/test_dao.py
+index 5ba6f45..535433e 100644
+--- a/tests/test_dao.py
++++ b/tests/test_dao.py
+@@ -83,9 +83,13 @@ def test_view_dao_history_and_day(session, schema_act):
+     today = datetime.date.today()
+     now = datetime.datetime.now(datetime.timezone.utc)
+ 
+-    v_dao.record_view(uid, tid, now)
++    v_dao.record_view(uid, tid, now, title="Inception", duration_watched_seconds=5400, completed=True)
+     history = v_dao.history(uid)
+     assert len(history) >= 1
++    record = history[0]
++    assert record["title"] == "Inception"
++    assert record["duration_watched_seconds"] == 5400
++    assert record["completed"] is True
+ 
+     daily = v_dao.views_of_day(today)
+     assert daily.get(tid, 0) >= 1
