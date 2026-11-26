@@ -11,17 +11,9 @@ from streaming.schema import create_schema, drop_schema
 KS_API = "streaming_test_api"
 
 
-@pytest.fixture(scope="module", autouse=True)
-def setup_default_keyspace(session):
-    # S'assure que le keyspace par défaut 'streaming' existe également pour éviter toute erreur de session globale
-    create_schema(session, "streaming", replication_factor=1)
-    yield
-    drop_schema(session, "streaming")
-
-
 @pytest.fixture(scope="module")
 def api_client(session):
-    create_schema(session, KS_API, replication_factor=1)
+    create_schema(session, KS_API, replication_factor=3)
     app = create_app(session, KS_API)
     client = TestClient(app)
     yield client
@@ -115,7 +107,6 @@ def test_post_rating_success_and_history(session, api_client):
     tid = uuid.uuid4()
     u_dao = UserDAO(session, KS_API)
     t_dao = TitleDAO(session, KS_API)
-    v_dao = ViewDAO(session, KS_API)
 
     u_dao.save(User(user_id=uid, email="user@test.com", username="moviefan", created_at=datetime.datetime.now(datetime.timezone.utc)))
     t_dao.save(Title(title_id=tid, title="Matrix", kind="movie", release_year=1999, genres={"Action"}, synopsis=None, duration_minutes=136, episodes_count=None))
