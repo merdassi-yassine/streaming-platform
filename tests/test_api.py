@@ -11,6 +11,14 @@ from streaming.schema import create_schema, drop_schema
 KS_API = "streaming_test_api"
 
 
+@pytest.fixture(scope="module", autouse=True)
+def setup_default_keyspace(session):
+    # S'assure que le keyspace par défaut 'streaming' existe également pour éviter toute erreur de session globale
+    create_schema(session, "streaming", replication_factor=1)
+    yield
+    drop_schema(session, "streaming")
+
+
 @pytest.fixture(scope="module")
 def api_client(session):
     create_schema(session, KS_API, replication_factor=1)
@@ -121,7 +129,6 @@ def test_post_rating_success_and_history(session, api_client):
     response = api_client.post("/ratings", json=payload)
     assert response.status_code == 201
 
-    # Vérifier l'historique utilisateur (ou les détails du titre mis à jour)
     res_title = api_client.get(f"/titles/{tid}")
     assert res_title.status_code == 200
     assert res_title.json()["rating_count"] == 1

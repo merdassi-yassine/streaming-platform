@@ -71,15 +71,8 @@ def create_app(session, keyspace: str) -> FastAPI:
     def health_check():
         cluster = session.cluster
         all_hosts = cluster.metadata.all_hosts()
-        # Évaluation des hôtes Up : connectés ou interrogés (selon l'API du driver, tous les all_hosts() sont connus,
-        # on peut vérifier leur état de disponibilité si disponible, sinon on compte les hôtes connus et up).
-        # Le driver expose state par hôte via l'interne ou can_connect, mais l'énoncé demande :
-        # "nombre de nœuds connus et nombre de nœuds « up » via session.cluster.metadata.all_hosts()".
-        # Dans cassandra-driver, all_hosts() renvoie les hôtes du cluster. Les hôtes up sont ceux dont l'état est up ou joignables.
-        # Plus simplement, tous les hôtes renvoyés par all_hosts() ou interrogés. Certains drivers gèrent host.is_up si supporté,
-        # ou on compte le nombre total et on estime up. Vérifions l'attribut is_up ou is_up() si présent, ou on compte les hôtes.
         known = len(all_hosts)
-        up_count = sum(1 for h in all_hosts if getattr(h, "is_up", True))
+        up_count = sum(1 for h in all_hosts if h.is_up)
         return {
             "nodes_known": known,
             "nodes_up": up_count,
@@ -88,22 +81,26 @@ def create_app(session, keyspace: str) -> FastAPI:
     return app
 
 
-# Instance globale pour uvicorn si CASSANDRA_CONTACT_POINTS est défini
-_contact_points = os.environ.get("CASSANDRA_CONTACT_POINTS")
-app: Optional[FastAPI] = None
-if _contact_points:
+def build_app() -> FastAPI:
+    """Factory pour uvicorn (--factory streaming.api:build_app).
+
+    Initialise la connexion Cluster/Session à partir des variables d'environnement
+    sans rien exécuter au moment de l'import du module.
+    """
+    contact_points = os.environ.get("CASSANDRA_CONTACT_POINTS", "cassandra1").split(",")
+    keyspace = os.environ.get("KEYSPACE", "streaming")
+
     from cassandra.cluster import Cluster, ExecutionProfile, EXEC_PROFILE_DEFAULT
     from cassandra.policies import DCAwareRoundRobinPolicy
 
-    _keyspace = os.environ.get("KEYSPACE", "streaming")
-    _profile = ExecutionProfile(
+    profile = ExecutionProfile(
         load_balancing_policy=DCAwareRoundRobinPolicy(local_dc="dc1"),
         request_timeout=30,
     )
-    _cluster = Cluster(
-        _contact_points.split(","),
-        execution_profiles={EXEC_PROFILE_DEFAULT: _profile},
+    cluster = Cluster(
+        contact_points,
+        execution_profiles={EXEC_PROFILE_DEFAULT: profile},
         protocol_version=5,
     )
-    _session = _cluster.connect()
-    app = create_app(_session, _keyspace)
+    session = cluster.connect()
+    return create_app(session, keyspace)
