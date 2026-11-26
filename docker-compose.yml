@@ -87,6 +87,25 @@ services:
         condition: service_healthy
     command: ["uvicorn", "--factory", "streaming.api:build_app", "--host", "0.0.0.0", "--port", "8000"]
 
+  # Frontend Django (code des agents, T006) — appelle l'API ci-dessus en HTTP, aucune requête Cassandra.
+  # docker compose --profile app up -d api web   →   http://localhost:8001/
+  web:
+    build:
+      context: .
+      dockerfile: docker/tests.Dockerfile
+    profiles: ["app"]
+    environment:
+      API_BASE_URL: http://api:8000
+      DJANGO_SETTINGS_MODULE: frontend.settings
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    ports:
+      - "8001:8001"
+    depends_on:
+      - api
+    command: ["python", "-m", "django", "runserver", "0.0.0.0:8001", "--noreload"]
+
 volumes:
   cassandra1-data:
   cassandra2-data:

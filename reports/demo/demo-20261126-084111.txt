@@ -1,0 +1,43 @@
+### Démo distribution — Thu Nov 26 08:41:11     2026
+
+--- nodetool status (3 nœuds) ---
+UN  172.20.0.3  478.19 KiB  16      100.0%            64ebfbd2-a5c8-4e84-8ce1-65a5507561bd  rack1
+UN  172.20.0.2  347.46 KiB  16      100.0%            18c57961-f8b4-4353-af17-46d77a809513  rack1
+UN  172.20.0.4  424.1 KiB   16      100.0%            516b87c9-cdf5-4887-b857-ca41bf5f5c3b  rack1
+
+===== 1) cluster complet : 3 nœuds UP =====
+Nœuds vus par le pilote : 172.20.0.2:9042 (UP), 172.20.0.3:9042 (UP), 172.20.0.4:9042 (UP)
+Réplication du keyspace : {'class': 'NetworkTopologyStrategy', 'dc1': '3'}
+Réplicas de la partition title_id=00000000-0000-4000-8000-000000000001 : 172.20.0.4:9042, 172.20.0.2:9042, 172.20.0.3:9042
+  ONE    : écriture + lecture OK (vues = 18)
+  QUORUM : écriture + lecture OK (vues = 19)
+  ALL    : écriture + lecture OK (vues = 20)
+Horodatage : 2026-11-26T07:41:13+00:00
+
+--- Arrêt de cassandra3 (panne simulée) ---
+UN  172.20.0.3  408.03 KiB  16      100.0%            64ebfbd2-a5c8-4e84-8ce1-65a5507561bd  rack1
+UN  172.20.0.2  347.46 KiB  16      100.0%            18c57961-f8b4-4353-af17-46d77a809513  rack1
+DN  172.20.0.4  424.1 KiB   16      100.0%            516b87c9-cdf5-4887-b857-ca41bf5f5c3b  rack1
+
+===== 2) un nœud en panne : ONE et QUORUM doivent réussir, ALL doit être refusé =====
+Nœuds vus par le pilote : 172.20.0.2:9042 (UP), 172.20.0.3:9042 (UP), 172.20.0.4:9042 (UP)
+Réplication du keyspace : {'class': 'NetworkTopologyStrategy', 'dc1': '3'}
+Réplicas de la partition title_id=00000000-0000-4000-8000-000000000001 : 172.20.0.4:9042, 172.20.0.2:9042, 172.20.0.3:9042
+  ONE    : écriture + lecture OK (vues = 20)
+  QUORUM : écriture + lecture OK (vues = 22)
+  ALL    : REFUSÉ — 2 réplica(s) vivant(s) sur 3 requis
+Horodatage : 2026-11-26T07:42:13+00:00
+
+--- Redémarrage de cassandra3 ---
+UN  172.20.0.3  408.03 KiB  16      100.0%            64ebfbd2-a5c8-4e84-8ce1-65a5507561bd  rack1
+UN  172.20.0.2  347.46 KiB  16      100.0%            18c57961-f8b4-4353-af17-46d77a809513  rack1
+UN  172.20.0.4  596.28 KiB  16      100.0%            516b87c9-cdf5-4887-b857-ca41bf5f5c3b  rack1
+
+===== 3) nœud revenu : ALL réussit de nouveau =====
+Nœuds vus par le pilote : 172.20.0.2:9042 (UP), 172.20.0.3:9042 (UP), 172.20.0.4:9042 (DOWN)
+Réplication du keyspace : {'class': 'NetworkTopologyStrategy', 'dc1': '3'}
+Réplicas de la partition title_id=00000000-0000-4000-8000-000000000001 : 172.20.0.4:9042, 172.20.0.2:9042, 172.20.0.3:9042
+  ONE    : écriture + lecture OK (vues = 23)
+  QUORUM : écriture + lecture OK (vues = 24)
+  ALL    : écriture + lecture OK (vues = 25)
+Horodatage : 2026-11-26T07:42:28+00:00
