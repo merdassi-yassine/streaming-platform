@@ -83,9 +83,13 @@ def test_view_dao_history_and_day(session, schema_act):
     today = datetime.date.today()
     now = datetime.datetime.now(datetime.timezone.utc)
 
-    v_dao.record_view(uid, tid, now)
+    v_dao.record_view(uid, tid, now, title="Inception", duration_watched_seconds=5400, completed=True)
     history = v_dao.history(uid)
     assert len(history) >= 1
+    record = history[0]
+    assert record["title"] == "Inception"
+    assert record["duration_watched_seconds"] == 5400
+    assert record["completed"] is True
 
     daily = v_dao.views_of_day(today)
     assert daily.get(tid, 0) >= 1

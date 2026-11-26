@@ -6,8 +6,6 @@ import uuid
 from datetime import datetime, date
 from typing import Dict, List
 
-from cassandra.query import BatchStatement
-
 
 class ViewDAO:
     """Accès aux tables d'historique et de statistiques de vues."""
@@ -40,19 +38,20 @@ class ViewDAO:
             f"SELECT title_id, view_count FROM {keyspace}.daily_views_by_title WHERE view_date = ?"
         )
 
-    def record_view(self, user_id: uuid.UUID, title_id: uuid.UUID, viewed_at: datetime) -> None:
-        """Enregistre une visionnage et incrémente les compteurs."""
-        # Normal insert into history
-        batch = BatchStatement()
-        batch.add(self._stmt_insert_history, (
-            user_id,
-            viewed_at,
-            title_id,
-            "",  # title text not provided
-            0,    # duration_watched_seconds placeholder
-            False,  # completed placeholder
-        ))
-        self._session.execute(batch)
+    def record_view(
+        self,
+        user_id: uuid.UUID,
+        title_id: uuid.UUID,
+        viewed_at: datetime,
+        title: str = "",
+        duration_watched_seconds: int = 0,
+        completed: bool = False,
+    ) -> None:
+        """Enregistre un visionnage, les détails et incrémente les compteurs."""
+        self._session.execute(
+            self._stmt_insert_history,
+            (user_id, viewed_at, title_id, title, duration_watched_seconds, completed)
+        )
         # Counter updates (separate)
         self._session.execute(self._stmt_update_view_count, (title_id,))
         self._session.execute(self._stmt_update_daily_view_count, (viewed_at.date(), title_id))
