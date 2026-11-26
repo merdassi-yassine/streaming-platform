@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 import httpx
 
-from ..schema import TABLES, KEYSPACE
+from ..schema import KEYSPACE, TABLES, create_schema
 from ..dao.titles import TitleDAO
 from ..dao.views import ViewDAO
 from ..models import Title
@@ -138,18 +138,37 @@ def main() -> None:
     session = cluster.connect()
 
     print(f"Connexion au cluster Cassandra établie sur {contact_points}...")
-    print(f"Réinitialisation du keyspace {KEYSPACE}...")
-    reset(session, KEYSPACE)
 
-    print(f"Téléchargement de Netflix Top 10 depuis {fetch.__globals__.get('NETFLIX_URL')}...")
-    client = httpx.Client(timeout=30, follow_redirects=True)
-    try:
-        tsv_text = fetch(client)
-    finally:
-        client.close()
+    # Correction humaine (26/11/2026) : on télécharge et on analyse AVANT de vider la base — une panne
+    # réseau laissait sinon la plateforme vide. Copie brute conservée (preuve de la source) ; la variable
+    # NETFLIX_TSV_FILE permet de recharger une copie locale si netflix.com est injoignable.
+    netflix_url = fetch.__globals__.get("NETFLIX_URL")
+    local_file = os.getenv("NETFLIX_TSV_FILE")
+    downloaded_at = datetime.now().isoformat(timespec="seconds")
+    if local_file:
+        print(f"Lecture de la copie locale {local_file} (source : {netflix_url})...")
+        tsv_text = Path(local_file).read_text(encoding="utf-8")
+        raw_path = Path(local_file)
+    else:
+        print(f"Téléchargement de Netflix Top 10 depuis {netflix_url}...")
+        client = httpx.Client(timeout=30, follow_redirects=True)
+        try:
+            tsv_text = fetch(client)
+        finally:
+            client.close()
+        raw_dir = Path("data/raw")
+        raw_dir.mkdir(parents=True, exist_ok=True)
+        raw_path = raw_dir / f"netflix-all-weeks-global-{datetime.now():%Y%m%d-%H%M%S}.tsv"
+        raw_path.write_text(tsv_text, encoding="utf-8")
 
     print("Parsing des 4 semaines les plus récentes...")
     rows = parse(tsv_text, weeks=4)
+    if not rows:
+        raise SystemExit("Aucune ligne Netflix exploitable : base laissée intacte.")
+
+    create_schema(session, KEYSPACE, replication_factor=3)
+    print(f"Réinitialisation du keyspace {KEYSPACE}...")
+    reset(session, KEYSPACE)
 
     print("Chargement et enrichissement Wikidata par lots en cours...")
     wikidata_client = httpx.Client(timeout=30, follow_redirects=True)
@@ -171,7 +190,8 @@ def main() -> None:
 
     report_content = f"""# Rapport d'ingestion – {now_str}
 
-- **Source Netflix** : {fetch.__globals__.get('NETFLIX_URL')}
+- **Source Netflix** : {netflix_url} (Netflix Top 10 officiel, téléchargé le {downloaded_at})
+- **Copie brute conservée** : `{raw_path.as_posix()}`
 - **Source Wikidata** : https://query.wikidata.org/sparql (licence CC0)
 - **Semaines traitées** : {report['weeks']}
 - **Titres distincts chargés** : {report['titles']}
